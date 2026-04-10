@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>메인 페이지 - CodeTree HRM</title>
+    <!-- 제이쿼리(jQuery) 추가 -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <style>
+        body { font-family: sans-serif; background-color: #f1f2f6; text-align: center; padding-top: 100px; }
+        .welcome-box { background: white; padding: 50px; border-radius: 12px; display: inline-block; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        h1 { color: #2f3542; }
+        #message { margin-top: 20px; font-weight: bold; color: #2e86de; }
+    </style>
+</head>
+<body>
+    <div class="welcome-box">
+        <h1>CodeTree HRM 시스템</h1>
+        <p>환영합니다! 이 페이지는 jQuery와 Java(Spring Boot)로 연동됩니다.</p>
+        <button id="btn-hello">인사말 가져오기</button>
+        <div id="message"></div>
+    </div>
+
+    <script>
+        $(document).ready(function() {
+            // 버튼 클릭 이벤트 (jQuery)
+            $('#btn-hello').on('click', function() {
+                // 백엔드 API 호출 (나중에 Java 컨트롤러에서 만들 주소)
+                $.ajax({
+                    url: '/api/hello',
+                    type: 'GET',
+                    success: function(data) {
+                        $('#message').text(data);
+                    },
+                    error: function() {
+                        alert('API 호출 실패! 아직 백엔드 API가 준비되지 않았습니다.');
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
