@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>메인 페이지 - CodeTree HRM</title>
+    <!-- 제이쿼리(jQuery) 추가 -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #2C3E50; /* 딥 블루 */
+            --accent-color: #82A67D;  /* 세이지 그린 */
+            --text-color: #34495E;
+            --bg-color: #F1F2F6;
+        }
+
+        body {
+            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
+            background-color: var(--bg-color);
+            text-align: center;
+            padding-top: 100px;
+            margin: 0;
+            color: var(--text-color);
+        }
+
+        .welcome-box {
+            background: white;
+            padding: 60px 50px;
+            border-radius: 20px;
+            display: inline-block;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+            max-width: 500px;
+            width: 90%;
+        }
+
+        /* 로고 스타일 */
+        .logo-box {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .logo-img {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 10px;
+        }
+
+        .logo-text {
+            font-size: 1.8rem;
+            font-weight: 800;
+            letter-spacing: -0.04em;
+            color: var(--primary-color);
+            margin: 0;
+        }
+
+        .logo-text span {
+            font-weight: 300;
+            color: var(--accent-color);
+        }
+
+        h1 {
+            color: var(--primary-color);
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+        }
+
+        p {
+            color: #7F8C8D;
+            line-height: 1.6;
+            margin-bottom: 30px;
+        }
+
+        #btn-hello {
+            padding: 12px 25px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(44, 62, 80, 0.2);
+        }
+
+        #btn-hello:hover {
+            background-color: var(--accent-color);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(130, 166, 125, 0.3);
+        }
+
+        #message {
+            margin-top: 25px;
+            font-weight: 600;
+            color: var(--accent-color);
+            min-height: 24px;
+        }
+    </style>
+</head>
+<body>
+    <div class="welcome-box">
+        <!-- 코드트리 로고 시작 -->
+        <div class="logo-box">
+            <img src="assets/logo/logo.svg" alt="CodeTree HRM Logo" class="logo-img">
+            <p class="logo-text">CODE<span>TREE</span></p>
+        </div>
+        <!-- 로고 끝 -->
+
+        <h1>HRM 시스템</h1>
+        <p>환영합니다! 데이터 기반의 정교한 인사 관리와<br>사람 중심의 따뜻한 성장을 지원합니다.</p>
+
+        <button id="btn-hello">시스템 시작하기</button>
+        <div id="message"></div>
+    </div>
+
+    <script>
+        $(document).ready(function() {
+            // 버튼 클릭 이벤트 (jQuery)
+            $('#btn-hello').on('click', function() {
+                $.ajax({
+                    url: '/api/hello',
+                    type: 'GET',
+                    success: function(data) {
+                        $('#message').fadeOut(100, function() {
+                            $(this).text(data).fadeIn(200);
+                        });
+                    },
+                    error: function() {
+                        alert('API 서버가 아직 준비되지 않았습니다.');
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
