@@ -1,0 +1,10 @@
+<svg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+    <!-- 나무 기둥 -->
+    <path d="M50 85 V45" stroke="#2C3E50" stroke-width="8" stroke-linecap="round"/>
+    <!-- 왼쪽 중괄호 잎 ({) -->
+    <path d="M40 45 Q20 45 20 65 Q20 85 40 85" fill="none" stroke="#82A67D" stroke-width="6" stroke-linecap="round"/>
+    <!-- 오른쪽 잎 -->
+    <path d="M60 45 Q80 45 80 65 Q80 85 60 85" fill="none" stroke="#82A67D" stroke-width="6" stroke-linecap="round"/>
+    <!-- 상단 기호 (/) -->
+    <path d="M40 35 L60 15" stroke="#2C3E50" stroke-width="6" stroke-linecap="round"/>
+</svg>
