@@ -13,6 +13,8 @@
             --sidebar-width: 240px;
             --header-height: 56px;
             --danger: #E74C3C;
+            --warning: #F39C12;
+            --info: #3498DB;
         }
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif; background: var(--bg); color: #34495E; display: flex; height: 100vh; overflow: hidden; }
@@ -58,8 +60,87 @@
         .summary-card .card-value { font-size: 2rem; font-weight: 800; color: var(--primary); }
         .summary-card .card-sub { font-size: 0.78rem; color: var(--accent); margin-top: 4px; }
 
-        /* ── 플레이스홀더 ── */
+        /* ── 공통 페이지 레이아웃 ── */
         .page-panel { background: white; border-radius: 16px; box-shadow: 0 2px 12px rgba(0,0,0,0.05); overflow: hidden; }
+        .page-panel-header { display: flex; align-items: center; justify-content: space-between; padding: 20px 24px; border-bottom: 1px solid #F0F0F0; }
+        .page-panel-header h2 { font-size: 1.1rem; font-weight: 700; color: var(--primary); }
+        .page-panel-body { padding: 20px 24px; }
+
+        /* ── 검색바 ── */
+        .search-bar { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+        .search-bar input, .search-bar select { padding: 8px 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 0.88rem; color: #34495E; outline: none; transition: border 0.2s; }
+        .search-bar input:focus, .search-bar select:focus { border-color: var(--accent); }
+        .search-bar input { width: 200px; }
+
+        /* ── 버튼 ── */
+        .btn { padding: 8px 16px; border: none; border-radius: 8px; font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: 0.2s; }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-primary:hover { background: #3d5166; }
+        .btn-accent { background: var(--accent); color: white; }
+        .btn-accent:hover { background: #6d9268; }
+        .btn-danger { background: var(--danger); color: white; }
+        .btn-danger:hover { background: #c0392b; }
+        .btn-outline { background: transparent; border: 1px solid #ddd; color: #555; }
+        .btn-outline:hover { border-color: var(--primary); color: var(--primary); }
+        .btn-info { background: var(--info); color: white; }
+        .btn-info:hover { background: #2980b9; }
+
+        /* ── 테이블 ── */
+        .data-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+        .data-table th { background: #F8F9FA; color: #7F8C8D; font-weight: 600; padding: 10px 14px; text-align: left; border-bottom: 2px solid #F0F0F0; white-space: nowrap; }
+        .data-table td { padding: 12px 14px; border-bottom: 1px solid #F8F8F8; vertical-align: middle; }
+        .data-table tr:hover td { background: #FAFBFC; }
+        .data-table .no-data { text-align: center; color: #aaa; padding: 40px; }
+
+        /* ── 배지 ── */
+        .badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; }
+        .badge-active { background: #EAF5EA; color: #27AE60; }
+        .badge-retired { background: #FDEDEC; color: #E74C3C; }
+        .badge-head { background: #EAF0FB; color: #3498DB; }
+
+        /* ── 액션 드롭다운 ── */
+        .action-wrap { position: relative; display: inline-block; }
+        .action-btn { background: transparent; border: 1px solid #ddd; border-radius: 6px; padding: 4px 10px; font-size: 0.8rem; cursor: pointer; color: #555; }
+        .action-btn:hover { border-color: var(--primary); color: var(--primary); }
+        .action-menu { display: none; position: absolute; right: 0; top: 100%; margin-top: 4px; background: white; border: 1px solid #E0E0E0; border-radius: 10px; box-shadow: 0 8px 24px rgba(0,0,0,0.1); z-index: 100; min-width: 140px; overflow: hidden; }
+        .action-menu.show { display: block; }
+        .action-menu button { display: block; width: 100%; padding: 9px 16px; text-align: left; background: none; border: none; font-size: 0.84rem; color: #34495E; cursor: pointer; transition: background 0.15s; }
+        .action-menu button:hover { background: #F8F9FA; }
+        .action-menu button.danger { color: var(--danger); }
+        .action-menu .divider { height: 1px; background: #F0F0F0; margin: 4px 0; }
+
+        /* ── 모달 ── */
+        .modal-backdrop { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 1000; align-items: center; justify-content: center; }
+        .modal-backdrop.show { display: flex; }
+        .modal { background: white; border-radius: 16px; width: 480px; max-width: 95vw; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.2); }
+        .modal-header { display: flex; align-items: center; justify-content: space-between; padding: 20px 24px; border-bottom: 1px solid #F0F0F0; }
+        .modal-header h3 { font-size: 1rem; font-weight: 700; color: var(--primary); }
+        .modal-close { background: none; border: none; font-size: 1.3rem; cursor: pointer; color: #aaa; line-height: 1; }
+        .modal-close:hover { color: #555; }
+        .modal-body { padding: 24px; }
+        .modal-footer { display: flex; justify-content: flex-end; gap: 10px; padding: 16px 24px; border-top: 1px solid #F0F0F0; }
+
+        /* ── 폼 ── */
+        .form-row { margin-bottom: 16px; }
+        .form-row label { display: block; font-size: 0.83rem; font-weight: 600; color: #555; margin-bottom: 6px; }
+        .form-row input, .form-row select, .form-row textarea { width: 100%; padding: 9px 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 0.88rem; color: #34495E; outline: none; transition: border 0.2s; }
+        .form-row input:focus, .form-row select:focus, .form-row textarea:focus { border-color: var(--accent); }
+        .form-row textarea { resize: vertical; min-height: 80px; }
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 16px; }
+        .form-row.required label::after { content: ' *'; color: var(--danger); }
+        .confirm-msg { text-align: center; padding: 16px 0; }
+        .confirm-msg .confirm-icon { font-size: 2.5rem; margin-bottom: 12px; }
+        .confirm-msg p { color: #555; line-height: 1.7; }
+        .confirm-msg strong { color: var(--primary); }
+
+        /* ── 인사정보 상세 ── */
+        .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .info-item .info-label { font-size: 0.78rem; color: #7F8C8D; font-weight: 600; margin-bottom: 4px; }
+        .info-item .info-value { font-size: 0.9rem; color: #34495E; }
+        .emp-detail-header { display: flex; align-items: center; gap: 16px; padding: 20px; background: #F8F9FA; border-radius: 12px; margin-bottom: 20px; }
+        .emp-avatar-lg { width: 56px; height: 56px; border-radius: 50%; background: var(--primary); color: white; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; font-weight: 700; flex-shrink: 0; }
+        .emp-detail-header .emp-name { font-size: 1.1rem; font-weight: 700; color: var(--primary); }
+        .emp-detail-header .emp-sub { font-size: 0.85rem; color: #7F8C8D; margin-top: 2px; }
     </style>
 </head>
 <body>
@@ -127,8 +208,8 @@
             <div class="card-grid">
                 <div class="summary-card">
                     <div class="card-label">전체 사원</div>
-                    <div class="card-value">-</div>
-                    <div class="card-sub">준비 중</div>
+                    <div class="card-value" id="stat-total">-</div>
+                    <div class="card-sub">재직 중</div>
                 </div>
                 <div class="summary-card">
                     <div class="card-label">부서 수</div>
@@ -139,6 +220,65 @@
                     <div class="card-label">공통코드</div>
                     <div class="card-value">-</div>
                     <div class="card-sub">준비 중</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 인사발령 -->
+        <div id="page-emp-appoint" style="display:none;">
+            <div class="page-panel">
+                <div class="page-panel-header">
+                    <h2>인사발령</h2>
+                    <button class="btn btn-primary" onclick="openModal('modal-register')">+ 사원 등록</button>
+                </div>
+                <div class="page-panel-body">
+                    <div class="search-bar">
+                        <input type="text" id="appoint-search" placeholder="사원명 검색" oninput="renderAppointTable()">
+                        <select id="appoint-dept" onchange="renderAppointTable()">
+                            <option value="">전체 부서</option>
+                            <option>개발팀</option><option>인사팀</option><option>영업팀</option>
+                        </select>
+                        <select id="appoint-status" onchange="renderAppointTable()">
+                            <option value="">전체 상태</option>
+                            <option>재직</option><option>퇴직</option>
+                        </select>
+                    </div>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>사번</th><th>사원명</th><th>부서</th><th>직급</th><th>직책</th>
+                                <th>조직장</th><th>입사일</th><th>상태</th><th></th>
+                            </tr>
+                        </thead>
+                        <tbody id="appoint-tbody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- 인사정보 -->
+        <div id="page-emp-info" style="display:none;">
+            <div class="page-panel">
+                <div class="page-panel-header">
+                    <h2>인사정보</h2>
+                </div>
+                <div class="page-panel-body">
+                    <div class="search-bar">
+                        <input type="text" id="info-search" placeholder="사원명 검색" oninput="renderInfoTable()">
+                        <select id="info-dept" onchange="renderInfoTable()">
+                            <option value="">전체 부서</option>
+                            <option>개발팀</option><option>인사팀</option><option>영업팀</option>
+                        </select>
+                    </div>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>사번</th><th>사원명</th><th>부서</th><th>직급</th><th>직책</th>
+                                <th>생년월일</th><th>연락처</th><th>이메일</th><th>입사일</th><th>상태</th>
+                            </tr>
+                        </thead>
+                        <tbody id="info-tbody"></tbody>
+                    </table>
                 </div>
             </div>
         </div>
@@ -155,45 +295,398 @@
     </main>
 </div>
 
+<!-- ── 모달: 사원 등록 ── -->
+<div class="modal-backdrop" id="modal-register">
+    <div class="modal">
+        <div class="modal-header"><h3>사원 등록</h3><button class="modal-close" onclick="closeModal('modal-register')">✕</button></div>
+        <div class="modal-body">
+            <div class="form-grid">
+                <div class="form-row required"><label>사번</label><input type="text" id="reg-id" placeholder="EMP007"></div>
+                <div class="form-row required"><label>사원명</label><input type="text" id="reg-name" placeholder="홍길동"></div>
+            </div>
+            <div class="form-grid">
+                <div class="form-row required"><label>부서</label>
+                    <select id="reg-dept"><option value="">선택</option><option>개발팀</option><option>인사팀</option><option>영업팀</option></select>
+                </div>
+                <div class="form-row required"><label>직급</label>
+                    <select id="reg-rank"><option value="">선택</option><option>사원</option><option>주임</option><option>대리</option><option>과장</option><option>차장</option><option>부장</option></select>
+                </div>
+            </div>
+            <div class="form-grid">
+                <div class="form-row"><label>직책</label><input type="text" id="reg-position" placeholder="백엔드개발"></div>
+                <div class="form-row required"><label>입사일</label><input type="date" id="reg-hire"></div>
+            </div>
+            <div class="form-grid">
+                <div class="form-row"><label>생년월일</label><input type="date" id="reg-birth"></div>
+                <div class="form-row"><label>연락처</label><input type="text" id="reg-phone" placeholder="010-0000-0000"></div>
+            </div>
+            <div class="form-row"><label>이메일</label><input type="email" id="reg-email" placeholder="email@codetree.com"></div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-outline" onclick="closeModal('modal-register')">취소</button>
+            <button class="btn btn-primary" onclick="doRegister()">등록</button>
+        </div>
+    </div>
+</div>
+
+<!-- ── 모달: 부서이동 ── -->
+<div class="modal-backdrop" id="modal-transfer">
+    <div class="modal">
+        <div class="modal-header"><h3>부서이동</h3><button class="modal-close" onclick="closeModal('modal-transfer')">✕</button></div>
+        <div class="modal-body">
+            <div class="form-row"><label>대상 사원</label><input type="text" id="transfer-emp" readonly></div>
+            <div class="form-row required"><label>이동 부서</label>
+                <select id="transfer-dept"><option value="">선택</option><option>개발팀</option><option>인사팀</option><option>영업팀</option></select>
+            </div>
+            <div class="form-row required"><label>이동 일자</label><input type="date" id="transfer-date"></div>
+            <div class="form-row"><label>사유</label><textarea id="transfer-reason" placeholder="부서이동 사유를 입력하세요"></textarea></div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-outline" onclick="closeModal('modal-transfer')">취소</button>
+            <button class="btn btn-primary" onclick="doTransfer()">저장</button>
+        </div>
+    </div>
+</div>
+
+<!-- ── 모달: 직책변경 ── -->
+<div class="modal-backdrop" id="modal-position">
+    <div class="modal">
+        <div class="modal-header"><h3>직책변경</h3><button class="modal-close" onclick="closeModal('modal-position')">✕</button></div>
+        <div class="modal-body">
+            <div class="form-row"><label>대상 사원</label><input type="text" id="position-emp" readonly></div>
+            <div class="form-row required"><label>변경 직책</label><input type="text" id="position-new" placeholder="새 직책 입력"></div>
+            <div class="form-row required"><label>변경 일자</label><input type="date" id="position-date"></div>
+            <div class="form-row"><label>사유</label><textarea id="position-reason" placeholder="직책변경 사유를 입력하세요"></textarea></div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-outline" onclick="closeModal('modal-position')">취소</button>
+            <button class="btn btn-primary" onclick="doPosition()">저장</button>
+        </div>
+    </div>
+</div>
+
+<!-- ── 모달: 승진 ── -->
+<div class="modal-backdrop" id="modal-promote">
+    <div class="modal">
+        <div class="modal-header"><h3>승진</h3><button class="modal-close" onclick="closeModal('modal-promote')">✕</button></div>
+        <div class="modal-body">
+            <div class="form-row"><label>대상 사원</label><input type="text" id="promote-emp" readonly></div>
+            <div class="form-grid">
+                <div class="form-row"><label>현재 직급</label><input type="text" id="promote-current" readonly></div>
+                <div class="form-row required"><label>변경 직급</label>
+                    <select id="promote-new"><option value="">선택</option><option>사원</option><option>주임</option><option>대리</option><option>과장</option><option>차장</option><option>부장</option></select>
+                </div>
+            </div>
+            <div class="form-row required"><label>승진 일자</label><input type="date" id="promote-date"></div>
+            <div class="form-row"><label>사유</label><textarea id="promote-reason" placeholder="승진 사유를 입력하세요"></textarea></div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-outline" onclick="closeModal('modal-promote')">취소</button>
+            <button class="btn btn-accent" onclick="doPromote()">저장</button>
+        </div>
+    </div>
+</div>
+
+<!-- ── 모달: 조직장 지정 ── -->
+<div class="modal-backdrop" id="modal-head">
+    <div class="modal">
+        <div class="modal-header"><h3>조직장 지정</h3><button class="modal-close" onclick="closeModal('modal-head')">✕</button></div>
+        <div class="modal-body">
+            <div class="confirm-msg">
+                <div class="confirm-icon">🏅</div>
+                <p><strong id="head-emp-name"></strong> 사원을 조직장으로 지정하시겠습니까?</p>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-outline" onclick="closeModal('modal-head')">취소</button>
+            <button class="btn btn-info" onclick="doSetHead()">지정</button>
+        </div>
+    </div>
+</div>
+
+<!-- ── 모달: 퇴직처리 ── -->
+<div class="modal-backdrop" id="modal-retire">
+    <div class="modal">
+        <div class="modal-header"><h3>퇴직처리</h3><button class="modal-close" onclick="closeModal('modal-retire')">✕</button></div>
+        <div class="modal-body">
+            <div class="confirm-msg" style="margin-bottom:16px;">
+                <div class="confirm-icon">⚠️</div>
+                <p><strong id="retire-emp-name"></strong> 사원을 퇴직처리 하시겠습니까?</p>
+            </div>
+            <div class="form-row required"><label>퇴직 일자</label><input type="date" id="retire-date"></div>
+            <div class="form-row required"><label>퇴직 사유</label>
+                <select id="retire-reason"><option value="">선택</option><option>자발적 퇴사</option><option>계약 만료</option><option>권고사직</option><option>해고</option><option>기타</option></select>
+            </div>
+            <div class="form-row"><label>비고</label><textarea id="retire-note" placeholder="추가 내용을 입력하세요"></textarea></div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-outline" onclick="closeModal('modal-retire')">취소</button>
+            <button class="btn btn-danger" onclick="doRetire()">퇴직처리</button>
+        </div>
+    </div>
+</div>
+
+<!-- ── 모달: 인사정보 상세 ── -->
+<div class="modal-backdrop" id="modal-emp-detail">
+    <div class="modal">
+        <div class="modal-header"><h3>인사정보 상세</h3><button class="modal-close" onclick="closeModal('modal-emp-detail')">✕</button></div>
+        <div class="modal-body" id="modal-emp-detail-body"></div>
+        <div class="modal-footer"><button class="btn btn-outline" onclick="closeModal('modal-emp-detail')">닫기</button></div>
+    </div>
+</div>
+
 <script>
-    function toggleGroup(id) {
-        document.getElementById(id).classList.toggle('open');
-    }
+let employees = [
+    { id:'EMP001', name:'김지수', dept:'개발팀', rank:'대리', position:'백엔드개발',    isHead:false, hireDate:'2021-03-02', status:'재직', phone:'010-1234-5678', email:'jisu@codetree.com',    birth:'1995-05-15' },
+    { id:'EMP002', name:'이민준', dept:'개발팀', rank:'과장', position:'프론트엔드개발', isHead:true,  hireDate:'2019-01-07', status:'재직', phone:'010-2345-6789', email:'minjun@codetree.com',  birth:'1991-08-22' },
+    { id:'EMP003', name:'박서연', dept:'인사팀', rank:'사원', position:'인사관리',       isHead:false, hireDate:'2023-06-01', status:'재직', phone:'010-3456-7890', email:'seoyeon@codetree.com', birth:'1998-11-30' },
+    { id:'EMP004', name:'최현우', dept:'인사팀', rank:'부장', position:'인사총괄',       isHead:true,  hireDate:'2015-09-14', status:'재직', phone:'010-4567-8901', email:'hyunwoo@codetree.com', birth:'1985-03-10' },
+    { id:'EMP005', name:'정다은', dept:'영업팀', rank:'과장', position:'영업관리',       isHead:true,  hireDate:'2018-04-23', status:'재직', phone:'010-5678-9012', email:'daeun@codetree.com',   birth:'1990-07-18' },
+    { id:'EMP006', name:'강태양', dept:'영업팀', rank:'사원', position:'영업지원',       isHead:false, hireDate:'2024-01-15', status:'퇴직', phone:'010-6789-0123', email:'taeyang@codetree.com', birth:'1997-12-05' },
+];
 
-    function showHome() {
-        hideAllPages();
-        $('#page-home').show();
-        $('#bc-text').text('대시보드');
-        $('.nav-sub a').removeClass('active');
-    }
+let selectedEmpId = null;
 
-    function showPage(pageId) {
-        hideAllPages();
-        $('.nav-sub a').removeClass('active');
-        $('a[onclick*="' + pageId + '"]').addClass('active');
+function toggleGroup(id) { document.getElementById(id).classList.toggle('open'); }
 
-        const pages = {
-            'emp-appoint': { bc:'사원관리 > 인사발령', icon:'👤', title:'인사발령' },
-            'emp-info':    { bc:'사원관리 > 인사정보', icon:'👤', title:'인사정보' },
-            'dept-list':   { bc:'부서관리 > 부서 목록',     icon:'🏢', title:'부서 목록' },
-            'dept-reg':    { bc:'부서관리 > 부서 등록',     icon:'🏢', title:'부서 등록' },
-            'code-list':   { bc:'공통관리 > 공통코드 목록', icon:'⚙️', title:'공통코드 목록' },
-            'code-reg':    { bc:'공통관리 > 공통코드 등록', icon:'⚙️', title:'공통코드 등록' },
-        };
-        const p = pages[pageId];
-        if (!p) return false;
-        $('#bc-text').text(p.bc);
-        $('#ph-icon').text(p.icon);
-        $('#ph-title').text(p.title);
-        $('#page-placeholder').show();
-        return false;
-    }
+function showHome() {
+    hideAllPages();
+    $('#page-home').show();
+    $('#bc-text').text('대시보드');
+    $('.nav-sub a').removeClass('active');
+    $('#stat-total').text(employees.filter(e => e.status === '재직').length);
+}
 
-    function hideAllPages() {
-        $('#page-home, #page-placeholder').hide();
-    }
+function showPage(pageId) {
+    hideAllPages();
+    closeAllDropdowns();
+    $('.nav-sub a').removeClass('active');
+    $('a[onclick*="' + pageId + '"]').addClass('active');
+    const pages = {
+        'emp-appoint': { el:'page-emp-appoint', bc:'사원관리 > 인사발령', init: renderAppointTable },
+        'emp-info':    { el:'page-emp-info',    bc:'사원관리 > 인사정보', init: renderInfoTable },
+        'dept-list':   { el:'page-placeholder', bc:'부서관리 > 부서 목록',     icon:'🏢', title:'부서 목록' },
+        'dept-reg':    { el:'page-placeholder', bc:'부서관리 > 부서 등록',     icon:'🏢', title:'부서 등록' },
+        'code-list':   { el:'page-placeholder', bc:'공통관리 > 공통코드 목록', icon:'⚙️', title:'공통코드 목록' },
+        'code-reg':    { el:'page-placeholder', bc:'공통관리 > 공통코드 등록', icon:'⚙️', title:'공통코드 등록' },
+    };
+    const p = pages[pageId];
+    if (!p) return false;
+    $('#bc-text').text(p.bc);
+    $('#' + p.el).show();
+    if (p.init) p.init();
+    if (p.icon) { $('#ph-icon').text(p.icon); $('#ph-title').text(p.title); }
+    return false;
+}
 
-    showHome();
+function hideAllPages() {
+    $('#page-home, #page-emp-appoint, #page-emp-info, #page-placeholder').hide();
+}
+
+function renderAppointTable() {
+    const keyword = $('#appoint-search').val().toLowerCase();
+    const dept    = $('#appoint-dept').val();
+    const status  = $('#appoint-status').val();
+    const filtered = employees.filter(e =>
+        (!keyword || e.name.includes(keyword) || e.id.toLowerCase().includes(keyword)) &&
+        (!dept   || e.dept === dept) &&
+        (!status || e.status === status)
+    );
+    const tbody = $('#appoint-tbody');
+    if (filtered.length === 0) { tbody.html('<tr><td colspan="9" class="no-data">조회된 사원이 없습니다.</td></tr>'); return; }
+    tbody.html(filtered.map(e => `
+        <tr>
+            <td>${e.id}</td>
+            <td><strong>${e.name}</strong></td>
+            <td>${e.dept}</td>
+            <td>${e.rank}</td>
+            <td>${e.position || '-'}</td>
+            <td>${e.isHead ? '<span class="badge badge-head">조직장</span>' : '-'}</td>
+            <td>${e.hireDate}</td>
+            <td><span class="badge ${e.status==='재직'?'badge-active':'badge-retired'}">${e.status}</span></td>
+            <td>
+                <div class="action-wrap">
+                    <button class="action-btn" onclick="toggleDropdown(event,'drop-${e.id}')">액션 ▾</button>
+                    <div class="action-menu" id="drop-${e.id}">
+                        <button onclick="openTransfer('${e.id}')">부서이동</button>
+                        <button onclick="openPosition('${e.id}')">직책변경</button>
+                        <button onclick="openPromote('${e.id}')">승진</button>
+                        <button onclick="openHead('${e.id}')">조직장 지정</button>
+                        <div class="divider"></div>
+                        <button class="danger" onclick="openRetire('${e.id}')">퇴직처리</button>
+                    </div>
+                </div>
+            </td>
+        </tr>
+    `).join(''));
+}
+
+function renderInfoTable() {
+    const keyword = $('#info-search').val().toLowerCase();
+    const dept    = $('#info-dept').val();
+    const filtered = employees.filter(e =>
+        (!keyword || e.name.includes(keyword) || e.id.toLowerCase().includes(keyword)) &&
+        (!dept || e.dept === dept)
+    );
+    const tbody = $('#info-tbody');
+    if (filtered.length === 0) { tbody.html('<tr><td colspan="10" class="no-data">조회된 사원이 없습니다.</td></tr>'); return; }
+    tbody.html(filtered.map(e => `
+        <tr style="cursor:pointer;" onclick="openEmpDetail('${e.id}')">
+            <td>${e.id}</td>
+            <td><strong>${e.name}</strong></td>
+            <td>${e.dept}</td>
+            <td>${e.rank}</td>
+            <td>${e.position || '-'}</td>
+            <td>${e.birth || '-'}</td>
+            <td>${e.phone || '-'}</td>
+            <td>${e.email || '-'}</td>
+            <td>${e.hireDate}</td>
+            <td><span class="badge ${e.status==='재직'?'badge-active':'badge-retired'}">${e.status}</span></td>
+        </tr>
+    `).join(''));
+}
+
+function openEmpDetail(id) {
+    const e = employees.find(x => x.id === id);
+    if (!e) return;
+    $('#modal-emp-detail-body').html(`
+        <div class="emp-detail-header">
+            <div class="emp-avatar-lg">${e.name[0]}</div>
+            <div>
+                <div class="emp-name">${e.name} <span class="badge ${e.status==='재직'?'badge-active':'badge-retired'}" style="font-size:0.75rem;">${e.status}</span></div>
+                <div class="emp-sub">${e.dept} · ${e.rank}${e.position ? ' · ' + e.position : ''}${e.isHead ? ' · 조직장' : ''}</div>
+            </div>
+        </div>
+        <div class="info-grid">
+            <div class="info-item"><div class="info-label">사번</div><div class="info-value">${e.id}</div></div>
+            <div class="info-item"><div class="info-label">사원명</div><div class="info-value">${e.name}</div></div>
+            <div class="info-item"><div class="info-label">부서</div><div class="info-value">${e.dept}</div></div>
+            <div class="info-item"><div class="info-label">직급</div><div class="info-value">${e.rank}</div></div>
+            <div class="info-item"><div class="info-label">직책</div><div class="info-value">${e.position || '-'}</div></div>
+            <div class="info-item"><div class="info-label">조직장</div><div class="info-value">${e.isHead ? '✅ 조직장' : '-'}</div></div>
+            <div class="info-item"><div class="info-label">생년월일</div><div class="info-value">${e.birth || '-'}</div></div>
+            <div class="info-item"><div class="info-label">연락처</div><div class="info-value">${e.phone || '-'}</div></div>
+            <div class="info-item"><div class="info-label">이메일</div><div class="info-value">${e.email || '-'}</div></div>
+            <div class="info-item"><div class="info-label">입사일</div><div class="info-value">${e.hireDate}</div></div>
+        </div>
+    `);
+    openModal('modal-emp-detail');
+}
+
+function doRegister() {
+    const id = $('#reg-id').val().trim(), name = $('#reg-name').val().trim();
+    const dept = $('#reg-dept').val(), rank = $('#reg-rank').val();
+    if (!id || !name || !dept || !rank) { alert('필수 항목을 입력해주세요.'); return; }
+    if (employees.find(e => e.id === id)) { alert('이미 존재하는 사번입니다.'); return; }
+    employees.push({ id, name, dept, rank, position:$('#reg-position').val(), isHead:false,
+        hireDate:$('#reg-hire').val(), status:'재직', phone:$('#reg-phone').val(),
+        email:$('#reg-email').val(), birth:$('#reg-birth').val() });
+    closeModal('modal-register');
+    $('#modal-register input, #modal-register select, #modal-register textarea').val('');
+    renderAppointTable();
+    alert(name + ' 사원이 등록되었습니다.');
+}
+
+function openTransfer(id) {
+    closeAllDropdowns();
+    const e = employees.find(x => x.id === id);
+    selectedEmpId = id;
+    $('#transfer-emp').val(e.name + ' (' + e.dept + ')');
+    $('#transfer-dept, #transfer-date, #transfer-reason').val('');
+    openModal('modal-transfer');
+}
+function doTransfer() {
+    const dept = $('#transfer-dept').val(), date = $('#transfer-date').val();
+    if (!dept || !date) { alert('필수 항목을 입력해주세요.'); return; }
+    const e = employees.find(x => x.id === selectedEmpId);
+    e.dept = dept;
+    closeModal('modal-transfer'); renderAppointTable();
+    alert(e.name + ' 사원의 부서가 ' + dept + '(으)로 변경되었습니다.');
+}
+
+function openPosition(id) {
+    closeAllDropdowns();
+    const e = employees.find(x => x.id === id);
+    selectedEmpId = id;
+    $('#position-emp').val(e.name + ' (현재: ' + (e.position || '없음') + ')');
+    $('#position-new, #position-date, #position-reason').val('');
+    openModal('modal-position');
+}
+function doPosition() {
+    const pos = $('#position-new').val().trim(), date = $('#position-date').val();
+    if (!pos || !date) { alert('필수 항목을 입력해주세요.'); return; }
+    const e = employees.find(x => x.id === selectedEmpId);
+    e.position = pos;
+    closeModal('modal-position'); renderAppointTable();
+    alert(e.name + ' 사원의 직책이 ' + pos + '(으)로 변경되었습니다.');
+}
+
+function openPromote(id) {
+    closeAllDropdowns();
+    const e = employees.find(x => x.id === id);
+    selectedEmpId = id;
+    $('#promote-emp').val(e.name);
+    $('#promote-current').val(e.rank);
+    $('#promote-new, #promote-date, #promote-reason').val('');
+    openModal('modal-promote');
+}
+function doPromote() {
+    const rank = $('#promote-new').val(), date = $('#promote-date').val();
+    if (!rank || !date) { alert('필수 항목을 입력해주세요.'); return; }
+    const e = employees.find(x => x.id === selectedEmpId);
+    const prev = e.rank; e.rank = rank;
+    closeModal('modal-promote'); renderAppointTable();
+    alert(e.name + ' 사원이 ' + prev + ' → ' + rank + '(으)로 승진되었습니다.');
+}
+
+function openHead(id) {
+    closeAllDropdowns();
+    selectedEmpId = id;
+    $('#head-emp-name').text(employees.find(x => x.id === id).name);
+    openModal('modal-head');
+}
+function doSetHead() {
+    const e = employees.find(x => x.id === selectedEmpId);
+    e.isHead = true;
+    closeModal('modal-head'); renderAppointTable();
+    alert(e.name + ' 사원이 조직장으로 지정되었습니다.');
+}
+
+function openRetire(id) {
+    closeAllDropdowns();
+    selectedEmpId = id;
+    $('#retire-emp-name').text(employees.find(x => x.id === id).name);
+    $('#retire-date, #retire-reason, #retire-note').val('');
+    openModal('modal-retire');
+}
+function doRetire() {
+    const date = $('#retire-date').val(), reason = $('#retire-reason').val();
+    if (!date || !reason) { alert('필수 항목을 입력해주세요.'); return; }
+    const e = employees.find(x => x.id === selectedEmpId);
+    e.status = '퇴직'; e.isHead = false;
+    closeModal('modal-retire'); renderAppointTable();
+    alert(e.name + ' 사원이 퇴직처리 되었습니다.');
+}
+
+function openModal(id)  { $('#' + id).addClass('show'); }
+function closeModal(id) { $('#' + id).removeClass('show'); }
+$(document).on('click', '.modal-backdrop', function(e) {
+    if ($(e.target).hasClass('modal-backdrop')) $(this).removeClass('show');
+});
+
+function toggleDropdown(e, id) {
+    e.stopPropagation();
+    const menu = document.getElementById(id);
+    const isOpen = menu.classList.contains('show');
+    closeAllDropdowns();
+    if (!isOpen) menu.classList.add('show');
+}
+function closeAllDropdowns() {
+    document.querySelectorAll('.action-menu').forEach(m => m.classList.remove('show'));
+}
+$(document).on('click', closeAllDropdowns);
+
+showHome();
 </script>
 </body>
 </html>
