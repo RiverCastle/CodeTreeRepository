@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.codetree.CodeTreeHRM.menu.mapper.MenuMapper">
+
+    <!--
+        기준 권한 상속 모델:
+        BASE_AUTH_YN='Y'인 행의 역할 ROLE_LEVEL >= 사용자 ROLE_LEVEL 이면 해당 메뉴에 접근 권한 부여.
+        (ROLE_LEVEL이 낮을수록 높은 권한이므로, 사용자보다 레벨 수치가 같거나 큰 역할이
+         기준 권한으로 설정된 메뉴는 사용자가 접근 가능)
+    -->
+    <select id="findAccessibleMenus" resultType="com.codetree.CodeTreeHRM.menu.dto.MenuNode">
+        SELECT DISTINCT
+            m.MENU_CD       AS menuCd,
+            m.MENU_NM       AS menuNm,
+            m.UPPER_MENU_CD AS upperMenuCd,
+            m.MENU_URL      AS menuUrl,
+            m.MENU_ORDR     AS menuOrdr
+        FROM com_menu m
+        WHERE m.USE_YN = 'Y'
+          AND EXISTS (
+              SELECT 1
+              FROM com_role_menu rm
+              JOIN com_role r ON rm.ROLE_CD = r.ROLE_CD
+              WHERE rm.MENU_CD = m.MENU_CD
+                AND rm.ACCS_YN = 'Y'
+                AND rm.BASE_AUTH_YN = 'Y'
+                AND r.USE_YN = 'Y'
+                AND r.ROLE_LEVEL >= #{roleLevel}
+          )
+        ORDER BY m.MENU_ORDR
+    </select>
+
+</mapper>
