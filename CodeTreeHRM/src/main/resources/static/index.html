@@ -27,7 +27,6 @@
         .nav-group { margin-bottom: 4px; }
         .nav-group-title { display: flex; align-items: center; justify-content: space-between; padding: 10px 20px; color: rgba(255,255,255,0.75); font-size: 0.88rem; font-weight: 600; cursor: pointer; transition: background 0.2s; user-select: none; }
         .nav-group-title:hover { background: rgba(255,255,255,0.07); }
-        .nav-group-title .icon { font-size: 1rem; margin-right: 8px; }
         .nav-group-title .arrow { font-size: 0.7rem; transition: transform 0.2s; }
         .nav-group.open .arrow { transform: rotate(180deg); }
         .nav-sub { display: none; background: rgba(0,0,0,0.15); }
@@ -35,6 +34,8 @@
         .nav-sub a { display: block; padding: 9px 20px 9px 44px; color: rgba(255,255,255,0.6); font-size: 0.84rem; text-decoration: none; transition: background 0.2s, color 0.2s; }
         .nav-sub a:hover, .nav-sub a.active { background: rgba(255,255,255,0.07); color: white; }
         .nav-sub a.active { border-left: 3px solid var(--accent); padding-left: 41px; }
+        .nav-no-child { padding: 10px 20px; color: rgba(255,255,255,0.6); font-size: 0.88rem; cursor: pointer; transition: background 0.2s; }
+        .nav-no-child:hover { background: rgba(255,255,255,0.07); color: white; }
         .sidebar-footer { padding: 16px 20px; border-top: 1px solid rgba(255,255,255,0.1); font-size: 0.78rem; color: rgba(255,255,255,0.35); text-align: center; }
 
         /* ── 오른쪽 영역 ── */
@@ -70,37 +71,8 @@
         <img src="assets/logo/logo.svg" alt="Logo">
         <span class="sidebar-logo-text">CODE<span>TREE</span></span>
     </div>
-    <div class="sidebar-nav">
-        <div class="nav-group" id="group-emp">
-            <div class="nav-group-title" onclick="toggleGroup('group-emp')">
-                <span><span class="icon">👤</span>사원관리</span>
-                <span class="arrow">▼</span>
-            </div>
-            <div class="nav-sub">
-                <a href="#" onclick="return showPage('emp-appoint')">인사발령</a>
-                <a href="#" onclick="return showPage('emp-info')">인사정보</a>
-            </div>
-        </div>
-        <div class="nav-group" id="group-dept">
-            <div class="nav-group-title" onclick="toggleGroup('group-dept')">
-                <span><span class="icon">🏢</span>부서관리</span>
-                <span class="arrow">▼</span>
-            </div>
-            <div class="nav-sub">
-                <a href="#" onclick="return showPage('dept-list')">부서 목록</a>
-                <a href="#" onclick="return showPage('dept-reg')">부서 등록</a>
-            </div>
-        </div>
-        <div class="nav-group" id="group-common">
-            <div class="nav-group-title" onclick="toggleGroup('group-common')">
-                <span><span class="icon">⚙️</span>공통관리</span>
-                <span class="arrow">▼</span>
-            </div>
-            <div class="nav-sub">
-                <a href="#" onclick="return showPage('code-list')">공통코드 목록</a>
-                <a href="#" onclick="return showPage('code-reg')">공통코드 등록</a>
-            </div>
-        </div>
+    <div class="sidebar-nav" id="sidebar-nav">
+        <!-- 동적 메뉴 로딩 -->
     </div>
     <div class="sidebar-footer">CodeTree HRM v0.1</div>
 </nav>
@@ -110,9 +82,9 @@
     <header id="header">
         <div id="breadcrumb">홈 &nbsp;/&nbsp; <span id="bc-text">대시보드</span></div>
         <div class="header-user">
-            <div class="avatar">A</div>
-            <span>admin</span>
-            <button class="btn-logout" onclick="location.href='/login'">로그아웃</button>
+            <div class="avatar" id="avatar-text">-</div>
+            <span id="user-name">-</span>
+            <button class="btn-logout" onclick="logout()">로그아웃</button>
         </div>
     </header>
 
@@ -121,7 +93,7 @@
         <!-- 홈 대시보드 -->
         <div id="page-home">
             <div class="dashboard-welcome">
-                <h2>안녕하세요, admin님 👋</h2>
+                <h2 id="welcome-msg">안녕하세요 👋</h2>
                 <p>CodeTree HRM 시스템에 오신 것을 환영합니다.<br>좌측 메뉴에서 원하는 기능을 선택해 주세요.</p>
             </div>
             <div class="card-grid">
@@ -146,7 +118,7 @@
         <!-- 플레이스홀더 -->
         <div id="page-placeholder" style="display:none;">
             <div class="page-panel" style="padding: 60px 40px; text-align:center;">
-                <div style="font-size:3rem; margin-bottom:16px;" id="ph-icon">🔧</div>
+                <div style="font-size:3rem; margin-bottom:16px;">🔧</div>
                 <h3 style="font-size:1.2rem; color:var(--primary); margin-bottom:8px;" id="ph-title"></h3>
                 <p style="color:#7F8C8D; font-size:0.9rem;">해당 기능은 현재 개발 중입니다.</p>
             </div>
@@ -156,6 +128,90 @@
 </div>
 
 <script>
+    var token = localStorage.getItem('accessToken');
+
+    /* 토큰 없으면 로그인 페이지로 */
+    if (!token) {
+        location.href = '/login';
+    }
+
+    /* 공통 AJAX 헤더 설정 */
+    $.ajaxSetup({
+        beforeSend: function(xhr) {
+            xhr.setRequestHeader('Authorization', 'Bearer ' + token);
+        }
+    });
+
+    /* 사용자 정보 표시 */
+    var empNm = localStorage.getItem('empNm') || localStorage.getItem('userId') || '-';
+    $('#user-name').text(empNm);
+    $('#avatar-text').text(empNm.charAt(0));
+    $('#welcome-msg').text('안녕하세요, ' + empNm + '님 👋');
+
+    /* 메뉴 로드 */
+    function loadMenu() {
+        $.ajax({
+            url: '/api/menu',
+            method: 'GET',
+            success: function(res) {
+                if (res.success) {
+                    renderMenu(res.data);
+                }
+            },
+            error: function(xhr) {
+                if (xhr.status === 401) {
+                    logout();
+                }
+            }
+        });
+    }
+
+    function renderMenu(menuTree) {
+        var $nav = $('#sidebar-nav').empty();
+        menuTree.forEach(function(parent) {
+            if (parent.children && parent.children.length > 0) {
+                var groupId = 'group-' + parent.menuCd;
+                var $group = $('<div class="nav-group" id="' + groupId + '"></div>');
+                var $title = $('<div class="nav-group-title"></div>')
+                    .html('<span>' + escHtml(parent.menuNm) + '</span><span class="arrow">▼</span>')
+                    .on('click', function() { toggleGroup(groupId); });
+                var $sub = $('<div class="nav-sub"></div>');
+                parent.children.forEach(function(child) {
+                    var $a = $('<a href="#"></a>')
+                        .text(child.menuNm)
+                        .data('menuNm', child.menuNm)
+                        .data('parentNm', parent.menuNm)
+                        .data('menuUrl', child.menuUrl)
+                        .on('click', function(e) {
+                            e.preventDefault();
+                            onMenuClick($(this));
+                        });
+                    $sub.append($a);
+                });
+                $group.append($title).append($sub);
+                $nav.append($group);
+            } else {
+                var $item = $('<div class="nav-no-child"></div>')
+                    .text(parent.menuNm)
+                    .on('click', function() {
+                        showPlaceholder(parent.menuNm);
+                        $('#bc-text').text(parent.menuNm);
+                    });
+                $nav.append($item);
+            }
+        });
+    }
+
+    function onMenuClick($a) {
+        $('.nav-sub a').removeClass('active');
+        $a.addClass('active');
+        var menuNm = $a.data('menuNm');
+        var parentNm = $a.data('parentNm');
+        var menuUrl = $a.data('menuUrl');
+        $('#bc-text').text(parentNm + ' > ' + menuNm);
+        showPlaceholder(menuNm);
+    }
+
     function toggleGroup(id) {
         document.getElementById(id).classList.toggle('open');
     }
@@ -167,32 +223,28 @@
         $('.nav-sub a').removeClass('active');
     }
 
-    function showPage(pageId) {
+    function showPlaceholder(title) {
         hideAllPages();
-        $('.nav-sub a').removeClass('active');
-        $('a[onclick*="' + pageId + '"]').addClass('active');
-
-        const pages = {
-            'emp-appoint': { bc:'사원관리 > 인사발령', icon:'👤', title:'인사발령' },
-            'emp-info':    { bc:'사원관리 > 인사정보', icon:'👤', title:'인사정보' },
-            'dept-list':   { bc:'부서관리 > 부서 목록',     icon:'🏢', title:'부서 목록' },
-            'dept-reg':    { bc:'부서관리 > 부서 등록',     icon:'🏢', title:'부서 등록' },
-            'code-list':   { bc:'공통관리 > 공통코드 목록', icon:'⚙️', title:'공통코드 목록' },
-            'code-reg':    { bc:'공통관리 > 공통코드 등록', icon:'⚙️', title:'공통코드 등록' },
-        };
-        const p = pages[pageId];
-        if (!p) return false;
-        $('#bc-text').text(p.bc);
-        $('#ph-icon').text(p.icon);
-        $('#ph-title').text(p.title);
+        $('#ph-title').text(title);
         $('#page-placeholder').show();
-        return false;
     }
 
     function hideAllPages() {
         $('#page-home, #page-placeholder').hide();
     }
 
+    function logout() {
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('userId');
+        localStorage.removeItem('empNm');
+        location.href = '/login';
+    }
+
+    function escHtml(str) {
+        return $('<div>').text(str).html();
+    }
+
+    loadMenu();
     showHome();
 </script>
 </body>

@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.codetree.CodeTreeHRM.auth.mapper.AuthMapper">
+
+    <select id="findByUserId" resultType="com.codetree.CodeTreeHRM.auth.dto.UserLoginInfo">
+        SELECT
+            u.USER_NO       AS userNo,
+            u.EMP_NO        AS empNo,
+            u.USER_ID       AS userId,
+            u.USER_PWD      AS userPwd,
+            u.LOGIN_FAIL_ATMT_CNT AS loginFailAtmtCnt,
+            u.ACCT_LOCK_YN  AS acctLockYn,
+            u.USE_YN        AS useYn,
+            e.EMP_STTS_CD   AS empSttsCd,
+            e.EMP_NM        AS empNm
+        FROM com_user u
+        JOIN hrm_emp_master e ON u.EMP_NO = e.EMP_NO
+        WHERE u.USER_ID = #{userId}
+    </select>
+
+    <select id="findActiveRolesByEmpNo" resultType="com.codetree.CodeTreeHRM.auth.dto.UserRoleInfo">
+        SELECT
+            er.ROLE_CD      AS roleCd,
+            r.ROLE_LEVEL    AS roleLevel
+        FROM com_emp_role er
+        JOIN com_role r ON er.ROLE_CD = r.ROLE_CD
+        WHERE er.EMP_NO = #{empNo}
+          AND r.USE_YN = 'Y'
+          AND (er.EXPIR_DT IS NULL OR er.EXPIR_DT > NOW())
+    </select>
+
+    <update id="incrementFailCount">
+        UPDATE com_user
+        SET LOGIN_FAIL_ATMT_CNT = LOGIN_FAIL_ATMT_CNT + 1
+        WHERE USER_NO = #{userNo}
+    </update>
+
+    <update id="lockAccount">
+        UPDATE com_user
+        SET ACCT_LOCK_YN        = 'Y',
+            ACCT_LOCK_DT        = NOW(),
+            LOGIN_FAIL_ATMT_CNT = 5
+        WHERE USER_NO = #{userNo}
+    </update>
+
+    <update id="resetFailCountAndUpdateLastLogin">
+        UPDATE com_user
+        SET LOGIN_FAIL_ATMT_CNT = 0,
+            LAST_LOGIN_DT       = NOW()
+        WHERE USER_NO = #{userNo}
+    </update>
+
+    <insert id="insertLoginHistory">
+        INSERT INTO com_login_history (LOGIN_ID, EMP_NO, LOGIN_RSLT_CD, FAIL_RSN_CD, IP_ADDR, USER_AGT)
+        VALUES (#{loginId}, #{empNo}, #{rsltCd}, #{failRsnCd}, #{ipAddr}, #{userAgent})
+    </insert>
+
+</mapper>
