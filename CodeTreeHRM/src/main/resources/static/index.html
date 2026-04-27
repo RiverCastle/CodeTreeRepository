@@ -3,136 +3,197 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>메인 페이지 - CodeTree HRM</title>
-    <!-- 제이쿼리(jQuery) 추가 -->
+    <title>CodeTree HRM</title>
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <style>
         :root {
-            --primary-color: #2C3E50; /* 딥 블루 */
-            --accent-color: #82A67D;  /* 세이지 그린 */
-            --text-color: #34495E;
-            --bg-color: #F1F2F6;
+            --primary: #2C3E50;
+            --accent: #82A67D;
+            --bg: #F1F2F6;
+            --sidebar-width: 240px;
+            --header-height: 56px;
+            --danger: #E74C3C;
         }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif; background: var(--bg); color: #34495E; display: flex; height: 100vh; overflow: hidden; }
 
-        body {
-            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
-            background-color: var(--bg-color);
-            text-align: center;
-            padding-top: 100px;
-            margin: 0;
-            color: var(--text-color);
-        }
+        /* ── 사이드바 ── */
+        #sidebar { width: var(--sidebar-width); background: var(--primary); display: flex; flex-direction: column; flex-shrink: 0; height: 100vh; overflow-y: auto; }
+        .sidebar-logo { display: flex; align-items: center; gap: 10px; padding: 18px 20px; border-bottom: 1px solid rgba(255,255,255,0.1); cursor: pointer; }
+        .sidebar-logo img { width: 32px; height: 32px; }
+        .sidebar-logo-text { font-size: 1.1rem; font-weight: 800; color: white; letter-spacing: -0.03em; }
+        .sidebar-logo-text span { font-weight: 300; color: var(--accent); }
+        .sidebar-nav { flex: 1; padding: 12px 0; }
+        .nav-group { margin-bottom: 4px; }
+        .nav-group-title { display: flex; align-items: center; justify-content: space-between; padding: 10px 20px; color: rgba(255,255,255,0.75); font-size: 0.88rem; font-weight: 600; cursor: pointer; transition: background 0.2s; user-select: none; }
+        .nav-group-title:hover { background: rgba(255,255,255,0.07); }
+        .nav-group-title .icon { font-size: 1rem; margin-right: 8px; }
+        .nav-group-title .arrow { font-size: 0.7rem; transition: transform 0.2s; }
+        .nav-group.open .arrow { transform: rotate(180deg); }
+        .nav-sub { display: none; background: rgba(0,0,0,0.15); }
+        .nav-group.open .nav-sub { display: block; }
+        .nav-sub a { display: block; padding: 9px 20px 9px 44px; color: rgba(255,255,255,0.6); font-size: 0.84rem; text-decoration: none; transition: background 0.2s, color 0.2s; }
+        .nav-sub a:hover, .nav-sub a.active { background: rgba(255,255,255,0.07); color: white; }
+        .nav-sub a.active { border-left: 3px solid var(--accent); padding-left: 41px; }
+        .sidebar-footer { padding: 16px 20px; border-top: 1px solid rgba(255,255,255,0.1); font-size: 0.78rem; color: rgba(255,255,255,0.35); text-align: center; }
 
-        .welcome-box {
-            background: white;
-            padding: 60px 50px;
-            border-radius: 20px;
-            display: inline-block;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
-            max-width: 500px;
-            width: 90%;
-        }
+        /* ── 오른쪽 영역 ── */
+        #main-wrapper { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+        #header { height: var(--header-height); background: white; border-bottom: 1px solid #E0E0E0; display: flex; align-items: center; justify-content: space-between; padding: 0 24px; flex-shrink: 0; }
+        #breadcrumb { font-size: 0.9rem; color: #7F8C8D; }
+        #breadcrumb span { color: var(--primary); font-weight: 600; }
+        .header-user { display: flex; align-items: center; gap: 10px; font-size: 0.88rem; color: #555; }
+        .avatar { width: 32px; height: 32px; background: var(--accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 0.85rem; }
+        .btn-logout { padding: 5px 12px; background: transparent; border: 1px solid #ddd; border-radius: 6px; font-size: 0.8rem; color: #888; cursor: pointer; transition: 0.2s; }
+        .btn-logout:hover { border-color: var(--danger); color: var(--danger); }
+        #content { flex: 1; overflow-y: auto; padding: 28px; }
 
-        /* 로고 스타일 */
-        .logo-box {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            margin-bottom: 30px;
-        }
+        /* ── 대시보드 ── */
+        .dashboard-welcome { background: white; border-radius: 16px; padding: 36px 40px; box-shadow: 0 2px 12px rgba(0,0,0,0.05); margin-bottom: 24px; }
+        .dashboard-welcome h2 { font-size: 1.4rem; color: var(--primary); margin-bottom: 8px; }
+        .dashboard-welcome p { color: #7F8C8D; line-height: 1.7; }
+        .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; }
+        .summary-card { background: white; border-radius: 12px; padding: 24px; box-shadow: 0 2px 12px rgba(0,0,0,0.05); }
+        .summary-card .card-label { font-size: 0.82rem; color: #7F8C8D; font-weight: 500; margin-bottom: 8px; }
+        .summary-card .card-value { font-size: 2rem; font-weight: 800; color: var(--primary); }
+        .summary-card .card-sub { font-size: 0.78rem; color: var(--accent); margin-top: 4px; }
 
-        .logo-img {
-            width: 80px;
-            height: 80px;
-            margin-bottom: 10px;
-        }
-
-        .logo-text {
-            font-size: 1.8rem;
-            font-weight: 800;
-            letter-spacing: -0.04em;
-            color: var(--primary-color);
-            margin: 0;
-        }
-
-        .logo-text span {
-            font-weight: 300;
-            color: var(--accent-color);
-        }
-
-        h1 {
-            color: var(--primary-color);
-            font-size: 1.5rem;
-            margin-bottom: 10px;
-        }
-
-        p {
-            color: #7F8C8D;
-            line-height: 1.6;
-            margin-bottom: 30px;
-        }
-
-        #btn-hello {
-            padding: 12px 25px;
-            background-color: var(--primary-color);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(44, 62, 80, 0.2);
-        }
-
-        #btn-hello:hover {
-            background-color: var(--accent-color);
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(130, 166, 125, 0.3);
-        }
-
-        #message {
-            margin-top: 25px;
-            font-weight: 600;
-            color: var(--accent-color);
-            min-height: 24px;
-        }
+        /* ── 플레이스홀더 ── */
+        .page-panel { background: white; border-radius: 16px; box-shadow: 0 2px 12px rgba(0,0,0,0.05); overflow: hidden; }
     </style>
 </head>
 <body>
-    <div class="welcome-box">
-        <!-- 코드트리 로고 시작 -->
-        <div class="logo-box">
-            <img src="assets/logo/logo.svg" alt="CodeTree HRM Logo" class="logo-img">
-            <p class="logo-text">CODE<span>TREE</span></p>
-        </div>
-        <!-- 로고 끝 -->
 
-        <h1>HRM 시스템</h1>
-        <p>환영합니다! 데이터 기반의 정교한 인사 관리와<br>사람 중심의 따뜻한 성장을 지원합니다.</p>
-
-        <button id="btn-hello">시스템 시작하기</button>
-        <div id="message"></div>
+<!-- 사이드바 -->
+<nav id="sidebar">
+    <div class="sidebar-logo" onclick="showHome()">
+        <img src="assets/logo/logo.svg" alt="Logo">
+        <span class="sidebar-logo-text">CODE<span>TREE</span></span>
     </div>
+    <div class="sidebar-nav">
+        <div class="nav-group" id="group-emp">
+            <div class="nav-group-title" onclick="toggleGroup('group-emp')">
+                <span><span class="icon">👤</span>사원관리</span>
+                <span class="arrow">▼</span>
+            </div>
+            <div class="nav-sub">
+                <a href="#" onclick="return showPage('emp-appoint')">인사발령</a>
+                <a href="#" onclick="return showPage('emp-info')">인사정보</a>
+            </div>
+        </div>
+        <div class="nav-group" id="group-dept">
+            <div class="nav-group-title" onclick="toggleGroup('group-dept')">
+                <span><span class="icon">🏢</span>부서관리</span>
+                <span class="arrow">▼</span>
+            </div>
+            <div class="nav-sub">
+                <a href="#" onclick="return showPage('dept-list')">부서 목록</a>
+                <a href="#" onclick="return showPage('dept-reg')">부서 등록</a>
+            </div>
+        </div>
+        <div class="nav-group" id="group-common">
+            <div class="nav-group-title" onclick="toggleGroup('group-common')">
+                <span><span class="icon">⚙️</span>공통관리</span>
+                <span class="arrow">▼</span>
+            </div>
+            <div class="nav-sub">
+                <a href="#" onclick="return showPage('code-list')">공통코드 목록</a>
+                <a href="#" onclick="return showPage('code-reg')">공통코드 등록</a>
+            </div>
+        </div>
+    </div>
+    <div class="sidebar-footer">CodeTree HRM v0.1</div>
+</nav>
 
-    <script>
-        $(document).ready(function() {
-            // 버튼 클릭 이벤트 (jQuery)
-            $('#btn-hello').on('click', function() {
-                $.ajax({
-                    url: '/api/hello',
-                    type: 'GET',
-                    success: function(data) {
-                        $('#message').fadeOut(100, function() {
-                            $(this).text(data).fadeIn(200);
-                        });
-                    },
-                    error: function() {
-                        alert('API 서버가 아직 준비되지 않았습니다.');
-                    }
-                });
-            });
-        });
-    </script>
+<!-- 오른쪽 -->
+<div id="main-wrapper">
+    <header id="header">
+        <div id="breadcrumb">홈 &nbsp;/&nbsp; <span id="bc-text">대시보드</span></div>
+        <div class="header-user">
+            <div class="avatar">A</div>
+            <span>admin</span>
+            <button class="btn-logout" onclick="location.href='/login'">로그아웃</button>
+        </div>
+    </header>
+
+    <main id="content">
+
+        <!-- 홈 대시보드 -->
+        <div id="page-home">
+            <div class="dashboard-welcome">
+                <h2>안녕하세요, admin님 👋</h2>
+                <p>CodeTree HRM 시스템에 오신 것을 환영합니다.<br>좌측 메뉴에서 원하는 기능을 선택해 주세요.</p>
+            </div>
+            <div class="card-grid">
+                <div class="summary-card">
+                    <div class="card-label">전체 사원</div>
+                    <div class="card-value">-</div>
+                    <div class="card-sub">준비 중</div>
+                </div>
+                <div class="summary-card">
+                    <div class="card-label">부서 수</div>
+                    <div class="card-value">-</div>
+                    <div class="card-sub">준비 중</div>
+                </div>
+                <div class="summary-card">
+                    <div class="card-label">공통코드</div>
+                    <div class="card-value">-</div>
+                    <div class="card-sub">준비 중</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 플레이스홀더 -->
+        <div id="page-placeholder" style="display:none;">
+            <div class="page-panel" style="padding: 60px 40px; text-align:center;">
+                <div style="font-size:3rem; margin-bottom:16px;" id="ph-icon">🔧</div>
+                <h3 style="font-size:1.2rem; color:var(--primary); margin-bottom:8px;" id="ph-title"></h3>
+                <p style="color:#7F8C8D; font-size:0.9rem;">해당 기능은 현재 개발 중입니다.</p>
+            </div>
+        </div>
+
+    </main>
+</div>
+
+<script>
+    function toggleGroup(id) {
+        document.getElementById(id).classList.toggle('open');
+    }
+
+    function showHome() {
+        hideAllPages();
+        $('#page-home').show();
+        $('#bc-text').text('대시보드');
+        $('.nav-sub a').removeClass('active');
+    }
+
+    function showPage(pageId) {
+        hideAllPages();
+        $('.nav-sub a').removeClass('active');
+        $('a[onclick*="' + pageId + '"]').addClass('active');
+
+        const pages = {
+            'emp-appoint': { bc:'사원관리 > 인사발령', icon:'👤', title:'인사발령' },
+            'emp-info':    { bc:'사원관리 > 인사정보', icon:'👤', title:'인사정보' },
+            'dept-list':   { bc:'부서관리 > 부서 목록',     icon:'🏢', title:'부서 목록' },
+            'dept-reg':    { bc:'부서관리 > 부서 등록',     icon:'🏢', title:'부서 등록' },
+            'code-list':   { bc:'공통관리 > 공통코드 목록', icon:'⚙️', title:'공통코드 목록' },
+            'code-reg':    { bc:'공통관리 > 공통코드 등록', icon:'⚙️', title:'공통코드 등록' },
+        };
+        const p = pages[pageId];
+        if (!p) return false;
+        $('#bc-text').text(p.bc);
+        $('#ph-icon').text(p.icon);
+        $('#ph-title').text(p.title);
+        $('#page-placeholder').show();
+        return false;
+    }
+
+    function hideAllPages() {
+        $('#page-home, #page-placeholder').hide();
+    }
+
+    showHome();
+</script>
 </body>
 </html>
