@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        :root { --primary: #2C3E50; --accent: #82A67D; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        html, body { height: 100%; }
+        body {
+            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+            background: var(--primary);
+        }
+        #sidebar { display: flex; flex-direction: column; height: 100vh; overflow-y: auto; }
+        .sidebar-logo {
+            display: flex; align-items: center; gap: 10px;
+            padding: 18px 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            cursor: pointer; flex-shrink: 0;
+        }
+        .sidebar-logo img { width: 32px; height: 32px; }
+        .sidebar-logo-text { font-size: 1.1rem; font-weight: 800; color: white; letter-spacing: -0.03em; }
+        .sidebar-logo-text span { font-weight: 300; color: var(--accent); }
+        .sidebar-nav { flex: 1; padding: 12px 0; }
+        .nav-group { margin-bottom: 4px; }
+        .nav-group-title {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 10px 20px;
+            color: rgba(255,255,255,0.75);
+            font-size: 0.88rem; font-weight: 600;
+            cursor: pointer; transition: background 0.2s; user-select: none;
+        }
+        .nav-group-title:hover { background: rgba(255,255,255,0.07); }
+        .nav-group-title .icon { font-size: 1rem; margin-right: 8px; }
+        .nav-group-title .arrow { font-size: 0.7rem; transition: transform 0.2s; }
+        .nav-group.open .arrow { transform: rotate(180deg); }
+        .nav-sub { display: none; background: rgba(0,0,0,0.15); }
+        .nav-group.open .nav-sub { display: block; }
+        .nav-sub a {
+            display: block; padding: 9px 20px 9px 44px;
+            color: rgba(255,255,255,0.6); font-size: 0.84rem;
+            text-decoration: none; cursor: pointer;
+            transition: background 0.2s, color 0.2s;
+        }
+        .nav-sub a:hover, .nav-sub a.active { background: rgba(255,255,255,0.07); color: white; }
+        .nav-sub a.active { border-left: 3px solid var(--accent); padding-left: 41px; }
+        .sidebar-footer {
+            padding: 16px 20px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            font-size: 0.78rem; color: rgba(255,255,255,0.35); text-align: center;
+        }
+    </style>
+</head>
+<body>
+<div id="sidebar">
+    <div class="sidebar-logo" onclick="goHome()">
+        <img src="assets/logo/logo.svg" alt="Logo">
+        <span class="sidebar-logo-text">CODE<span>TREE</span></span>
+    </div>
+    <div class="sidebar-nav" id="sidebar-nav"></div>
+    <div class="sidebar-footer">CodeTree HRM v0.1</div>
+</div>
+
+<script>
+    const ICON_MAP = {
+        '사원': '👤', '부서': '🏢', '메뉴': '📋', '공통': '⚙️',
+        '권한': '🔐', '역할': '🔐', '코드': '🗂️'
+    };
+
+    function getIcon(nm) {
+        for (const [key, icon] of Object.entries(ICON_MAP)) {
+            if (nm.includes(key)) return icon;
+        }
+        return '📁';
+    }
+
+    function buildMenu(menus) {
+        const roots    = menus.filter(m => !m.upperMenuCd).sort((a, b) => a.menuOrdr - b.menuOrdr);
+        const childMap = {};
+        menus.filter(m => m.upperMenuCd).forEach(m => {
+            if (!childMap[m.upperMenuCd]) childMap[m.upperMenuCd] = [];
+            childMap[m.upperMenuCd].push(m);
+        });
+
+        const nav = document.getElementById('sidebar-nav');
+        nav.innerHTML = '';
+
+        roots.forEach((root, idx) => {
+            const children = (childMap[root.menuCd] || []).sort((a, b) => a.menuOrdr - b.menuOrdr);
+            const groupId  = 'group-' + idx;
+            const icon     = getIcon(root.menuNm);
+
+            const group = document.createElement('div');
+            group.className = 'nav-group';
+            group.id = groupId;
+
+            if (children.length > 0) {
+                /* 자식이 있으면 → 접히는 그룹 */
+                group.innerHTML = `
+                    <div class="nav-group-title" onclick="toggleGroup('${groupId}')">
+                        <span><span class="icon">${icon}</span>${root.menuNm}</span>
+                        <span class="arrow">▼</span>
+                    </div>
+                    <div class="nav-sub" id="sub-${groupId}"></div>`;
+
+                const sub = group.querySelector('.nav-sub');
+                children.forEach(child => {
+                    const a = document.createElement('a');
+                    a.textContent = child.menuNm;
+                    a.onclick = () => go(a, child.menuUrl || 'placeholder.html?title=' + encodeURIComponent(child.menuNm) + '&icon=' + encodeURIComponent(icon),
+                                           root.menuNm + ' > ' + child.menuNm);
+                    sub.appendChild(a);
+                });
+            } else if (root.menuUrl) {
+                /* 자식 없고 URL 있으면 → 단독 링크 */
+                group.innerHTML = `
+                    <div class="nav-group-title" onclick="goLink('${root.menuUrl}','${root.menuNm}')">
+                        <span><span class="icon">${icon}</span>${root.menuNm}</span>
+                    </div>`;
+            } else {
+                /* 자식 없고 URL 없으면 → 빈 그룹 헤더 */
+                group.innerHTML = `
+                    <div class="nav-group-title" onclick="toggleGroup('${groupId}')">
+                        <span><span class="icon">${icon}</span>${root.menuNm}</span>
+                        <span class="arrow">▼</span>
+                    </div>
+                    <div class="nav-sub" id="sub-${groupId}"></div>`;
+            }
+
+            nav.appendChild(group);
+        });
+    }
+
+    function toggleGroup(id) {
+        document.getElementById(id).classList.toggle('open');
+    }
+
+    function go(el, url, bc) {
+        document.querySelectorAll('.nav-sub a').forEach(a => a.classList.remove('active'));
+        el.classList.add('active');
+        parent.navigate(url, bc);
+    }
+
+    function goLink(url, bc) {
+        document.querySelectorAll('.nav-sub a').forEach(a => a.classList.remove('active'));
+        parent.navigate(url, bc);
+    }
+
+    function goHome() {
+        document.querySelectorAll('.nav-sub a').forEach(a => a.classList.remove('active'));
+        parent.navigate('home.html', '대시보드');
+    }
+
+    /* 메뉴 로드 */
+    fetch('/api/menus')
+        .then(r => {
+            if (r.status === 401) { parent.location.href = '/login'; return null; }
+            return r.json();
+        })
+        .then(data => { if (data) buildMenu(data); });
+</script>
+</body>
+</html>

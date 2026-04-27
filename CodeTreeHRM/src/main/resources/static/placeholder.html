@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        :root {
+            --primary: #2C3E50;
+            --bg:      #F1F2F6;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+            background: var(--bg);
+            padding: 28px;
+            color: #34495E;
+            height: 100vh;
+        }
+        .page-panel {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+            padding: 60px 40px;
+            text-align: center;
+        }
+        #ph-icon  { font-size: 3rem; margin-bottom: 16px; }
+        #ph-title { font-size: 1.2rem; color: var(--primary); margin-bottom: 8px; }
+        #ph-desc  { color: #7F8C8D; font-size: 0.9rem; }
+    </style>
+</head>
+<body>
+    <div class="page-panel">
+        <div id="ph-icon">🔧</div>
+        <h3 id="ph-title"></h3>
+        <p id="ph-desc">해당 기능은 현재 개발 중입니다.</p>
+    </div>
+    <script>
+        const p = new URLSearchParams(location.search);
+        document.getElementById('ph-icon').textContent  = p.get('icon')  || '🔧';
+        document.getElementById('ph-title').textContent = p.get('title') || '';
+    </script>
+</body>
+</html>

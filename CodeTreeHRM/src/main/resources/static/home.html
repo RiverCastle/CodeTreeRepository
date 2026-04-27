@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        :root {
+            --primary: #2C3E50;
+            --accent:  #82A67D;
+            --bg:      #F1F2F6;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+            background: var(--bg);
+            padding: 28px;
+            color: #34495E;
+        }
+        .dashboard-welcome {
+            background: white;
+            border-radius: 16px;
+            padding: 36px 40px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+            margin-bottom: 24px;
+        }
+        .dashboard-welcome h2 { font-size: 1.4rem; color: var(--primary); margin-bottom: 8px; }
+        .dashboard-welcome p  { color: #7F8C8D; line-height: 1.7; }
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 16px;
+        }
+        .summary-card {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+        }
+        .card-label { font-size: 0.82rem; color: #7F8C8D; font-weight: 500; margin-bottom: 8px; }
+        .card-value { font-size: 2rem; font-weight: 800; color: var(--primary); }
+        .card-sub   { font-size: 0.78rem; color: var(--accent); margin-top: 4px; }
+    </style>
+</head>
+<body>
+    <div class="dashboard-welcome">
+        <h2>안녕하세요, admin님 👋</h2>
+        <p>CodeTree HRM 시스템에 오신 것을 환영합니다.<br>좌측 메뉴에서 원하는 기능을 선택해 주세요.</p>
+    </div>
+    <div class="card-grid">
+        <div class="summary-card">
+            <div class="card-label">전체 사원</div>
+            <div class="card-value">-</div>
+            <div class="card-sub">준비 중</div>
+        </div>
+        <div class="summary-card">
+            <div class="card-label">부서 수</div>
+            <div class="card-value">-</div>
+            <div class="card-sub">준비 중</div>
+        </div>
+        <div class="summary-card">
+            <div class="card-label">공통코드</div>
+            <div class="card-value">-</div>
+            <div class="card-sub">준비 중</div>
+        </div>
+    </div>
+</body>
+</html>
