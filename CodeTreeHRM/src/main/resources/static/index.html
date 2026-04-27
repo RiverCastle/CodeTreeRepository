@@ -110,9 +110,9 @@
     <header id="header">
         <div id="breadcrumb">홈 &nbsp;/&nbsp; <span id="bc-text">대시보드</span></div>
         <div class="header-user">
-            <div class="avatar">A</div>
-            <span>admin</span>
-            <button class="btn-logout" onclick="location.href='/login'">로그아웃</button>
+            <div class="avatar" id="avatarText">?</div>
+            <span id="displayUserId">-</span>
+            <button class="btn-logout" onclick="location.href='/logout'">로그아웃</button>
         </div>
     </header>
 
@@ -121,7 +121,7 @@
         <!-- 홈 대시보드 -->
         <div id="page-home">
             <div class="dashboard-welcome">
-                <h2>안녕하세요, admin님 👋</h2>
+                <h2 id="welcomeMsg">안녕하세요 👋</h2>
                 <p>CodeTree HRM 시스템에 오신 것을 환영합니다.<br>좌측 메뉴에서 원하는 기능을 선택해 주세요.</p>
             </div>
             <div class="card-grid">
@@ -192,6 +192,14 @@
     function hideAllPages() {
         $('#page-home, #page-placeholder').hide();
     }
+
+    $.get('/api/me', function(res) {
+        if (!res.loggedIn) { location.href = '/login'; return; }
+        const userId = res.userId;
+        $('#displayUserId').text(userId);
+        $('#avatarText').text(userId.charAt(0).toUpperCase());
+        $('#welcomeMsg').text('안녕하세요, ' + userId + '님 👋');
+    }).fail(function() { location.href = '/login'; });
 
     showHome();
 </script>
