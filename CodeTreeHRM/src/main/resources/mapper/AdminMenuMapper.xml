@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.codetree.CodeTreeHRM.admin.mapper.AdminMenuMapper">
+
+    <select id="searchMenus" resultType="com.codetree.CodeTreeHRM.admin.dto.MenuDto">
+        SELECT
+            m.MENU_CD       AS menuCd,
+            m.MENU_NM       AS menuNm,
+            m.UPPER_MENU_CD AS upperMenuCd,
+            p.MENU_NM       AS upperMenuNm,
+            m.MENU_URL      AS menuUrl,
+            m.MENU_ORDR     AS menuOrdr,
+            m.USE_YN        AS useYn,
+            NULL            AS crtnDt,
+            NULL            AS updtDt
+        FROM com_menu m
+        LEFT JOIN com_menu p ON m.UPPER_MENU_CD = p.MENU_CD
+        <where>
+            <if test="search.menuNm != null and search.menuNm != ''">
+                AND m.MENU_NM LIKE CONCAT('%', #{search.menuNm}, '%')
+            </if>
+            <if test="search.useYn != null and search.useYn != ''">
+                AND m.USE_YN = #{search.useYn}
+            </if>
+        </where>
+        ORDER BY
+            IFNULL(m.UPPER_MENU_CD, m.MENU_CD) ASC,
+            m.UPPER_MENU_CD ASC,
+            m.MENU_ORDR ASC,
+            CASE WHEN m.USE_YN = 'Y' THEN 0 ELSE 1 END ASC
+    </select>
+
+    <select id="countByMenuCd" resultType="int">
+        SELECT COUNT(*) FROM com_menu WHERE MENU_CD = #{menuCd}
+    </select>
+
+    <select id="countChildMenus" resultType="int">
+        SELECT COUNT(*) FROM com_menu WHERE UPPER_MENU_CD = #{menuCd}
+    </select>
+
+    <select id="findAllForSelect" resultType="com.codetree.CodeTreeHRM.admin.dto.MenuDto">
+        SELECT
+            MENU_CD   AS menuCd,
+            MENU_NM   AS menuNm,
+            MENU_ORDR AS menuOrdr
+        FROM com_menu
+        WHERE USE_YN = 'Y'
+        ORDER BY MENU_ORDR
+    </select>
+
+    <insert id="insertMenu" parameterType="com.codetree.CodeTreeHRM.admin.dto.MenuDto">
+        INSERT INTO com_menu (MENU_CD, MENU_NM, UPPER_MENU_CD, MENU_URL, MENU_ORDR, USE_YN)
+        VALUES (#{menuCd}, #{menuNm}, #{upperMenuCd}, #{menuUrl}, #{menuOrdr}, #{useYn})
+    </insert>
+
+    <update id="updateMenu" parameterType="com.codetree.CodeTreeHRM.admin.dto.MenuDto">
+        UPDATE com_menu
+        SET
+            MENU_NM       = #{menuNm},
+            UPPER_MENU_CD = #{upperMenuCd},
+            MENU_URL      = #{menuUrl},
+            MENU_ORDR     = #{menuOrdr},
+            USE_YN        = #{useYn}
+        WHERE MENU_CD = #{menuCd}
+    </update>
+
+    <delete id="deleteMenu">
+        DELETE FROM com_menu WHERE MENU_CD = #{menuCd}
+    </delete>
+
+    <!--
+        해당 상위 메뉴의 하위 코드 중 마지막 '-' 이후 숫자의 최대값 반환.
+        숫자가 아닌 suffix는 CAST 시 0으로 처리되어 영향 없음.
+        예) M004-01, M004-02, M004-03 → 3 반환
+    -->
+    <select id="getMaxChildSequence" resultType="int">
+        SELECT IFNULL(
+            MAX(CAST(SUBSTRING_INDEX(MENU_CD, '-', -1) AS UNSIGNED)),
+            0
+        )
+        FROM com_menu
+        WHERE UPPER_MENU_CD = #{upperMenuCd}
+    </select>
+
+</mapper>
