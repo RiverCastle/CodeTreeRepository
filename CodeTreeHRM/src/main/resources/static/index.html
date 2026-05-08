@@ -611,7 +611,7 @@
             loadMenuMgmt();
         } else if (menuUrl === '/admin/role-menu' || nm === '권한별메뉴관리' || nm === '메뉴권한관리') {
             loadRoleMenuPage();
-        } else if (menuUrl === '/hr/register' || nm === '사원등록') {
+        } else if (menuUrl === '/hr/manage' || nm === '인사관리') {
             loadEmpRegPage();
         } else {
             showPlaceholder(menuNm);
@@ -685,7 +685,7 @@
             $tbody.append('<tr><td colspan="8" style="text-align:center;padding:32px;color:#aaa;">조회된 데이터가 없습니다.</td></tr>');
             return;
         }
-        data.forEach(function(m) {`
+        data.forEach(function(m) {
             var badge = m.useYn === 'Y'
                 ? '<span class="badge-y">사용</span>'
                 : '<span class="badge-n">미사용</span>';
