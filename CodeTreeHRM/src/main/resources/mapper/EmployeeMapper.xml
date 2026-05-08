@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.codetree.CodeTreeHRM.hr.mapper.EmployeeMapper">
+
+    <!-- ─────────────────────────────────────
+         목록 조회 (페이징 + 검색)
+    ───────────────────────────────────── -->
+    <select id="searchEmployees" resultType="com.codetree.CodeTreeHRM.hr.dto.EmployeeDto">
+        SELECT
+            e.EMP_NO        AS empNo,
+            e.EMP_NM        AS empNm,
+            e.DEPT_CD       AS deptCd,
+            d.DEPT_NM       AS deptNm,
+            e.JBGD_CD       AS jbgdCd,
+            p.JBGD_NM       AS jbgdNm,
+            e.EMPL_SE_CD    AS emplSeCd,
+            e.EMP_STTS_CD   AS empSttsCd,
+            e.JNCMP_YMD     AS jncmpYmd,
+            e.RETIR_YMD     AS retirYmd
+        FROM hrm_emp_master e
+        LEFT JOIN hrm_dept_master d ON e.DEPT_CD = d.DEPT_CD
+        LEFT JOIN hrm_pos_master  p ON e.JBGD_CD = p.JBGD_CD
+        <where>
+            <if test="empNm != null and empNm != ''">
+                AND e.EMP_NM LIKE CONCAT('%', #{empNm}, '%')
+            </if>
+            <if test="deptCd != null and deptCd != ''">
+                AND e.DEPT_CD = #{deptCd}
+            </if>
+            <if test="jbgdCd != null and jbgdCd != ''">
+                AND e.JBGD_CD = #{jbgdCd}
+            </if>
+            <if test="empSttsCd != null and empSttsCd != ''">
+                AND e.EMP_STTS_CD = #{empSttsCd}
+            </if>
+        </where>
+        ORDER BY e.JNCMP_YMD DESC, e.EMP_NO DESC
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <!-- ─────────────────────────────────────
+         목록 건수 (페이징 계산용)
+    ───────────────────────────────────── -->
+    <select id="countEmployees" resultType="long">
+        SELECT COUNT(*)
+        FROM hrm_emp_master e
+        <where>
+            <if test="empNm != null and empNm != ''">
+                AND e.EMP_NM LIKE CONCAT('%', #{empNm}, '%')
+            </if>
+            <if test="deptCd != null and deptCd != ''">
+                AND e.DEPT_CD = #{deptCd}
+            </if>
+            <if test="jbgdCd != null and jbgdCd != ''">
+                AND e.JBGD_CD = #{jbgdCd}
+            </if>
+            <if test="empSttsCd != null and empSttsCd != ''">
+                AND e.EMP_STTS_CD = #{empSttsCd}
+            </if>
+        </where>
+    </select>
+
+    <!-- ─────────────────────────────────────
+         단건 상세 조회 (전체 컬럼)
+    ───────────────────────────────────── -->
+    <select id="findByEmpNo" resultType="com.codetree.CodeTreeHRM.hr.dto.EmployeeDto">
+        SELECT
+            e.EMP_NO            AS empNo,
+            e.EMP_NM            AS empNm,
+            e.EMP_ENG_NM        AS empEngNm,
+            e.EML_ADDR          AS emlAddr,
+            e.DEPT_CD           AS deptCd,
+            d.DEPT_NM           AS deptNm,
+            e.JBGD_CD           AS jbgdCd,
+            p.JBGD_NM           AS jbgdNm,
+            e.EMPL_SE_CD        AS emplSeCd,
+            e.EMP_STTS_CD       AS empSttsCd,
+            e.JNCMP_YMD         AS jncmpYmd,
+            e.RETIR_YMD         AS retirYmd,
+            e.RSDNT_NO          AS rsdntNo,
+            e.BRDT              AS brdt,
+            e.SEXDSTN_CD        AS sexdstnCd,
+            e.MBTLNUM           AS mbtlnum,
+            e.ADDR              AS addr,
+            e.ZIP_CD            AS zipCd,
+            e.ADDR_DTL          AS addrDtl,
+            e.BANK_CD           AS bankCd,
+            e.ACTNO             AS actno,
+            e.EMRGNC_CNTCT_NM   AS emrgncCntctNm,
+            e.EMRGNC_TELNO      AS emrgncTelno,
+            e.FILE_REF_ID       AS fileRefId,
+            e.REGIST_DT         AS registDt,
+            e.UPDT_DT           AS updtDt
+        FROM hrm_emp_master e
+        LEFT JOIN hrm_dept_master d ON e.DEPT_CD = d.DEPT_CD
+        LEFT JOIN hrm_pos_master  p ON e.JBGD_CD = p.JBGD_CD
+        WHERE e.EMP_NO = #{empNo}
+    </select>
+
+    <!-- ─────────────────────────────────────
+         사번 자동 생성: 해당 연도의 최대 시퀀스 + 1
+         예) 2026-001, 2026-002 ...
+    ───────────────────────────────────── -->
+    <select id="generateNextSeq" resultType="int">
+        SELECT IFNULL(
+            MAX(CAST(SUBSTRING_INDEX(EMP_NO, '-', -1) AS UNSIGNED)),
+            0
+        ) + 1
+        FROM hrm_emp_master
+        WHERE EMP_NO LIKE CONCAT(#{year}, '-%')
+    </select>
+
+    <!-- ─────────────────────────────────────
+         신규 등록
+    ───────────────────────────────────── -->
+    <insert id="insertEmployee" parameterType="com.codetree.CodeTreeHRM.hr.dto.EmployeeDto">
+        INSERT INTO hrm_emp_master (
+            EMP_NO, EMP_NM, EMP_ENG_NM, EML_ADDR,
+            DEPT_CD, JBGD_CD,
+            EMPL_SE_CD, EMP_STTS_CD, JNCMP_YMD, RETIR_YMD,
+            RSDNT_NO, BRDT, SEXDSTN_CD, MBTLNUM,
+            ADDR, ZIP_CD, ADDR_DTL, BANK_CD, ACTNO,
+            EMRGNC_CNTCT_NM, EMRGNC_TELNO, FILE_REF_ID
+        ) VALUES (
+            #{empNo}, #{empNm}, #{empEngNm}, #{emlAddr},
+            #{deptCd}, #{jbgdCd},
+            #{emplSeCd}, #{empSttsCd}, #{jncmpYmd}, #{retirYmd},
+            #{rsdntNo}, #{brdt}, #{sexdstnCd}, #{mbtlnum},
+            #{addr}, #{zipCd}, #{addrDtl}, #{bankCd}, #{actno},
+            #{emrgncCntctNm}, #{emrgncTelno}, #{fileRefId}
+        )
+    </insert>
+
+    <!-- ─────────────────────────────────────
+         수정 (RSDNT_NO: null이면 기존 값 유지)
+    ───────────────────────────────────── -->
+    <update id="updateEmployee" parameterType="com.codetree.CodeTreeHRM.hr.dto.EmployeeDto">
+        UPDATE hrm_emp_master
+        <set>
+            EMP_NM          = #{empNm},
+            EMP_ENG_NM      = #{empEngNm},
+            EML_ADDR        = #{emlAddr},
+            DEPT_CD         = #{deptCd},
+            JBGD_CD         = #{jbgdCd},
+            EMPL_SE_CD      = #{emplSeCd},
+            EMP_STTS_CD     = #{empSttsCd},
+            JNCMP_YMD       = #{jncmpYmd},
+            RETIR_YMD       = #{retirYmd},
+            <if test="rsdntNo != null">
+                RSDNT_NO    = #{rsdntNo},
+            </if>
+            BRDT            = #{brdt},
+            SEXDSTN_CD      = #{sexdstnCd},
+            MBTLNUM         = #{mbtlnum},
+            ADDR            = #{addr},
+            ZIP_CD          = #{zipCd},
+            ADDR_DTL        = #{addrDtl},
+            BANK_CD         = #{bankCd},
+            ACTNO           = #{actno},
+            EMRGNC_CNTCT_NM = #{emrgncCntctNm},
+            EMRGNC_TELNO    = #{emrgncTelno}
+        </set>
+        WHERE EMP_NO = #{empNo}
+    </update>
+
+    <!-- ─────────────────────────────────────
+         부서 선택 목록
+    ───────────────────────────────────── -->
+    <select id="findAllDepts" resultType="com.codetree.CodeTreeHRM.hr.dto.DeptDto">
+        SELECT DEPT_CD AS deptCd, DEPT_NM AS deptNm, DEPT_ORDR AS deptOrdr
+        FROM hrm_dept_master
+        ORDER BY DEPT_ORDR
+    </select>
+
+    <!-- ─────────────────────────────────────
+         직급 선택 목록
+    ───────────────────────────────────── -->
+    <select id="findAllJobGrades" resultType="com.codetree.CodeTreeHRM.hr.dto.JobGradeDto">
+        SELECT JBGD_CD AS jbgdCd, JBGD_NM AS jbgdNm, JBGD_ORDR AS jbgdOrdr
+        FROM hrm_pos_master
+        ORDER BY JBGD_ORDR
+    </select>
+
+</mapper>
