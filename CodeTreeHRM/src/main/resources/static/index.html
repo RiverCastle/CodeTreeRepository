@@ -61,6 +61,49 @@
 
         /* ── 플레이스홀더 ── */
         .page-panel { background: white; border-radius: 16px; box-shadow: 0 2px 12px rgba(0,0,0,0.05); overflow: hidden; }
+
+        /* ── 관리 페이지 공통 ── */
+        .admin-toolbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; flex-wrap: wrap; gap: 10px; }
+        .search-form { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+        .search-form input, .search-form select { padding: 7px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 0.84rem; outline: none; }
+        .search-form input:focus, .search-form select:focus { border-color: var(--accent); }
+        .btn-primary { background: var(--primary); color: white; border: none; padding: 7px 16px; border-radius: 6px; cursor: pointer; font-size: 0.84rem; transition: opacity 0.2s; }
+        .btn-primary:hover { opacity: 0.85; }
+        .btn-cancel { background: white; color: #888; border: 1px solid #ddd; padding: 7px 16px; border-radius: 6px; cursor: pointer; font-size: 0.84rem; }
+        .btn-cancel:hover { border-color: #aaa; }
+        .btn-sm { padding: 4px 10px; font-size: 0.78rem; border-radius: 4px; cursor: pointer; border: 1px solid; margin-left: 4px; }
+        .btn-edit { background: white; border-color: var(--accent); color: var(--accent); }
+        .btn-edit:hover { background: #f0f8ef; }
+        .btn-del { background: white; border-color: var(--danger); color: var(--danger); }
+        .btn-del:hover { background: #fef0ef; }
+        .admin-table { width: 100%; border-collapse: collapse; font-size: 0.84rem; }
+        .admin-table th { background: #F8F9FA; padding: 10px 12px; text-align: left; font-weight: 600; color: #555; border-bottom: 2px solid #E0E0E0; white-space: nowrap; }
+        .admin-table td { padding: 9px 12px; border-bottom: 1px solid #F0F0F0; color: #444; vertical-align: middle; }
+        .admin-table tbody tr:hover { background: #FAFAFA; }
+        .badge-y { display: inline-block; padding: 2px 8px; background: #E8F5E9; color: #388E3C; border-radius: 4px; font-size: 0.75rem; font-weight: 600; }
+        .badge-n { display: inline-block; padding: 2px 8px; background: #FFF3E0; color: #E65100; border-radius: 4px; font-size: 0.75rem; font-weight: 600; }
+        .role-row { cursor: pointer; }
+        .role-row.selected td { background: #EEF2F7; }
+
+        /* ── 모달 ── */
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+        .modal-box { background: white; border-radius: 12px; width: 480px; max-width: 90vw; box-shadow: 0 8px 32px rgba(0,0,0,0.18); }
+        .modal-header { display: flex; align-items: center; justify-content: space-between; padding: 20px 24px 0; }
+        .modal-header h3 { font-size: 1rem; color: var(--primary); font-weight: 700; }
+        .modal-close { background: none; border: none; font-size: 1.4rem; color: #aaa; cursor: pointer; line-height: 1; padding: 0 4px; }
+        .modal-close:hover { color: #555; }
+        .modal-body { padding: 20px 24px; }
+        .form-row { display: flex; flex-direction: column; margin-bottom: 14px; }
+        .form-row label { font-size: 0.82rem; font-weight: 600; color: #555; margin-bottom: 5px; }
+        .form-row input, .form-row select { padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 0.84rem; outline: none; }
+        .form-row input:focus, .form-row select:focus { border-color: var(--accent); }
+        .form-row input[readonly] { background: #F8F9FA; color: #888; cursor: not-allowed; }
+        .req { color: var(--danger); }
+        .modal-footer { display: flex; justify-content: flex-end; gap: 8px; padding: 4px 24px 20px; }
+        .role-chk-box { border: 1px solid #ddd; border-radius: 6px; padding: 8px 12px; max-height: 120px; overflow-y: auto; background: #fafafa; display: flex; flex-wrap: wrap; gap: 4px 16px; }
+        .role-chk-item { display: flex; align-items: center; gap: 6px; font-size: 0.82rem; color: #444; cursor: pointer; white-space: nowrap; }
+        .role-chk-item input[type=checkbox] { cursor: pointer; accent-color: var(--accent); }
+        .role-chk-empty { font-size: 0.82rem; color: #aaa; padding: 4px 0; }
     </style>
 </head>
 <body>
@@ -124,7 +167,141 @@
             </div>
         </div>
 
+        <!-- 메뉴 관리 -->
+        <div id="page-menu-mgmt" style="display:none;">
+            <div class="page-panel" style="padding: 24px;">
+                <div class="admin-toolbar">
+                    <div class="search-form">
+                        <input type="text" id="menu-search-nm" placeholder="메뉴명 검색" onkeydown="if(event.key==='Enter') searchMenus()">
+                        <select id="menu-search-use">
+                            <option value="">사용여부 전체</option>
+                            <option value="Y">사용</option>
+                            <option value="N">미사용</option>
+                        </select>
+                        <button class="btn-primary" onclick="searchMenus()">검색</button>
+                    </div>
+                    <button class="btn-primary" onclick="openMenuModal(null)">+ 신규 등록</button>
+                </div>
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>메뉴코드</th>
+                            <th>메뉴명</th>
+                            <th>상위메뉴</th>
+                            <th>URL</th>
+                            <th style="text-align:center">순서</th>
+                            <th>사용여부</th>
+                            <th>등록일시</th>
+                            <th style="text-align:center">관리</th>
+                        </tr>
+                    </thead>
+                    <tbody id="menu-table-body"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 권한별 메뉴 관리 -->
+        <div id="page-role-menu" style="display:none;">
+            <div style="display:flex; gap:16px; align-items:flex-start;">
+                <!-- 좌측: 권한 목록 -->
+                <div class="page-panel" style="width:280px; flex-shrink:0; padding:24px;">
+                    <h4 style="margin-bottom:16px; color:var(--primary); font-size:0.95rem;">권한 목록</h4>
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>권한코드</th>
+                                <th>권한명</th>
+                                <th style="text-align:center">레벨</th>
+                            </tr>
+                        </thead>
+                        <tbody id="role-table-body"></tbody>
+                    </table>
+                </div>
+                <!-- 우측: 메뉴 할당 -->
+                <div class="page-panel" style="flex:1; padding:24px; min-height:300px;">
+                    <div id="role-menu-placeholder" style="text-align:center; padding:60px 0; color:#aaa;">
+                        <p style="font-size:0.95rem;">좌측 목록에서 권한을 선택하세요.</p>
+                    </div>
+                    <div id="role-menu-assign" style="display:none;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+                            <h4 style="color:var(--primary); font-size:0.95rem;">
+                                <span id="selected-role-nm"></span>
+                                <span style="font-size:0.8rem; color:#888; margin-left:4px;" id="selected-role-cd"></span>
+                                메뉴 할당
+                            </h4>
+                            <button class="btn-primary" onclick="saveRoleMenus()">저장</button>
+                        </div>
+                        <table class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th style="width:44px; text-align:center;">
+                                        <input type="checkbox" id="chk-all" onclick="toggleAllMenus(this)" title="전체 선택">
+                                    </th>
+                                    <th>메뉴코드</th>
+                                    <th>메뉴명</th>
+                                    <th>상위메뉴</th>
+                                    <th>사용여부</th>
+                                </tr>
+                            </thead>
+                            <tbody id="role-menu-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </main>
+</div>
+
+<!-- 메뉴 등록/수정 모달 -->
+<div id="menu-modal" class="modal-overlay" style="display:none;">
+    <div class="modal-box">
+        <div class="modal-header">
+            <h3 id="menu-modal-title">메뉴 등록</h3>
+            <button class="modal-close" onclick="closeMenuModal()">×</button>
+        </div>
+        <div class="modal-body">
+            <div class="form-row">
+                <label>메뉴코드 <span class="req">*</span></label>
+                <input type="text" id="f-menu-cd" placeholder="예: MN001" maxlength="20">
+            </div>
+            <div class="form-row">
+                <label>메뉴명 <span class="req">*</span></label>
+                <input type="text" id="f-menu-nm" placeholder="메뉴명을 입력하세요" maxlength="100">
+            </div>
+            <div class="form-row">
+                <label>상위메뉴</label>
+                <select id="f-menu-upper">
+                    <option value="">없음 (최상위 메뉴)</option>
+                </select>
+            </div>
+            <div class="form-row">
+                <label>URL</label>
+                <input type="text" id="f-menu-url" placeholder="예: /admin/menu" maxlength="200">
+            </div>
+            <div class="form-row">
+                <label>표시 순서 <span class="req">*</span></label>
+                <input type="number" id="f-menu-ordr" value="1" min="1" max="9999">
+            </div>
+            <div class="form-row">
+                <label>사용여부</label>
+                <select id="f-menu-use-yn">
+                    <option value="Y">사용</option>
+                    <option value="N">미사용</option>
+                </select>
+            </div>
+            <div class="form-row">
+                <label>접근 권한 <span style="font-size:0.78rem;color:#999;font-weight:400;">(미선택 시 사이드바 미노출)</span></label>
+                <div id="f-menu-roles" class="role-chk-box">
+                    <span class="role-chk-empty">권한 목록을 불러오는 중...</span>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-cancel" onclick="closeMenuModal()">취소</button>
+            <button class="btn-primary" id="menu-save-btn" onclick="saveMenu()">등록</button>
+        </div>
+    </div>
 </div>
 
 <script>
@@ -193,9 +370,13 @@
             } else {
                 var $item = $('<div class="nav-no-child"></div>')
                     .text(parent.menuNm)
+                    .data('menuNm', parent.menuNm)
+                    .data('menuUrl', parent.menuUrl)
                     .on('click', function() {
-                        showPlaceholder(parent.menuNm);
-                        $('#bc-text').text(parent.menuNm);
+                        var url = $(this).data('menuUrl');
+                        var nm  = $(this).data('menuNm');
+                        $('#bc-text').text(nm);
+                        routeToPage(url, nm);
                     });
                 $nav.append($item);
             }
@@ -205,11 +386,24 @@
     function onMenuClick($a) {
         $('.nav-sub a').removeClass('active');
         $a.addClass('active');
-        var menuNm = $a.data('menuNm');
+        var menuNm  = $a.data('menuNm');
         var parentNm = $a.data('parentNm');
         var menuUrl = $a.data('menuUrl');
         $('#bc-text').text(parentNm + ' > ' + menuNm);
-        showPlaceholder(menuNm);
+        routeToPage(menuUrl, menuNm);
+    }
+
+    /* URL 기반 페이지 라우팅
+       - menuUrl 우선 매칭, 없거나 불일치하면 menuNm으로 fallback */
+    function routeToPage(menuUrl, menuNm) {
+        var nm = (menuNm || '').replace(/\s/g, '');
+        if (menuUrl === '/admin/menu' || nm === '메뉴관리') {
+            loadMenuMgmt();
+        } else if (menuUrl === '/admin/role-menu' || nm === '권한별메뉴관리' || nm === '메뉴권한관리') {
+            loadRoleMenuPage();
+        } else {
+            showPlaceholder(menuNm);
+        }
     }
 
     function toggleGroup(id) {
@@ -230,7 +424,7 @@
     }
 
     function hideAllPages() {
-        $('#page-home, #page-placeholder').hide();
+        $('#page-home, #page-placeholder, #page-menu-mgmt, #page-role-menu').hide();
     }
 
     function logout() {
@@ -241,9 +435,319 @@
     }
 
     function escHtml(str) {
-        return $('<div>').text(str).html();
+        return $('<div>').text(str || '').html();
     }
 
+    /* ═══════════════════════════════════════
+       메뉴 관리 (Menu Master CRUD)
+    ═══════════════════════════════════════ */
+    var _editMenuCd = null;
+
+    function loadMenuMgmt() {
+        hideAllPages();
+        $('#page-menu-mgmt').show();
+        searchMenus();
+    }
+
+    function searchMenus() {
+        var params = {
+            menuNm: $('#menu-search-nm').val(),
+            useYn:  $('#menu-search-use').val()
+        };
+        $.ajax({
+            url: '/api/admin/menus',
+            method: 'GET',
+            data: params,
+            success: function(res) {
+                if (res.success) renderMenuTable(res.data);
+            },
+            error: function(xhr) {
+                if (xhr.status === 401) logout();
+            }
+        });
+    }
+
+    function renderMenuTable(data) {
+        var $tbody = $('#menu-table-body').empty();
+        if (!data || data.length === 0) {
+            $tbody.append('<tr><td colspan="8" style="text-align:center;padding:32px;color:#aaa;">조회된 데이터가 없습니다.</td></tr>');
+            return;
+        }
+        data.forEach(function(m) {
+            var badge = m.useYn === 'Y'
+                ? '<span class="badge-y">사용</span>'
+                : '<span class="badge-n">미사용</span>';
+            var $tr = $('<tr>');
+            $tr.append('<td><code style="font-size:0.82rem">' + escHtml(m.menuCd) + '</code></td>');
+            $tr.append('<td>' + escHtml(m.menuNm) + '</td>');
+            $tr.append('<td>' + (m.upperMenuNm ? escHtml(m.upperMenuNm) : '<span style="color:#bbb">-</span>') + '</td>');
+            $tr.append('<td style="color:#888;font-size:0.82rem">' + (m.menuUrl ? escHtml(m.menuUrl) : '<span style="color:#bbb">-</span>') + '</td>');
+            $tr.append('<td style="text-align:center">' + (m.menuOrdr != null ? m.menuOrdr : '-') + '</td>');
+            $tr.append('<td>' + badge + '</td>');
+            $tr.append('<td style="color:#999;font-size:0.8rem">' + (m.crtnDt ? m.crtnDt.substring(0, 10) : '-') + '</td>');
+            var $acts = $('<td style="text-align:center;white-space:nowrap">');
+            $('<button class="btn-sm btn-edit">수정</button>').on('click', function() { openMenuModal(m); }).appendTo($acts);
+            $('<button class="btn-sm btn-del">삭제</button>').on('click', function() { deleteMenuAction(m.menuCd); }).appendTo($acts);
+            $tr.append($acts);
+            $tbody.append($tr);
+        });
+    }
+
+    function openMenuModal(menuData) {
+        _editMenuCd = menuData ? menuData.menuCd : null;
+        var isEdit  = _editMenuCd !== null;
+
+        $('#menu-modal-title').text(isEdit ? '메뉴 수정' : '메뉴 등록');
+        $('#menu-save-btn').text(isEdit ? '수정' : '등록');
+        $('#f-menu-cd').val(isEdit ? menuData.menuCd : '').prop('readonly', isEdit);
+        $('#f-menu-nm').val(isEdit ? menuData.menuNm : '');
+        $('#f-menu-url').val(isEdit ? (menuData.menuUrl || '') : '');
+        $('#f-menu-ordr').val(isEdit ? menuData.menuOrdr : 1);
+        $('#f-menu-use-yn').val(isEdit ? menuData.useYn : 'Y');
+        $('#f-menu-roles').html('<span class="role-chk-empty">불러오는 중...</span>');
+
+        /* 상위메뉴 + 권한 목록 + (수정 시) 할당된 권한 병렬 로드 */
+        var parentsReq  = $.ajax({ url: '/api/admin/menus/parents', method: 'GET' });
+        var rolesReq    = $.ajax({ url: '/api/admin/roles',         method: 'GET' });
+        var assignedReq = isEdit
+            ? $.ajax({ url: '/api/admin/menus/' + encodeURIComponent(_editMenuCd) + '/roles', method: 'GET' })
+            : $.Deferred().resolve({ success: true, data: [] }).promise();
+
+        $.when(parentsReq, rolesReq, assignedReq).done(function(parentsRes, rolesRes, assignedRes) {
+            /* ── 상위메뉴 셀렉트 ── */
+            var $sel = $('#f-menu-upper').empty().append('<option value="">없음 (최상위 메뉴)</option>');
+            if (parentsRes[0].success && parentsRes[0].data) {
+                parentsRes[0].data.forEach(function(p) {
+                    if (!isEdit || p.menuCd !== _editMenuCd) {
+                        var $opt = $('<option>').val(p.menuCd).text(p.menuNm + ' (' + p.menuCd + ')');
+                        if (isEdit && menuData.upperMenuCd === p.menuCd) $opt.prop('selected', true);
+                        $sel.append($opt);
+                    }
+                });
+            }
+            $sel.off('change.autocode').on('change.autocode', function() {
+                if (_editMenuCd !== null) return;
+                var upperCd = $(this).val();
+                if (!upperCd) { $('#f-menu-cd').val('').prop('readonly', false); return; }
+                $.ajax({
+                    url: '/api/admin/menus/next-code', method: 'GET', data: { upperMenuCd: upperCd },
+                    success: function(r) { if (r.success && r.data) $('#f-menu-cd').val(r.data).prop('readonly', true); }
+                });
+            });
+
+            /* ── 접근 권한 체크박스 ── */
+            var allRoles    = (rolesRes[0].success    && rolesRes[0].data)    ? rolesRes[0].data    : [];
+            var assignedCds = (assignedRes[0].success && assignedRes[0].data) ? assignedRes[0].data : [];
+            var assignedSet = {};
+            assignedCds.forEach(function(cd) { assignedSet[cd] = true; });
+
+            var $box = $('#f-menu-roles').empty();
+            if (allRoles.length === 0) {
+                $box.html('<span class="role-chk-empty">등록된 권한이 없습니다.</span>');
+            } else {
+                allRoles.forEach(function(r) {
+                    /* 신규 등록 시 전체 체크(기본값), 수정 시 기존 할당된 것만 체크 */
+                    var checked = (!isEdit || assignedSet[r.roleCd]) ? ' checked' : '';
+                    var label   = escHtml(r.roleNm || r.roleCd) + ' <span style="color:#aaa;font-size:0.75rem;">Lv.' + r.roleLevel + '</span>';
+                    $('<label class="role-chk-item">')
+                        .append('<input type="checkbox" class="modal-role-chk" value="' + escHtml(r.roleCd) + '"' + checked + '>')
+                        .append($('<span>').html(label))
+                        .appendTo($box);
+                });
+            }
+        }).fail(function() {
+            $('#f-menu-roles').html('<span class="role-chk-empty" style="color:#e74c3c;">권한 목록 로드 실패</span>');
+        });
+
+        $('#menu-modal').show();
+    }
+
+    function closeMenuModal() {
+        $('#menu-modal').hide();
+        $('#f-menu-roles').empty();
+        _editMenuCd = null;
+    }
+
+    function saveMenu() {
+        var menuCd   = $('#f-menu-cd').val().trim();
+        var menuNm   = $('#f-menu-nm').val().trim();
+        var menuOrdr = parseInt($('#f-menu-ordr').val()) || 1;
+        var isEdit   = _editMenuCd !== null;
+
+        if (!menuNm) { alert('메뉴명을 입력하세요.'); $('#f-menu-nm').focus(); return; }
+        if (!isEdit && !menuCd) { alert('메뉴코드를 입력하세요.'); $('#f-menu-cd').focus(); return; }
+
+        var roleCdList = [];
+        $('.modal-role-chk:checked').each(function() { roleCdList.push($(this).val()); });
+
+        var payload = {
+            menuNm:      menuNm,
+            upperMenuCd: $('#f-menu-upper').val() || null,
+            menuUrl:     $('#f-menu-url').val().trim() || null,
+            menuOrdr:    menuOrdr,
+            useYn:       $('#f-menu-use-yn').val(),
+            roleCdList:  roleCdList
+        };
+        if (!isEdit) payload.menuCd = menuCd;
+
+        $.ajax({
+            url:         isEdit ? '/api/admin/menus/' + encodeURIComponent(_editMenuCd) : '/api/admin/menus',
+            method:      isEdit ? 'PUT' : 'POST',
+            contentType: 'application/json',
+            data:        JSON.stringify(payload),
+            success: function(res) {
+                if (res.success) {
+                    closeMenuModal();
+                    searchMenus();
+                    alert(isEdit ? '수정되었습니다.' : '등록되었습니다.');
+                } else {
+                    alert(res.message || '저장 중 오류가 발생했습니다.');
+                }
+            },
+            error: function(xhr) {
+                var msg = (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : '저장 중 오류가 발생했습니다.';
+                alert(msg);
+            }
+        });
+    }
+
+    function deleteMenuAction(menuCd) {
+        if (!confirm('[' + menuCd + '] 메뉴를 삭제하시겠습니까?\n하위 메뉴가 있으면 삭제할 수 없습니다.')) return;
+        $.ajax({
+            url: '/api/admin/menus/' + encodeURIComponent(menuCd),
+            method: 'DELETE',
+            success: function(res) {
+                if (res.success) {
+                    searchMenus();
+                    alert('삭제되었습니다.');
+                } else {
+                    alert(res.message || '삭제 중 오류가 발생했습니다.');
+                }
+            },
+            error: function(xhr) {
+                var msg = (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : '삭제 중 오류가 발생했습니다.';
+                alert(msg);
+            }
+        });
+    }
+
+    /* ═══════════════════════════════════════
+       권한별 메뉴 관리 (Role-Menu Assignment)
+    ═══════════════════════════════════════ */
+    var _selectedRoleCd = null;
+
+    function loadRoleMenuPage() {
+        hideAllPages();
+        $('#page-role-menu').show();
+        $('#role-menu-placeholder').show();
+        $('#role-menu-assign').hide();
+        _selectedRoleCd = null;
+
+        $.ajax({
+            url: '/api/admin/roles',
+            method: 'GET',
+            success: function(res) {
+                if (res.success) renderRoleTable(res.data);
+            },
+            error: function(xhr) {
+                if (xhr.status === 401) logout();
+            }
+        });
+    }
+
+    function renderRoleTable(roles) {
+        var $tbody = $('#role-table-body').empty();
+        if (!roles || roles.length === 0) {
+            $tbody.append('<tr><td colspan="3" style="text-align:center;padding:20px;color:#aaa;">데이터 없음</td></tr>');
+            return;
+        }
+        roles.forEach(function(r) {
+            var $tr = $('<tr class="role-row">')
+                .append('<td><code style="font-size:0.82rem">' + escHtml(r.roleCd) + '</code></td>')
+                .append('<td>' + escHtml(r.roleNm || '-') + '</td>')
+                .append('<td style="text-align:center">' + (r.roleLevel != null ? r.roleLevel : '-') + '</td>')
+                .on('click', function() {
+                    $('.role-row').removeClass('selected');
+                    $(this).addClass('selected');
+                    selectRole(r.roleCd, r.roleNm || r.roleCd);
+                });
+            $tbody.append($tr);
+        });
+    }
+
+    function selectRole(roleCd, roleNm) {
+        _selectedRoleCd = roleCd;
+        $('#selected-role-nm').text(roleNm);
+        $('#selected-role-cd').text('(' + roleCd + ')');
+        $('#chk-all').prop('checked', false);
+
+        $.when(
+            $.ajax({ url: '/api/admin/menus', method: 'GET' }),
+            $.ajax({ url: '/api/admin/roles/' + encodeURIComponent(roleCd) + '/menus', method: 'GET' })
+        ).done(function(menuRes, assignedRes) {
+            var allMenus   = (menuRes[0].success   && menuRes[0].data)   ? menuRes[0].data   : [];
+            var assignedCds = (assignedRes[0].success && assignedRes[0].data) ? assignedRes[0].data : [];
+            renderRoleMenuTable(allMenus, assignedCds);
+            $('#role-menu-placeholder').hide();
+            $('#role-menu-assign').show();
+        }).fail(function(xhr) {
+            if (xhr.status === 401) logout();
+        });
+    }
+
+    function renderRoleMenuTable(allMenus, assignedCds) {
+        var $tbody = $('#role-menu-body').empty();
+        if (!allMenus || allMenus.length === 0) {
+            $tbody.append('<tr><td colspan="5" style="text-align:center;padding:24px;color:#aaa;">등록된 메뉴가 없습니다.</td></tr>');
+            return;
+        }
+        var assignedSet = {};
+        assignedCds.forEach(function(cd) { assignedSet[cd] = true; });
+
+        allMenus.forEach(function(m) {
+            var checked = assignedSet[m.menuCd] ? ' checked' : '';
+            var badge   = m.useYn === 'Y'
+                ? '<span class="badge-y">사용</span>'
+                : '<span class="badge-n">미사용</span>';
+            var $tr = $('<tr>');
+            $tr.append('<td style="text-align:center"><input type="checkbox" class="menu-chk" value="' + escHtml(m.menuCd) + '"' + checked + '></td>');
+            $tr.append('<td><code style="font-size:0.82rem">' + escHtml(m.menuCd) + '</code></td>');
+            $tr.append('<td>' + escHtml(m.menuNm) + '</td>');
+            $tr.append('<td>' + (m.upperMenuNm ? escHtml(m.upperMenuNm) : '<span style="color:#bbb">-</span>') + '</td>');
+            $tr.append('<td>' + badge + '</td>');
+            $tbody.append($tr);
+        });
+    }
+
+    function toggleAllMenus(checkbox) {
+        $('.menu-chk').prop('checked', checkbox.checked);
+    }
+
+    function saveRoleMenus() {
+        if (!_selectedRoleCd) return;
+        var menuCdList = [];
+        $('.menu-chk:checked').each(function() { menuCdList.push($(this).val()); });
+
+        $.ajax({
+            url:         '/api/admin/roles/' + encodeURIComponent(_selectedRoleCd) + '/menus',
+            method:      'PUT',
+            contentType: 'application/json',
+            data:        JSON.stringify({ menuCdList: menuCdList }),
+            success: function(res) {
+                if (res.success) {
+                    alert('저장되었습니다. (' + menuCdList.length + '개 메뉴 할당)');
+                } else {
+                    alert(res.message || '저장 중 오류가 발생했습니다.');
+                }
+            },
+            error: function(xhr) {
+                if (xhr.status === 401) logout();
+                else alert('저장 중 오류가 발생했습니다.');
+            }
+        });
+    }
+
+    /* ── 초기 로드 ── */
     loadMenu();
     showHome();
 </script>

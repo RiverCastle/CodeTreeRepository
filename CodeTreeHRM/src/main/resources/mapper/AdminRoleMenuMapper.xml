@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.codetree.CodeTreeHRM.admin.mapper.AdminRoleMenuMapper">
+
+    <select id="findAllRoles" resultType="com.codetree.CodeTreeHRM.admin.dto.RoleDto">
+        SELECT
+            ROLE_CD    AS roleCd,
+            ROLE_NM    AS roleNm,
+            ROLE_LEVEL AS roleLevel,
+            USE_YN     AS useYn
+        FROM com_role
+        WHERE USE_YN = 'Y'
+        ORDER BY ROLE_LEVEL
+    </select>
+
+    <select id="findAllMenus" resultType="com.codetree.CodeTreeHRM.admin.dto.MenuDto">
+        SELECT
+            m.MENU_CD       AS menuCd,
+            m.MENU_NM       AS menuNm,
+            m.UPPER_MENU_CD AS upperMenuCd,
+            p.MENU_NM       AS upperMenuNm,
+            m.MENU_ORDR     AS menuOrdr,
+            m.USE_YN        AS useYn
+        FROM com_menu m
+        LEFT JOIN com_menu p ON m.UPPER_MENU_CD = p.MENU_CD
+        ORDER BY m.MENU_ORDR
+    </select>
+
+    <select id="findAssignedMenuCds" resultType="string">
+        SELECT MENU_CD FROM com_role_menu WHERE ROLE_CD = #{roleCd}
+    </select>
+
+    <delete id="deleteRoleMenus">
+        DELETE FROM com_role_menu WHERE ROLE_CD = #{roleCd}
+    </delete>
+
+    <!--
+        신규 할당 시 ACCS_YN, BASE_AUTH_YN 기본값 'Y' 설정.
+        기존 findAccessibleMenus 쿼리가 이 두 컬럼으로 접근 권한을 판단하므로 'Y'로 고정.
+    -->
+    <insert id="insertRoleMenu">
+        INSERT INTO com_role_menu (ROLE_CD, MENU_CD, ACCS_YN, BASE_AUTH_YN)
+        VALUES (#{roleCd}, #{menuCd}, 'Y', 'Y')
+    </insert>
+
+    <!-- 메뉴 기준 역방향 조회/삭제 (메뉴 모달 권한 할당용) -->
+    <select id="findAssignedRoleCdsByMenuCd" resultType="string">
+        SELECT ROLE_CD FROM com_role_menu WHERE MENU_CD = #{menuCd}
+    </select>
+
+    <delete id="deleteRoleMenusByMenuCd">
+        DELETE FROM com_role_menu WHERE MENU_CD = #{menuCd}
+    </delete>
+
+</mapper>
