@@ -1,0 +1,1007 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>메뉴관리</title>
+<style>
+  :root {
+    --primary: #2C3E50;
+    --accent:  #82A67D;
+    --bg:      #F1F2F6;
+    --danger:  #E74C3C;
+    --border:  #EAECEF;
+    --new-bg:  #FFFBEA;
+    --new-border: #F0C040;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 100%; height: 100%; overflow: hidden; }
+  body { font-family: 'Segoe UI', -apple-system, sans-serif; background: var(--bg); }
+
+  .layout { display: flex; width: 100%; height: 100%; padding: 20px; gap: 18px; }
+
+  /* ── 좌측 트리 패널 ── */
+  .tree-panel {
+    width: 360px; min-width: 360px;
+    background: white; border-radius: 16px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+    display: flex; flex-direction: column; overflow: hidden;
+  }
+  .panel-header {
+    padding: 11px 14px; border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; gap: 8px;
+  }
+  .panel-title { font-size: 0.88rem; font-weight: 700; color: var(--primary); white-space: nowrap; }
+  .btn-group-sm { display: flex; gap: 4px; flex-shrink: 0; }
+  .btn-sm {
+    padding: 4px 9px; border-radius: 6px;
+    font-size: 0.72rem; font-weight: 600;
+    cursor: pointer; border: 1.5px solid; line-height: 1.5;
+    white-space: nowrap; transition: opacity .15s;
+  }
+  .btn-sm:hover    { opacity: .75; }
+  .btn-sm:disabled { opacity: .35; cursor: not-allowed; }
+  .btn-add-same { background: white;         border-color: var(--accent); color: var(--accent); }
+  .btn-add-sub  { background: white;         border-color: #5B8FD4;      color: #5B8FD4; }
+  .btn-del      { background: white;         border-color: var(--danger); color: var(--danger); }
+  .btn-save     { background: var(--accent); border-color: var(--accent); color: white; }
+
+  .tree-toolbar {
+    padding: 5px 14px; border-bottom: 1px solid var(--border);
+    display: flex; gap: 10px; flex-shrink: 0;
+  }
+  .btn-tree-ctrl {
+    font-size: 0.72rem; color: #888; background: none; border: none;
+    cursor: pointer; padding: 2px 0; display: flex; align-items: center; gap: 4px;
+    transition: color .15s;
+  }
+  .btn-tree-ctrl:hover { color: var(--accent); }
+
+  .tree-body { padding: 8px 6px; flex: 1; overflow-y: auto; }
+  .tree-item {
+    display: flex; align-items: center; gap: 6px;
+    padding: 7px 10px; border-radius: 8px;
+    font-size: 0.85rem; color: #34495E; cursor: pointer; user-select: none;
+    transition: background .1s;
+  }
+  .tree-item:hover  { background: var(--bg); }
+  .tree-item.selected { background: rgba(130,166,125,0.15); color: var(--primary); font-weight: 600; }
+  .arrow { font-size: 0.6rem; color: #aaa; width: 12px; flex-shrink: 0; text-align: center; }
+  .dot   { font-size: 0.4rem; color: #ccc; width: 12px; text-align: center; flex-shrink: 0; }
+  .tree-icon  { font-size: 1rem; flex-shrink: 0; }
+  .tree-label { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  /* ── 우측 영역 ── */
+  .right-area { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 14px; }
+
+  /* ── 그리드 패널 ── */
+  .grid-panel {
+    flex: 4; background: white; border-radius: 16px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+    display: flex; flex-direction: column; overflow: hidden;
+  }
+  .grid-header {
+    padding: 11px 20px; border-bottom: 1px solid var(--border);
+    font-size: 0.88rem; font-weight: 700; color: var(--primary); flex-shrink: 0;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .grid-breadcrumb { font-size: 0.78rem; font-weight: 400; color: #999; }
+  .grid-body { flex: 1; overflow-y: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.83rem; }
+  thead th {
+    padding: 9px 14px; text-align: left;
+    background: #F8F9FA; color: #555; font-weight: 600; font-size: 0.79rem;
+    border-bottom: 1px solid var(--border); white-space: nowrap;
+    position: sticky; top: 0; z-index: 1;
+  }
+  tbody td { padding: 9px 14px; border-bottom: 1px solid #F3F4F6; color: #34495E; }
+  tbody tr { cursor: pointer; }
+  tbody tr:hover     { background: #FAFBFC; }
+  tbody tr.selected-row { background: rgba(130,166,125,0.1); }
+  tbody tr.selected-row td { color: var(--primary); font-weight: 500; }
+
+  /* 신규 추가 행 */
+  tbody tr.new-row { background: var(--new-bg); border-left: 3px solid var(--new-border); }
+  tbody tr.new-row td { color: #7A5C00; font-style: italic; }
+  tbody tr.new-row.selected-row { background: #FFF3C0; }
+
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 0.73rem; font-weight: 600; }
+  .badge-y   { background: rgba(130,166,125,0.15); color: var(--accent); }
+  .badge-n   { background: rgba(231,76,60,0.1);    color: var(--danger); }
+  .badge-new { background: rgba(240,192,64,0.2);   color: #9A6B00; }
+  .icon-cell { text-align: center; font-size: 1.05rem; }
+  .no-data   { color: #ccc; font-size: 0.8rem; }
+  .empty-row td { text-align: center; color: #bbb; padding: 20px; font-size: 0.83rem; }
+
+  /* ── 폼 패널 ── */
+  .form-panel {
+    flex: 5; background: white; border-radius: 16px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+    display: flex; flex-direction: column;
+  }
+  .form-header {
+    padding: 11px 20px; border-bottom: 1px solid var(--border);
+    font-size: 0.88rem; font-weight: 700; color: var(--primary); flex-shrink: 0;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .form-header-badge {
+    font-size: 0.72rem; font-weight: 600; padding: 2px 8px;
+    border-radius: 20px; background: rgba(240,192,64,0.2); color: #9A6B00;
+  }
+  .form-header-dirty {
+    font-size: 0.72rem; font-weight: 600; padding: 2px 8px;
+    border-radius: 20px; background: rgba(231,76,60,0.1); color: var(--danger);
+    display: none;
+  }
+  .form-header-actions { margin-left: auto; display: flex; gap: 6px; }
+  .form-body {
+    padding: 18px 30px;
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 15px 36px; overflow-y: auto; align-content: start; flex: 1;
+  }
+  .form-row      { display: flex; align-items: center; gap: 10px; }
+  .form-row.full { grid-column: 1 / -1; }
+  .form-label    { width: 72px; font-size: 0.81rem; font-weight: 600; color: #555; flex-shrink: 0; }
+  .req { color: var(--danger); }
+  .form-input {
+    flex: 1; padding: 7px 11px;
+    border: 1px solid #DDE1E7; border-radius: 8px;
+    font-size: 0.83rem; color: #34495E; background: white; min-width: 0; outline: none;
+    transition: border-color .15s;
+  }
+  .form-input:focus   { border-color: var(--accent); }
+  .form-input.readonly { background: #F8F9FA; color: #555; cursor: default; }
+  .form-input.sm      { flex: none; width: 84px; }
+  select.form-input   { cursor: pointer; }
+  .form-empty {
+    color: #bbb; font-size: 0.83rem;
+    display: flex; align-items: center; justify-content: center; height: 100%;
+    grid-column: 1 / -1;
+  }
+
+  /* 아이콘 콤보 */
+  .icon-combo { flex: 1; min-width: 0; }
+  .icon-combo-trigger {
+    display: flex; align-items: center; gap: 9px;
+    padding: 6px 11px; border: 1px solid #DDE1E7; border-radius: 8px;
+    cursor: pointer; background: white; user-select: none; transition: border-color .15s;
+  }
+  .icon-combo-trigger:hover { border-color: var(--accent); }
+  .ico-preview { font-size: 1.1rem; width: 22px; text-align: center; flex-shrink: 0; }
+  .ico-label   { flex: 1; font-size: 0.83rem; color: #34495E; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .ico-caret   { font-size: 0.58rem; color: #aaa; flex-shrink: 0; }
+  .icon-dropdown {
+    position: fixed; background: white; border: 1px solid var(--border); border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.12); z-index: 9999; overflow: hidden;
+    width: 280px; display: none;
+  }
+  .icon-search { padding: 8px 10px; border-bottom: 1px solid var(--border); }
+  .icon-search input {
+    width: 100%; padding: 6px 10px; border: 1px solid #DDE1E7; border-radius: 7px;
+    font-size: 0.81rem; outline: none;
+  }
+  .icon-grid {
+    display: grid; grid-template-columns: repeat(5, 1fr);
+    padding: 8px; gap: 3px; max-height: 180px; overflow-y: auto;
+  }
+  .icon-opt {
+    display: flex; flex-direction: column; align-items: center;
+    padding: 7px 3px; border-radius: 7px; cursor: pointer; gap: 3px;
+  }
+  .icon-opt:hover  { background: var(--bg); }
+  .icon-opt.active { background: rgba(130,166,125,0.15); }
+  .icon-opt .ico { font-size: 1.3rem; }
+  .icon-opt .nm  { font-size: 0.65rem; color: #888; text-align: center; }
+
+  .radio-group  { display: flex; gap: 18px; }
+  .radio-label  { display: flex; align-items: center; gap: 6px; font-size: 0.83rem; color: #34495E; cursor: pointer; }
+  .radio-label input[type="radio"] { accent-color: var(--accent); width: 14px; height: 14px; cursor: pointer; }
+
+  /* ── Dirty 확인 모달 ── */
+  .modal-backdrop {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.35);
+    z-index: 99990; display: none; align-items: center; justify-content: center;
+  }
+  .modal-backdrop.show { display: flex; }
+  .modal-box {
+    background: white; border-radius: 16px;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.18);
+    padding: 28px 32px; width: 360px; text-align: center;
+  }
+  .modal-icon { font-size: 2rem; margin-bottom: 10px; }
+  .modal-title { font-size: 1rem; font-weight: 700; color: var(--primary); margin-bottom: 8px; }
+  .modal-desc  { font-size: 0.83rem; color: #777; margin-bottom: 22px; line-height: 1.5; }
+  .modal-btns  { display: flex; gap: 8px; justify-content: center; }
+  .modal-btn {
+    padding: 8px 18px; border-radius: 8px; font-size: 0.83rem; font-weight: 600;
+    cursor: pointer; border: 1.5px solid; transition: opacity .15s;
+  }
+  .modal-btn:hover { opacity: .8; }
+  .modal-btn-save    { background: var(--accent); border-color: var(--accent); color: white; }
+  .modal-btn-discard { background: white; border-color: #ccc; color: #555; }
+  .modal-btn-cancel  { background: white; border-color: var(--danger); color: var(--danger); }
+
+  .toast {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+    background: #34495E; color: white; padding: 9px 20px;
+    border-radius: 24px; font-size: 0.84rem; z-index: 99999;
+    opacity: 0; transition: opacity .3s; pointer-events: none;
+  }
+  .toast.show    { opacity: 1; }
+  .toast.success { background: var(--accent); }
+  .toast.error   { background: var(--danger); }
+</style>
+</head>
+<body>
+<div class="layout">
+
+  <!-- 좌측 트리 패널 -->
+  <div class="tree-panel">
+    <div class="panel-header">
+      <span class="panel-title">메뉴 목록</span>
+      <div class="btn-group-sm">
+        <button class="btn-sm btn-add-same" onclick="addMenuSameLevel()" title="같은 레벨에 추가">동일 추가</button>
+        <button class="btn-sm btn-add-sub"  onclick="addMenuSubLevel()"  title="하위 레벨에 추가">하위 추가</button>
+        <button class="btn-sm btn-del"      onclick="delMenu()">삭제</button>
+      </div>
+    </div>
+    <div class="tree-toolbar">
+      <button class="btn-tree-ctrl" onclick="expandAll()">▼ 전체 펼치기</button>
+      <button class="btn-tree-ctrl" onclick="collapseAll()">▶ 전체 접기</button>
+    </div>
+    <div class="tree-body" id="treeBody">
+      <div style="text-align:center;color:#ccc;padding:20px;font-size:.82rem;">로딩 중...</div>
+    </div>
+  </div>
+
+  <!-- 우측 영역 -->
+  <div class="right-area">
+
+    <!-- 그리드 패널 -->
+    <div class="grid-panel">
+      <div class="grid-header">
+        <span>메뉴 목록</span>
+        <span class="grid-breadcrumb" id="gridBreadcrumb"></span>
+      </div>
+      <div class="grid-body">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:48px">아이콘</th>
+              <th style="width:90px">메뉴코드</th>
+              <th>메뉴명</th>
+              <th style="width:72px">정렬순서</th>
+              <th>메뉴 URL</th>
+              <th style="width:68px">사용여부</th>
+            </tr>
+          </thead>
+          <tbody id="gridBody">
+            <tr class="empty-row"><td colspan="6">데이터를 불러오는 중...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 폼 패널 -->
+    <div class="form-panel">
+      <div class="form-header" id="formHeader">
+        <span id="formTitle">메뉴 상세</span>
+        <span class="form-header-badge"  id="formNewBadge"   style="display:none">NEW — 미저장</span>
+        <span class="form-header-dirty"  id="formDirtyBadge">● 변경됨</span>
+        <div class="form-header-actions">
+          <button class="btn-sm btn-save" id="formSaveBtn" onclick="saveMenu()">저장</button>
+        </div>
+      </div>
+      <div class="form-body" id="formBody">
+        <div class="form-empty">트리에서 메뉴를 선택하거나 추가 버튼을 눌러주세요.</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- 아이콘 드롭다운 -->
+<div class="icon-dropdown" id="iconDrop">
+  <div class="icon-search"><input type="text" id="iconSearch" placeholder="아이콘 검색..." oninput="filterIcons()"></div>
+  <div class="icon-grid" id="iconGrid"></div>
+</div>
+
+<!-- Dirty 확인 모달 -->
+<div class="modal-backdrop" id="dirtyModal">
+  <div class="modal-box">
+    <div class="modal-icon">💾</div>
+    <div class="modal-title">저장하지 않은 변경사항이 있습니다</div>
+    <div class="modal-desc">다른 항목으로 이동하기 전에<br>변경사항을 저장하시겠습니까?</div>
+    <div class="modal-btns">
+      <button class="modal-btn modal-btn-save"    onclick="resolveDirtyModal('save')">저장 후 이동</button>
+      <button class="modal-btn modal-btn-discard" onclick="resolveDirtyModal('discard')">저장 안 함</button>
+      <button class="modal-btn modal-btn-cancel"  onclick="resolveDirtyModal('cancel')">취소</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ─────────────────────────────────────
+   아이콘 목록
+───────────────────────────────────── */
+const ICONS = [
+  {ico:'👤',nm:'사원'}, {ico:'👥',nm:'그룹'}, {ico:'🏢',nm:'부서'},
+  {ico:'🏠',nm:'홈'},   {ico:'⚙️',nm:'설정'}, {ico:'📋',nm:'메뉴'},
+  {ico:'🗂️',nm:'파일함'},{ico:'📁',nm:'폴더'}, {ico:'🔐',nm:'권한'},
+  {ico:'🔑',nm:'키'},   {ico:'📊',nm:'통계'}, {ico:'📈',nm:'현황'},
+  {ico:'🗓️',nm:'일정'}, {ico:'📝',nm:'작성'}, {ico:'🔔',nm:'알림'},
+  {ico:'💰',nm:'급여'}, {ico:'🧾',nm:'문서'}, {ico:'🖥️',nm:'시스템'},
+  {ico:'👔',nm:'인사'}, {ico:'📌',nm:'고정'}, {ico:'🔍',nm:'검색'},
+  {ico:'📂',nm:'폴더2'},{ico:'🏷️',nm:'태그'},  {ico:'📣',nm:'공지'},
+  {ico:'✅',nm:'완료'}, {ico:'🔧',nm:'도구'}, {ico:'🌐',nm:'웹'},
+];
+
+/* ─────────────────────────────────────
+   상태 변수
+───────────────────────────────────── */
+let allMenus         = [];
+let selectedMenuCd   = null;
+let pendingNew       = null;   // 미저장 신규 행: { menuCd, upperMenuCd }
+let currentIconValue = '';
+let expandedNodes    = new Set();
+let isDirty          = false;  // 폼 변경 여부
+
+/* ─────────────────────────────────────
+   초기화
+───────────────────────────────────── */
+document.addEventListener('DOMContentLoaded', loadMenus);
+
+async function loadMenus() {
+  try {
+    const res = await fetch('/api/menus/all');
+    if (res.status === 401) { parent.location.href = '/login'; return; }
+    allMenus = await res.json();
+    renderAll();
+  } catch(e) {
+    showToast('메뉴 데이터를 불러올 수 없습니다.', 'error');
+  }
+}
+
+function renderAll() {
+  renderTree();
+  renderGrid();
+}
+
+/* ─────────────────────────────────────
+   Dirty 상태 관리
+───────────────────────────────────── */
+function markDirty() {
+  isDirty = true;
+  document.getElementById('formDirtyBadge').style.display = 'inline-block';
+  document.getElementById('formSaveBtn').style.display    = '';
+}
+
+function clearDirty() {
+  isDirty = false;
+  document.getElementById('formDirtyBadge').style.display = 'none';
+}
+
+/* ─────────────────────────────────────
+   Dirty 확인 모달 (Promise 기반)
+   resolve: 'save' | 'discard' | 'cancel'
+───────────────────────────────────── */
+let _dirtyResolve = null;
+
+function openDirtyModal() {
+  return new Promise(resolve => {
+    _dirtyResolve = resolve;
+    document.getElementById('dirtyModal').classList.add('show');
+  });
+}
+
+function resolveDirtyModal(action) {
+  document.getElementById('dirtyModal').classList.remove('show');
+  if (_dirtyResolve) { _dirtyResolve(action); _dirtyResolve = null; }
+}
+
+/**
+ * 이동 전 dirty/pendingNew 체크
+ * - 변경사항 없으면 true 반환 (바로 이동)
+ * - 있으면 모달 → 저장 후 true / 저장 안 함 true / 취소 false
+ */
+async function guardNavigation() {
+  if (!isDirty && !pendingNew) return true;
+
+  const action = await openDirtyModal();
+
+  if (action === 'cancel') return false;
+
+  if (action === 'save') {
+    const saved = await saveMenu(true);  // silent=true: 이동 후 처리
+    if (!saved) return false;            // 저장 실패 시 이동 취소
+  }
+
+  // 'discard' or post-save cleanup
+  isDirty    = false;
+  pendingNew = null;
+  return true;
+}
+
+/* ─────────────────────────────────────
+   트리 렌더링
+───────────────────────────────────── */
+function renderTree() {
+  const childMap = buildChildMap();
+  const roots    = allMenus.filter(m => !m.upperMenuCd);
+  const body     = document.getElementById('treeBody');
+  body.innerHTML = '';
+
+  function renderNode(menu, depth) {
+    const kids            = childMap[menu.menuCd] || [];
+    const isExpanded      = expandedNodes.has(menu.menuCd);
+    const hasPendingChild = pendingNew && pendingNew.upperMenuCd === menu.menuCd;
+    const hasKids         = kids.length > 0 || hasPendingChild;
+    const isSelected      = menu.menuCd === selectedMenuCd;
+
+    const item = document.createElement('div');
+    item.className      = 'tree-item' + (isSelected ? ' selected' : '');
+    item.dataset.menuCd = menu.menuCd;
+    item.style.paddingLeft = (10 + depth * 22) + 'px';
+
+    const arrow = document.createElement('span');
+    if (hasKids) {
+      arrow.className   = 'arrow';
+      arrow.textContent = (isExpanded || hasPendingChild) ? '▼' : '▶';
+    } else {
+      arrow.className   = 'dot';
+      arrow.textContent = '•';
+    }
+
+    const ico = document.createElement('span');
+    ico.className   = 'tree-icon';
+    ico.textContent = menu.menuIcon || '📁';
+
+    const lbl = document.createElement('span');
+    lbl.className   = 'tree-label';
+    lbl.textContent = menu.menuNm;
+    if (menu.useYn === 'N') { lbl.style.color = '#bbb'; lbl.style.textDecoration = 'line-through'; }
+
+    item.appendChild(arrow); item.appendChild(ico); item.appendChild(lbl);
+    body.appendChild(item);
+
+    item.addEventListener('click', async () => {
+      // 같은 노드 클릭: 펼침/접힘만 토글
+      if (menu.menuCd === selectedMenuCd) {
+        if (hasKids) {
+          expandedNodes.has(menu.menuCd)
+            ? expandedNodes.delete(menu.menuCd)
+            : expandedNodes.add(menu.menuCd);
+          renderTree();
+        }
+        return;
+      }
+
+      // 다른 노드로 이동: dirty 체크
+      if (hasKids) {
+        expandedNodes.has(menu.menuCd)
+          ? expandedNodes.delete(menu.menuCd)
+          : expandedNodes.add(menu.menuCd);
+      }
+
+      const canNav = await guardNavigation();
+      if (!canNav) {
+        // 이동 취소 → 펼침 상태 원복
+        if (hasKids) {
+          expandedNodes.has(menu.menuCd)
+            ? expandedNodes.delete(menu.menuCd)
+            : expandedNodes.add(menu.menuCd);
+        }
+        return;
+      }
+
+      selectedMenuCd = menu.menuCd;
+      renderAll();
+      const m = allMenus.find(x => x.menuCd === menu.menuCd);
+      if (m) renderForm(m); else clearForm();
+    });
+
+    if (hasKids && (isExpanded || hasPendingChild)) {
+      kids.forEach(k => renderNode(k, depth + 1));
+      if (hasPendingChild) renderPendingTreeNode(depth + 1, body);
+    }
+  }
+
+  roots.forEach(m => renderNode(m, 0));
+
+  if (pendingNew && !pendingNew.upperMenuCd) {
+    renderPendingTreeNode(0, body);
+  }
+}
+
+function renderPendingTreeNode(depth, body) {
+  const item = document.createElement('div');
+  item.className = 'tree-item selected';
+  item.style.paddingLeft = (10 + depth * 22) + 'px';
+  item.style.background  = 'rgba(240,192,64,0.15)';
+  item.style.color       = '#7A5C00';
+
+  const dot = document.createElement('span'); dot.className = 'dot'; dot.textContent = '•';
+  const ico = document.createElement('span'); ico.className = 'tree-icon'; ico.textContent = '📁';
+  const lbl = document.createElement('span'); lbl.className = 'tree-label';
+  lbl.textContent = '(신규 입력 중)';
+  lbl.style.fontStyle = 'italic';
+
+  item.appendChild(dot); item.appendChild(ico); item.appendChild(lbl);
+  body.appendChild(item);
+}
+
+/* ─────────────────────────────────────
+   그리드 렌더링
+───────────────────────────────────── */
+function renderGrid() {
+  const tbody = document.getElementById('gridBody');
+  const crumb = document.getElementById('gridBreadcrumb');
+
+  let parentCd = null;
+
+  const base = pendingNew && selectedMenuCd === pendingNew.menuCd
+    ? null
+    : allMenus.find(m => m.menuCd === selectedMenuCd);
+
+  if (pendingNew && selectedMenuCd === pendingNew.menuCd) {
+    parentCd = pendingNew.upperMenuCd || null;
+  } else if (!base) {
+    parentCd = null;
+  } else {
+    parentCd = base.upperMenuCd || null;
+  }
+
+  crumb.textContent = parentCd
+    ? '— ' + (allMenus.find(m => m.menuCd === parentCd)?.menuNm || parentCd) + ' 하위'
+    : '— 최상위';
+
+  const items = allMenus.filter(m =>
+    parentCd ? m.upperMenuCd === parentCd : !m.upperMenuCd
+  );
+
+  const showPending = pendingNew && (
+    parentCd ? pendingNew.upperMenuCd === parentCd : !pendingNew.upperMenuCd
+  );
+
+  if (!items.length && !showPending) {
+    tbody.innerHTML = '<tr class="empty-row"><td colspan="6">표시할 메뉴가 없습니다.</td></tr>';
+    return;
+  }
+
+  const existingRows = items.map(m => {
+    const isSelected = m.menuCd === selectedMenuCd;
+    return `
+      <tr class="${isSelected ? 'selected-row' : ''}" data-menu-cd="${m.menuCd}"
+          onclick="selectFromGrid('${m.menuCd}')">
+        <td class="icon-cell">${m.menuIcon || ''}</td>
+        <td>${m.menuCd}</td>
+        <td id="grid-nm-${m.menuCd}">${escHtml(m.menuNm)}</td>
+        <td>${m.menuOrdr}</td>
+        <td>${m.menuUrl ? escHtml(m.menuUrl) : '<span class="no-data">—</span>'}</td>
+        <td><span class="badge ${m.useYn === 'Y' ? 'badge-y' : 'badge-n'}">${m.useYn}</span></td>
+      </tr>`;
+  }).join('');
+
+  const pendingRow = showPending ? `
+    <tr class="new-row selected-row" data-menu-cd="${pendingNew.menuCd}">
+      <td class="icon-cell">—</td>
+      <td><span class="badge badge-new">NEW</span> ${pendingNew.menuCd}</td>
+      <td id="grid-nm-new"><em>입력 중...</em></td>
+      <td>—</td><td>—</td><td>—</td>
+    </tr>` : '';
+
+  tbody.innerHTML = existingRows + pendingRow;
+}
+
+/* ─────────────────────────────────────
+   선택 처리
+───────────────────────────────────── */
+async function selectFromGrid(menuCd) {
+  if (menuCd === selectedMenuCd) return;
+  if (menuCd === (pendingNew && pendingNew.menuCd)) return;
+
+  const canNav = await guardNavigation();
+  if (!canNav) return;
+
+  selectedMenuCd = menuCd;
+  // 트리 하이라이트 갱신
+  document.querySelectorAll('#treeBody .tree-item').forEach(el =>
+    el.classList.toggle('selected', el.dataset.menuCd === menuCd)
+  );
+  // 그리드 하이라이트 갱신
+  document.querySelectorAll('#gridBody tr[data-menu-cd]').forEach(tr =>
+    tr.classList.toggle('selected-row', tr.dataset.menuCd === menuCd)
+  );
+  const menu = allMenus.find(m => m.menuCd === menuCd);
+  if (menu) renderForm(menu);
+}
+
+/* ─────────────────────────────────────
+   폼 렌더링
+───────────────────────────────────── */
+function renderForm(menu) {
+  currentIconValue = menu.menuIcon || '';
+  clearDirty();
+  // 헤더
+  document.getElementById('formTitle').textContent    = '메뉴 상세';
+  document.getElementById('formNewBadge').style.display = 'none';
+
+  document.getElementById('formBody').innerHTML = buildFormHtml(
+    menu.menuCd, menu.menuNm, menu.menuIcon,
+    menu.upperMenuCd, menu.menuUrl, menu.menuOrdr, menu.useYn, false
+  );
+  renderIconGrid();
+  attachDirtyListeners();
+}
+
+function renderNewForm(menuCd, parentCd) {
+  currentIconValue = '';
+  clearDirty();
+  // 헤더 — 신규는 항상 저장버튼 표시
+  document.getElementById('formTitle').textContent      = '메뉴 상세';
+  document.getElementById('formNewBadge').style.display = 'inline-block';
+  document.getElementById('formSaveBtn').style.display  = '';
+
+  document.getElementById('formBody').innerHTML = buildFormHtml(
+    menuCd, '', '', parentCd, '', 1, 'Y', true
+  );
+  renderIconGrid();
+  document.getElementById('f_menuNm')?.focus();
+  document.getElementById('f_menuNm')?.addEventListener('input', syncNewRowName);
+  // 신규폼은 dirty 리스너 불필요 (이미 NEW 상태)
+}
+
+function clearForm() {
+  clearDirty();
+  document.getElementById('formTitle').textContent      = '메뉴 상세';
+  document.getElementById('formNewBadge').style.display = 'none';
+  document.getElementById('formBody').innerHTML =
+    '<div class="form-empty">트리에서 메뉴를 선택하거나 추가 버튼을 눌러주세요.</div>';
+}
+
+/* 폼 필드 변경 감지 리스너 부착 (기존 메뉴 수정 시) */
+function attachDirtyListeners() {
+  const ids = ['f_menuNm', 'f_menuUrl', 'f_menuOrdr', 'f_upperMenuCd'];
+  ids.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('input',  markDirty);
+    if (el) el.addEventListener('change', markDirty);
+  });
+  document.querySelectorAll('input[name="useYn"]').forEach(el =>
+    el.addEventListener('change', markDirty)
+  );
+}
+
+// 신규 행 이름 실시간 동기화
+function syncNewRowName() {
+  const val  = document.getElementById('f_menuNm')?.value || '';
+  const cell = document.getElementById('grid-nm-new');
+  if (cell) cell.innerHTML = val ? escHtml(val) : '<em>입력 중...</em>';
+}
+
+function buildFormHtml(menuCd, menuNm, menuIcon, upperMenuCd, menuUrl, menuOrdr, useYn, isNew) {
+  const parentOpts  = buildParentOptions(upperMenuCd, menuCd);
+  const icoLabel    = menuIcon ? findIconNm(menuIcon) : '선택 안 함';
+  const parentMenu  = upperMenuCd ? allMenus.find(m => m.menuCd === upperMenuCd) : null;
+  const parentLabel = upperMenuCd
+    ? (parentMenu ? (parentMenu.menuIcon || '') + ' ' + parentMenu.menuNm : upperMenuCd)
+    : '— 없음 (최상위) —';
+
+  const upperMenuField = isNew
+    ? `<input class="form-input readonly" id="f_upperMenuCd_display" value="${escHtml(parentLabel)}" readonly>
+       <input type="hidden" id="f_upperMenuCd" value="${escHtml(upperMenuCd || '')}">`
+    : `<select class="form-input" id="f_upperMenuCd">${parentOpts}</select>`;
+
+  return `
+    <div class="form-row">
+      <label class="form-label">메뉴코드 <span class="req">*</span></label>
+      <input class="form-input ${isNew ? '' : 'readonly'}" id="f_menuCd"
+             value="${escHtml(menuCd)}" ${isNew ? 'placeholder="예: M005 또는 M001-04"' : 'readonly'}>
+    </div>
+    <div class="form-row">
+      <label class="form-label">메뉴명 <span class="req">*</span></label>
+      <input class="form-input" id="f_menuNm" value="${escHtml(menuNm)}" placeholder="메뉴명 입력">
+    </div>
+    <div class="form-row">
+      <label class="form-label">아이콘</label>
+      <div class="icon-combo" id="iconCombo">
+        <div class="icon-combo-trigger" onclick="toggleDrop(event)">
+          <span class="ico-preview" id="icoPreview">${menuIcon || '📁'}</span>
+          <span class="ico-label"   id="icoLabel">${escHtml(icoLabel)}</span>
+          <span class="ico-caret">▼</span>
+        </div>
+      </div>
+    </div>
+    <div class="form-row">
+      <label class="form-label">상위메뉴</label>
+      ${upperMenuField}
+    </div>
+    <div class="form-row full">
+      <label class="form-label">메뉴 URL</label>
+      <input class="form-input" id="f_menuUrl" value="${escHtml(menuUrl || '')}" placeholder="/example/path">
+    </div>
+    <div class="form-row">
+      <label class="form-label">정렬순서</label>
+      <input class="form-input sm" id="f_menuOrdr" type="number" value="${menuOrdr || 1}" min="1">
+    </div>
+    <div class="form-row">
+      <label class="form-label">사용여부</label>
+      <div class="radio-group">
+        <label class="radio-label"><input type="radio" name="useYn" value="Y" ${useYn === 'Y' ? 'checked' : ''}> 사용</label>
+        <label class="radio-label"><input type="radio" name="useYn" value="N" ${useYn !== 'Y' ? 'checked' : ''}> 미사용</label>
+      </div>
+    </div>
+  `;
+}
+
+function buildParentOptions(selectedCd, selfCd) {
+  let opts = `<option value="">— 없음 (최상위) —</option>`;
+  allMenus.filter(m => m.menuCd !== selfCd).forEach(m => {
+    const sel    = m.menuCd === selectedCd ? 'selected' : '';
+    const indent = m.upperMenuCd ? '　' : '';
+    opts += `<option value="${m.menuCd}" ${sel}>${indent}${m.menuIcon || ''} ${escHtml(m.menuNm)}</option>`;
+  });
+  return opts;
+}
+
+/* ─────────────────────────────────────
+   CRUD 버튼
+───────────────────────────────────── */
+async function addMenuSameLevel() {
+  if (pendingNew) { showToast('이미 신규 항목이 있습니다. 먼저 저장하거나 삭제해주세요.', 'error'); return; }
+  if (isDirty) {
+    const canNav = await guardNavigation();
+    if (!canNav) return;
+  }
+
+  const sel      = selectedMenuCd ? allMenus.find(m => m.menuCd === selectedMenuCd) : null;
+  const parentCd = sel ? (sel.upperMenuCd || null) : null;
+  const nextCd   = await getNextMenuCd(parentCd); if (!nextCd) return;
+
+  pendingNew     = { menuCd: nextCd, upperMenuCd: parentCd };
+  selectedMenuCd = nextCd;
+  if (parentCd) expandedNodes.add(parentCd);
+
+  renderAll();
+  renderNewForm(nextCd, parentCd || '');
+}
+
+async function addMenuSubLevel() {
+  if (pendingNew) { showToast('이미 신규 항목이 있습니다. 먼저 저장하거나 삭제해주세요.', 'error'); return; }
+  if (!selectedMenuCd) { showToast('하위에 추가할 상위 메뉴를 먼저 선택해주세요.', 'error'); return; }
+  if (isDirty) {
+    const canNav = await guardNavigation();
+    if (!canNav) return;
+  }
+
+  const nextCd   = await getNextMenuCd(selectedMenuCd); if (!nextCd) return;
+  const parentCd = selectedMenuCd;
+
+  expandedNodes.add(parentCd);
+  pendingNew     = { menuCd: nextCd, upperMenuCd: parentCd };
+  selectedMenuCd = nextCd;
+
+  renderAll();
+  renderNewForm(nextCd, parentCd);
+}
+
+async function delMenu() {
+  if (!selectedMenuCd && !pendingNew) {
+    showToast('삭제할 메뉴를 선택해주세요.', 'error'); return;
+  }
+
+  // 신규(미저장) 행 취소
+  if (pendingNew && selectedMenuCd === pendingNew.menuCd) {
+    const parentCd = pendingNew.upperMenuCd;
+    pendingNew     = null;
+    isDirty        = false;
+    const fallback = parentCd
+      ? allMenus.find(m => m.menuCd === parentCd)
+      : allMenus.filter(m => !m.upperMenuCd)[0];
+    selectedMenuCd = fallback ? fallback.menuCd : null;
+    renderAll();
+    if (fallback) renderForm(fallback); else clearForm();
+    showToast('신규 항목이 취소되었습니다.', '');
+    return;
+  }
+
+  // 기존 항목 삭제
+  const menu     = allMenus.find(m => m.menuCd === selectedMenuCd);
+  const hasChild = allMenus.some(m => m.upperMenuCd === selectedMenuCd);
+  if (hasChild) { showToast('하위 메뉴가 있는 메뉴는 삭제할 수 없습니다.', 'error'); return; }
+  if (!confirm(`"${menu?.menuNm}" 메뉴를 삭제하시겠습니까?`)) return;
+
+  try {
+    const res = await fetch('/api/menus/' + selectedMenuCd, { method: 'DELETE' });
+    if (!res.ok) { showToast('삭제 실패', 'error'); return; }
+    showToast('삭제되었습니다.', 'success');
+    const parentCd = menu?.upperMenuCd;
+    selectedMenuCd = null;
+    isDirty        = false;
+    await reloadMenus();
+    if (parentCd) {
+      selectedMenuCd = parentCd;
+      const p = allMenus.find(m => m.menuCd === parentCd);
+      if (p) renderForm(p);
+    } else {
+      clearForm();
+    }
+    renderAll();
+    reloadSidebar();
+  } catch(e) { showToast('오류가 발생했습니다.', 'error'); }
+}
+
+/**
+ * @param {boolean} [silent] true이면 이동 중 저장 (토스트/renderAll 스킵)
+ * @returns {boolean} 성공 여부
+ */
+async function saveMenu(silent) {
+  const menuCd = document.getElementById('f_menuCd')?.value?.trim();
+  const menuNm = document.getElementById('f_menuNm')?.value?.trim();
+  if (!menuCd) { showToast('메뉴코드를 입력해주세요.', 'error'); document.getElementById('f_menuCd')?.focus(); return false; }
+  if (!menuNm) { showToast('메뉴명을 입력해주세요.', 'error'); return false; }
+
+  const isNew   = !!pendingNew;
+  const useYnEl = document.querySelector('input[name="useYn"]:checked');
+  const payload = {
+    menuCd,
+    menuNm,
+    menuIcon:    currentIconValue || null,
+    upperMenuCd: document.getElementById('f_upperMenuCd')?.value || null,
+    menuUrl:     document.getElementById('f_menuUrl')?.value?.trim() || null,
+    menuOrdr:    parseInt(document.getElementById('f_menuOrdr')?.value) || 1,
+    useYn:       useYnEl ? useYnEl.value : 'Y',
+  };
+
+  try {
+    const res = await fetch(
+      isNew ? '/api/menus' : '/api/menus/' + menuCd,
+      { method: isNew ? 'POST' : 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload) }
+    );
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      showToast(err.message || '저장 실패', 'error');
+      return false;
+    }
+
+    pendingNew     = null;
+    isDirty        = false;
+    selectedMenuCd = menuCd;
+    if (payload.upperMenuCd) expandedNodes.add(payload.upperMenuCd);
+    await reloadMenus();
+
+    if (!silent) {
+      showToast('저장되었습니다.', 'success');
+      const saved = allMenus.find(m => m.menuCd === menuCd);
+      if (saved) renderForm(saved);
+      renderAll();
+      reloadSidebar();
+    }
+    return true;
+  } catch(e) {
+    showToast('오류가 발생했습니다.', 'error');
+    return false;
+  }
+}
+
+async function getNextMenuCd(parentCd) {
+  try {
+    const url  = parentCd ? `/api/menus/next-cd?parentCd=${encodeURIComponent(parentCd)}` : '/api/menus/next-cd';
+    const res  = await fetch(url);
+    const data = await res.json();
+    return data.menuCd;
+  } catch(e) { showToast('오류가 발생했습니다.', 'error'); return null; }
+}
+
+async function reloadMenus() {
+  const res = await fetch('/api/menus/all');
+  allMenus  = await res.json();
+}
+
+function reloadSidebar() {
+  try { parent.frames.menu_frame && parent.frames.menu_frame.location.reload(); } catch(e) {}
+}
+
+/* ─────────────────────────────────────
+   아이콘 드롭다운
+───────────────────────────────────── */
+function renderIconGrid(filter) {
+  const list = filter
+    ? ICONS.filter(i => i.nm.includes(filter) || i.ico.includes(filter))
+    : ICONS;
+  document.getElementById('iconGrid').innerHTML = list.map(i => `
+    <div class="icon-opt ${currentIconValue === i.ico ? 'active' : ''}"
+         onclick="selectIcon('${i.ico}','${i.nm}')">
+      <span class="ico">${i.ico}</span><span class="nm">${i.nm}</span>
+    </div>
+  `).join('');
+}
+
+function toggleDrop(e) {
+  e.stopPropagation();
+  const drop    = document.getElementById('iconDrop');
+  const trigger = document.querySelector('#iconCombo .icon-combo-trigger');
+  if (!trigger) return;
+  if (drop.style.display === 'block') { drop.style.display = 'none'; return; }
+  const rect = trigger.getBoundingClientRect();
+  drop.style.top  = (rect.bottom + 5) + 'px';
+  drop.style.left = rect.left + 'px';
+  drop.style.display = 'block';
+  document.getElementById('iconSearch').value = '';
+  renderIconGrid();
+  document.getElementById('iconSearch').focus();
+}
+
+function filterIcons() {
+  renderIconGrid(document.getElementById('iconSearch').value.trim());
+}
+
+function selectIcon(ico, nm) {
+  currentIconValue = ico;
+  const p = document.getElementById('icoPreview'); if (p) p.textContent = ico;
+  const l = document.getElementById('icoLabel');   if (l) l.textContent = ico + ' ' + nm;
+  document.getElementById('iconDrop').style.display = 'none';
+  renderIconGrid();
+  markDirty();  // 아이콘 변경도 dirty 처리
+}
+
+document.addEventListener('click', e => {
+  const drop    = document.getElementById('iconDrop');
+  const trigger = document.querySelector('#iconCombo .icon-combo-trigger');
+  if (drop.style.display !== 'block') return;
+  if (trigger && trigger.contains(e.target)) return;
+  if (!drop.contains(e.target)) drop.style.display = 'none';
+});
+
+/* ─────────────────────────────────────
+   전체 펼치기 / 전체 접기
+───────────────────────────────────── */
+function expandAll() {
+  const childMap = buildChildMap();
+  Object.keys(childMap).forEach(cd => expandedNodes.add(cd));
+  renderTree();
+}
+
+function collapseAll() {
+  expandedNodes.clear();
+  renderTree();
+}
+
+/* ─────────────────────────────────────
+   유틸
+───────────────────────────────────── */
+function buildChildMap() {
+  const map = {};
+  allMenus.forEach(m => {
+    if (m.upperMenuCd) {
+      if (!map[m.upperMenuCd]) map[m.upperMenuCd] = [];
+      map[m.upperMenuCd].push(m);
+    }
+  });
+  return map;
+}
+
+function escHtml(s) {
+  return (s || '').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function findIconNm(ico) {
+  const f = ICONS.find(i => i.ico === ico);
+  return f ? ico + ' ' + f.nm : ico;
+}
+
+let toastTimer;
+function showToast(msg, type) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className   = 'toast show ' + (type || '');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { t.className = 'toast'; }, 2600);
+}
+</script>
+</body>
+</html>

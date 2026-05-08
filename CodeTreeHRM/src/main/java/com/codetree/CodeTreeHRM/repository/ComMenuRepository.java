@@ -7,4 +7,7 @@ import java.util.List;
 
 public interface ComMenuRepository extends JpaRepository<ComMenu, String> {
     List<ComMenu> findByUseYnOrderByMenuOrdr(String useYn);
+    List<ComMenu> findAllByOrderByMenuOrdr();
+    List<ComMenu> findByUpperMenuCdIsNull();
+    List<ComMenu> findByUpperMenuCd(String upperMenuCd);
 }

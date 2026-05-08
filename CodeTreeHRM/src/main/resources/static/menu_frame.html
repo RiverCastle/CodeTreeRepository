@@ -61,18 +61,6 @@
 </div>
 
 <script>
-    const ICON_MAP = {
-        '사원': '👤', '부서': '🏢', '메뉴': '📋', '공통': '⚙️',
-        '권한': '🔐', '역할': '🔐', '코드': '🗂️'
-    };
-
-    function getIcon(nm) {
-        for (const [key, icon] of Object.entries(ICON_MAP)) {
-            if (nm.includes(key)) return icon;
-        }
-        return '📁';
-    }
-
     function buildMenu(menus) {
         const roots    = menus.filter(m => !m.upperMenuCd).sort((a, b) => a.menuOrdr - b.menuOrdr);
         const childMap = {};
@@ -87,7 +75,7 @@
         roots.forEach((root, idx) => {
             const children = (childMap[root.menuCd] || []).sort((a, b) => a.menuOrdr - b.menuOrdr);
             const groupId  = 'group-' + idx;
-            const icon     = getIcon(root.menuNm);
+            const icon     = root.menuIcon || '📁';
 
             const group = document.createElement('div');
             group.className = 'nav-group';
@@ -105,8 +93,9 @@
                 const sub = group.querySelector('.nav-sub');
                 children.forEach(child => {
                     const a = document.createElement('a');
-                    a.textContent = child.menuNm;
-                    a.onclick = () => go(a, child.menuUrl || 'placeholder.html?title=' + encodeURIComponent(child.menuNm) + '&icon=' + encodeURIComponent(icon),
+                    const childIcon = child.menuIcon || '';
+                    a.textContent = (childIcon ? childIcon + ' ' : '') + child.menuNm;
+                    a.onclick = () => go(a, child.menuUrl || 'placeholder.html?title=' + encodeURIComponent(child.menuNm),
                                            root.menuNm + ' > ' + child.menuNm);
                     sub.appendChild(a);
                 });

@@ -22,6 +22,9 @@ public class ComMenu {
     @Column(name = "MENU_NM", nullable = false)
     private String menuNm;
 
+    @Column(name = "MENU_ICON")
+    private String menuIcon;
+
     @Column(name = "UPPER_MENU_CD")
     private String upperMenuCd;
 
@@ -39,4 +42,28 @@ public class ComMenu {
 
     @Column(name = "UPDT_DT", insertable = false, updatable = false)
     private LocalDateTime updtDt;
+
+    public static ComMenu create(String menuCd, String menuNm, String menuIcon,
+                                  String upperMenuCd, String menuUrl,
+                                  Integer menuOrdr, String useYn) {
+        ComMenu m = new ComMenu();
+        m.menuCd     = menuCd;
+        m.menuNm     = menuNm;
+        m.menuIcon   = menuIcon;
+        m.upperMenuCd = upperMenuCd;
+        m.menuUrl    = menuUrl;
+        m.menuOrdr   = menuOrdr;
+        m.useYn      = useYn;
+        return m;
+    }
+
+    public void update(String menuNm, String menuIcon, String upperMenuCd,
+                       String menuUrl, Integer menuOrdr, String useYn) {
+        this.menuNm      = menuNm;
+        this.menuIcon    = menuIcon;
+        this.upperMenuCd = upperMenuCd;
+        this.menuUrl     = menuUrl;
+        this.menuOrdr    = menuOrdr;
+        this.useYn       = useYn;
+    }
 }
