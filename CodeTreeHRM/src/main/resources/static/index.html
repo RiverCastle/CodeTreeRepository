@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CodeTree HRM</title>
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.6/Sortable.min.js"></script>
     <style>
         :root {
             --primary: #2C3E50;
@@ -70,37 +71,8 @@
         <img src="assets/logo/logo.svg" alt="Logo">
         <span class="sidebar-logo-text">CODE<span>TREE</span></span>
     </div>
-    <div class="sidebar-nav">
-        <div class="nav-group" id="group-emp">
-            <div class="nav-group-title" onclick="toggleGroup('group-emp')">
-                <span><span class="icon">👤</span>사원관리</span>
-                <span class="arrow">▼</span>
-            </div>
-            <div class="nav-sub">
-                <a href="#" onclick="return showPage('emp-appoint')">인사발령</a>
-                <a href="#" onclick="return showPage('emp-info')">인사정보</a>
-            </div>
-        </div>
-        <div class="nav-group" id="group-dept">
-            <div class="nav-group-title" onclick="toggleGroup('group-dept')">
-                <span><span class="icon">🏢</span>부서관리</span>
-                <span class="arrow">▼</span>
-            </div>
-            <div class="nav-sub">
-                <a href="#" onclick="return showPage('dept-list')">부서 목록</a>
-                <a href="#" onclick="return showPage('dept-reg')">부서 등록</a>
-            </div>
-        </div>
-        <div class="nav-group" id="group-common">
-            <div class="nav-group-title" onclick="toggleGroup('group-common')">
-                <span><span class="icon">⚙️</span>공통관리</span>
-                <span class="arrow">▼</span>
-            </div>
-            <div class="nav-sub">
-                <a href="#" onclick="return showPage('code-list')">공통코드 목록</a>
-                <a href="#" onclick="return showPage('code-reg')">공통코드 등록</a>
-            </div>
-        </div>
+    <div class="sidebar-nav" id="sidebar-nav">
+        <!-- DB에서 동적 생성 -->
     </div>
     <div class="sidebar-footer">CodeTree HRM v0.1</div>
 </nav>
@@ -143,6 +115,9 @@
             </div>
         </div>
 
+        <!-- 동적 페이지 영역 -->
+        <div id="page-dynamic" style="display:none;"></div>
+
         <!-- 플레이스홀더 -->
         <div id="page-placeholder" style="display:none;">
             <div class="page-panel" style="padding: 60px 40px; text-align:center;">
@@ -156,8 +131,14 @@
 </div>
 
 <script>
+    /* ── 토글 ── */
     function toggleGroup(id) {
         document.getElementById(id).classList.toggle('open');
+    }
+
+    /* ── 페이지 영역 제어 ── */
+    function hideAllPages() {
+        $('#page-home, #page-placeholder, #page-dynamic').hide();
     }
 
     function showHome() {
@@ -167,32 +148,88 @@
         $('.nav-sub a').removeClass('active');
     }
 
-    function showPage(pageId) {
+    /* ── 메뉴 페이지 로드 (URL 있는 경우) ── */
+    function loadMenuPage(menuCd, bc, url) {
         hideAllPages();
         $('.nav-sub a').removeClass('active');
-        $('a[onclick*="' + pageId + '"]').addClass('active');
+        $('[data-menu-cd="' + menuCd + '"]').addClass('active');
+        $('#bc-text').text(bc);
+        $('#page-dynamic').empty().load(url, function(response, status) {
+            if (status === 'error') {
+                hideAllPages();
+                $('#ph-icon').text('🔧');
+                $('#ph-title').text(bc.split(' > ').pop());
+                $('#page-placeholder').show();
+            }
+        }).show();
+    }
 
-        const pages = {
-            'emp-appoint': { bc:'사원관리 > 인사발령', icon:'👤', title:'인사발령' },
-            'emp-info':    { bc:'사원관리 > 인사정보', icon:'👤', title:'인사정보' },
-            'dept-list':   { bc:'부서관리 > 부서 목록',     icon:'🏢', title:'부서 목록' },
-            'dept-reg':    { bc:'부서관리 > 부서 등록',     icon:'🏢', title:'부서 등록' },
-            'code-list':   { bc:'공통관리 > 공통코드 목록', icon:'⚙️', title:'공통코드 목록' },
-            'code-reg':    { bc:'공통관리 > 공통코드 등록', icon:'⚙️', title:'공통코드 등록' },
-        };
-        const p = pages[pageId];
-        if (!p) return false;
-        $('#bc-text').text(p.bc);
-        $('#ph-icon').text(p.icon);
-        $('#ph-title').text(p.title);
+    /* ── 개발 중 플레이스홀더 (URL 없는 경우) ── */
+    function showPlaceholder(menuCd, bc, title) {
+        hideAllPages();
+        $('.nav-sub a').removeClass('active');
+        $('[data-menu-cd="' + menuCd + '"]').addClass('active');
+        $('#bc-text').text(bc);
+        $('#ph-icon').text('🔧');
+        $('#ph-title').text(title);
         $('#page-placeholder').show();
-        return false;
     }
 
-    function hideAllPages() {
-        $('#page-home, #page-placeholder').hide();
+    /* ── 사이드바 메뉴 동적 생성 ── */
+    function loadSidebarMenu() {
+        $.get('/api/menu', function(tree) {
+            const $nav = $('#sidebar-nav').empty();
+
+            tree.filter(m => m.useYn === 'Y').forEach(function(menu) {
+                const children = (menu.children || []).filter(c => c.useYn === 'Y');
+                const groupId  = 'group-' + menu.menuCd;
+
+                const $group = $(`
+                    <div class="nav-group" id="${groupId}">
+                        <div class="nav-group-title">
+                            <span>${menu.menuNm}</span>
+                            <span class="arrow">▼</span>
+                        </div>
+                        <div class="nav-sub"></div>
+                    </div>`);
+
+                $group.find('.nav-group-title').on('click', function() {
+                    toggleGroup(groupId);
+                });
+
+                const $sub = $group.find('.nav-sub');
+
+                if (children.length > 0) {
+                    children.forEach(function(child) {
+                        const bc = menu.menuNm + ' > ' + child.menuNm;
+                        const $a = $('<a href="#"></a>')
+                            .text(child.menuNm)
+                            .attr('data-menu-cd', child.menuCd)
+                            .on('click', function(e) {
+                                e.preventDefault();
+                                if (child.menuUrl) {
+                                    loadMenuPage(child.menuCd, bc, child.menuUrl);
+                                } else {
+                                    showPlaceholder(child.menuCd, bc, child.menuNm);
+                                }
+                            });
+                        $sub.append($a);
+                    });
+                } else if (menu.menuUrl) {
+                    // 2뎁스 없는 1뎁스 단독 메뉴
+                    $group.find('.nav-group-title').on('click', function() {
+                        loadMenuPage(menu.menuCd, menu.menuNm, menu.menuUrl);
+                    });
+                }
+
+                $nav.append($group);
+            });
+        }).fail(function() {
+            console.warn('사이드바 메뉴 로드 실패');
+        });
     }
 
+    /* ── 초기화 ── */
     $.get('/api/me', function(res) {
         if (!res.loggedIn) { location.href = '/login'; return; }
         const userId = res.userId;
@@ -201,6 +238,7 @@
         $('#welcomeMsg').text('안녕하세요, ' + userId + '님 👋');
     }).fail(function() { location.href = '/login'; });
 
+    loadSidebarMenu();
     showHome();
 </script>
 </body>

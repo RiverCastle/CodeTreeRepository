@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<style>
+    :root { --primary: #2C3E50; --accent: #82A67D; --danger: #E74C3C; --bg: #F1F2F6; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Pretendard', -apple-system, sans-serif; }
+
+    /* ── 카드 ── */
+    .card { background: white; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); }
+    .card-header {
+        display: flex; align-items: center; justify-content: space-between;
+        padding: 16px 20px; border-bottom: 1px solid #f0f0f0;
+    }
+    .card-header-title { font-weight: 700; color: var(--primary); font-size: 0.95rem; }
+    .card-header-right { display: flex; align-items: center; gap: 10px; }
+    .total { font-size: 0.8rem; color: #aaa; }
+
+    .btn-add {
+        padding: 7px 16px; background: var(--primary); color: white;
+        border: none; border-radius: 7px; font-size: 0.84rem; font-weight: 600;
+        cursor: pointer; transition: background 0.2s;
+    }
+    .btn-add:hover { background: var(--accent); }
+
+    /* ── 테이블 ── */
+    .dept-table { width: 100%; border-collapse: collapse; }
+    .dept-table thead th {
+        padding: 10px 16px; text-align: left; font-size: 0.78rem;
+        font-weight: 600; color: #888; background: #fafafa;
+        border-bottom: 1px solid #eee;
+    }
+    .dept-table thead th:last-child { text-align: center; }
+    .dept-table tbody td { padding: 11px 16px; font-size: 0.86rem; color: #444; border-bottom: 1px solid #f5f5f5; }
+    .dept-table tbody tr:hover td { background: #f9f9f9; }
+    .dept-table tbody tr:last-child td { border-bottom: none; }
+    .empty-row td { text-align: center; padding: 48px; color: #bbb; font-size: 0.88rem; }
+
+    .badge {
+        display: inline-block; font-size: 0.68rem; padding: 2px 8px;
+        border-radius: 10px; font-weight: 600;
+    }
+    .badge-active  { background: #e6f4ea; color: #1e7e34; }
+    .badge-inactive { background: #f0f0f0; color: #999; }
+
+    .btn-detail {
+        padding: 4px 12px; border: 1px solid #ddd; background: white;
+        border-radius: 6px; font-size: 0.78rem; color: #555; cursor: pointer; transition: 0.15s;
+    }
+    .btn-detail:hover { border-color: var(--primary); color: var(--primary); }
+
+    /* ── 모달 ── */
+    .modal-bg {
+        display: none; position: fixed; inset: 0;
+        background: rgba(0,0,0,0.35); z-index: 100;
+        align-items: center; justify-content: center;
+    }
+    .modal-bg.open { display: flex; }
+    .modal {
+        background: white; border-radius: 14px; width: 480px;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.15); overflow: hidden;
+    }
+    .modal-header {
+        display: flex; align-items: center; justify-content: space-between;
+        padding: 18px 24px; border-bottom: 1px solid #f0f0f0;
+    }
+    .modal-title { font-weight: 700; color: var(--primary); font-size: 1rem; }
+    .modal-close { background: none; border: none; font-size: 1.3rem; color: #aaa; cursor: pointer; line-height: 1; }
+    .modal-close:hover { color: #555; }
+    .modal-body { padding: 24px; }
+    .modal-footer {
+        display: flex; justify-content: flex-end; gap: 8px;
+        padding: 16px 24px; border-top: 1px solid #f0f0f0; background: #fafafa;
+    }
+
+    /* 상세 뷰 */
+    .detail-row { display: flex; padding: 10px 0; border-bottom: 1px solid #f5f5f5; font-size: 0.88rem; }
+    .detail-row:last-child { border-bottom: none; }
+    .detail-label { width: 100px; color: #888; font-weight: 600; flex-shrink: 0; }
+    .detail-value { color: #333; }
+
+    /* 폼 */
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+    .form-group { margin-bottom: 14px; }
+    .form-label { display: block; font-size: 0.82rem; font-weight: 600; color: #555; margin-bottom: 5px; }
+    .form-label .req { color: var(--danger); }
+    .form-control {
+        width: 100%; padding: 9px 12px; border: 1px solid #ddd;
+        border-radius: 7px; font-size: 0.88rem; transition: border-color 0.2s;
+    }
+    .form-control:focus { outline: none; border-color: var(--accent); }
+    .form-control[readonly] { background: #f5f5f5; color: #888; }
+
+    .btn { padding: 9px 20px; border: none; border-radius: 7px; font-weight: 600; font-size: 0.86rem; cursor: pointer; transition: 0.2s; }
+    .btn-primary { background: var(--primary); color: white; }
+    .btn-primary:hover { background: #3d5166; }
+    .btn-secondary { background: #f0f0f0; color: #555; }
+    .btn-secondary:hover { background: #e0e0e0; }
+    .btn-danger  { background: var(--danger); color: white; }
+    .btn-danger:hover { background: #c0392b; }
+    .btn-edit { background: #e8f4fd; color: #2980b9; }
+    .btn-edit:hover { background: #d0eaf8; }
+
+    .alert { padding: 10px 14px; border-radius: 7px; font-size: 0.84rem; margin-bottom: 14px; display: none; }
+    .alert-error { background: #fde8e8; color: var(--danger); border: 1px solid #f5c6cb; }
+</style>
+</head>
+<body>
+
+<!-- 부서 목록 카드 -->
+<div class="card">
+    <div class="card-header">
+        <span class="card-header-title">부서 목록</span>
+        <div class="card-header-right">
+            <span class="total" id="totalCount"></span>
+            <button class="btn-add" onclick="openAddModal()">+ 등록</button>
+        </div>
+    </div>
+    <table class="dept-table">
+        <thead>
+            <tr>
+                <th style="width:15%">부서코드</th>
+                <th style="width:25%">부서명</th>
+                <th style="width:20%">상위부서</th>
+                <th style="width:12%">상태</th>
+                <th style="width:18%">등록일</th>
+                <th style="width:10%">상세</th>
+            </tr>
+        </thead>
+        <tbody id="deptBody">
+            <tr class="empty-row"><td colspan="6">로딩 중...</td></tr>
+        </tbody>
+    </table>
+</div>
+
+<!-- 상세 모달 -->
+<div class="modal-bg" id="detailModal">
+    <div class="modal">
+        <div class="modal-header">
+            <span class="modal-title">부서 상세</span>
+            <button class="modal-close" onclick="closeModal('detailModal')">×</button>
+        </div>
+        <div class="modal-body" id="detailBody"></div>
+        <div class="modal-footer">
+            <button class="btn btn-danger" onclick="deleteFromDetail()">삭제</button>
+            <button class="btn btn-edit" onclick="switchToEdit()">수정</button>
+            <button class="btn btn-secondary" onclick="closeModal('detailModal')">닫기</button>
+        </div>
+    </div>
+</div>
+
+<!-- 추가/수정 모달 -->
+<div class="modal-bg" id="formModal">
+    <div class="modal">
+        <div class="modal-header">
+            <span class="modal-title" id="formModalTitle">부서 등록</span>
+            <button class="modal-close" onclick="closeModal('formModal')">×</button>
+        </div>
+        <div class="modal-body">
+            <div class="alert alert-error" id="formError"></div>
+            <div class="form-row">
+                <div class="form-group" style="margin-bottom:0">
+                    <label class="form-label">부서코드 <span class="req">*</span></label>
+                    <input type="text" class="form-control" id="fDeptCd" placeholder="예) DEPT001" maxlength="20">
+                </div>
+                <div class="form-group" style="margin-bottom:0">
+                    <label class="form-label">부서명 <span class="req">*</span></label>
+                    <input type="text" class="form-control" id="fDeptNm" placeholder="예) 개발팀" maxlength="100">
+                </div>
+            </div>
+            <div class="form-row" style="margin-top:14px">
+                <div class="form-group" style="margin-bottom:0">
+                    <label class="form-label">상위부서</label>
+                    <select class="form-control" id="fUpperDeptCd">
+                        <option value="">— 없음 (최상위) —</option>
+                    </select>
+                </div>
+                <div class="form-group" style="margin-bottom:0">
+                    <label class="form-label">사용여부</label>
+                    <select class="form-control" id="fUseYn">
+                        <option value="Y">사용</option>
+                        <option value="N">미사용</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-primary" onclick="saveDept()">저장</button>
+            <button class="btn btn-secondary" onclick="closeModal('formModal')">취소</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let currentDept = null;
+    let isEditMode = false;
+
+    function loadDeptList() {
+        $.get('/api/dept', function(list) {
+            const $body = $('#deptBody').empty();
+            if (!list || !list.length) {
+                $body.html('<tr class="empty-row"><td colspan="6">등록된 부서가 없습니다.</td></tr>');
+                $('#totalCount').text('');
+                return;
+            }
+            $('#totalCount').text('총 ' + list.length + '개');
+            list.forEach(function(d) {
+                const badgeCls = d.useYn === 'Y' ? 'badge-active' : 'badge-inactive';
+                const badgeTxt = d.useYn === 'Y' ? '활성' : '비활성';
+                const parentNm = d.upperDeptNm ? d.upperDeptNm + ' (' + d.upperDeptCd + ')' : '—';
+                $body.append(`
+                    <tr>
+                        <td>${d.deptCd}</td>
+                        <td>${d.deptNm}</td>
+                        <td>${parentNm}</td>
+                        <td><span class="badge ${badgeCls}">${badgeTxt}</span></td>
+                        <td>${d.createdAt || '—'}</td>
+                        <td style="text-align:center">
+                            <button class="btn-detail" onclick='openDetail(${JSON.stringify(d)})'>상세</button>
+                        </td>
+                    </tr>`);
+            });
+        }).fail(function() {
+            $('#deptBody').html('<tr class="empty-row"><td colspan="6">데이터를 불러올 수 없습니다.</td></tr>');
+        });
+    }
+
+    function openDetail(dept) {
+        currentDept = dept;
+        const badgeCls = dept.useYn === 'Y' ? 'badge-active' : 'badge-inactive';
+        const badgeTxt = dept.useYn === 'Y' ? '활성' : '비활성';
+        const parentNm = dept.upperDeptNm ? dept.upperDeptNm + ' (' + dept.upperDeptCd + ')' : '—';
+        $('#detailBody').html(`
+            <div class="detail-row"><span class="detail-label">부서코드</span><span class="detail-value">${dept.deptCd}</span></div>
+            <div class="detail-row"><span class="detail-label">부서명</span><span class="detail-value">${dept.deptNm}</span></div>
+            <div class="detail-row"><span class="detail-label">상위부서</span><span class="detail-value">${parentNm}</span></div>
+            <div class="detail-row"><span class="detail-label">사용여부</span><span class="detail-value"><span class="badge ${badgeCls}">${badgeTxt}</span></span></div>
+            <div class="detail-row"><span class="detail-label">등록일</span><span class="detail-value">${dept.createdAt || '—'}</span></div>
+        `);
+        $('#detailModal').addClass('open');
+    }
+
+    function switchToEdit() {
+        closeModal('detailModal');
+        openFormModal(currentDept);
+    }
+
+    function openAddModal() {
+        isEditMode = false;
+        currentDept = null;
+        $('#formModalTitle').text('부서 등록');
+        $('#fDeptCd').val('').prop('readonly', false);
+        $('#fDeptNm').val('');
+        $('#fUseYn').val('Y');
+        $('#formError').hide();
+        loadUpperDeptOptions(null);
+        $('#formModal').addClass('open');
+    }
+
+    function openFormModal(dept) {
+        isEditMode = true;
+        $('#formModalTitle').text('부서 수정');
+        $('#fDeptCd').val(dept.deptCd).prop('readonly', true);
+        $('#fDeptNm').val(dept.deptNm);
+        $('#fUseYn').val(dept.useYn);
+        $('#formError').hide();
+        loadUpperDeptOptions(dept.upperDeptCd);
+        $('#formModal').addClass('open');
+    }
+
+    function loadUpperDeptOptions(selectedCd) {
+        $.get('/api/dept', function(list) {
+            const $sel = $('#fUpperDeptCd').empty().append('<option value="">— 없음 (최상위) —</option>');
+            (list || []).forEach(function(d) {
+                if (isEditMode && currentDept && d.deptCd === currentDept.deptCd) return;
+                const opt = $(`<option value="${d.deptCd}">${d.deptNm} (${d.deptCd})</option>`);
+                if (d.deptCd === selectedCd) opt.prop('selected', true);
+                $sel.append(opt);
+            });
+        });
+    }
+
+    function saveDept() {
+        const deptCd = $('#fDeptCd').val().trim();
+        const deptNm = $('#fDeptNm').val().trim();
+        if (!deptCd) { showFormError('부서코드를 입력해주세요.'); return; }
+        if (!deptNm) { showFormError('부서명을 입력해주세요.'); return; }
+
+        const data = {
+            deptCd,
+            deptNm,
+            upperDeptCd: $('#fUpperDeptCd').val() || null,
+            useYn: $('#fUseYn').val()
+        };
+
+        const url    = isEditMode ? '/api/dept/' + deptCd : '/api/dept';
+        const method = isEditMode ? 'PUT' : 'POST';
+
+        $.ajax({ url, method, contentType: 'application/json', data: JSON.stringify(data) })
+            .done(function(res) {
+                if (res.success) { closeModal('formModal'); loadDeptList(); }
+                else showFormError(res.message || '저장에 실패했습니다.');
+            })
+            .fail(function() { showFormError('서버 오류가 발생했습니다.'); });
+    }
+
+    function deleteFromDetail() {
+        if (!currentDept) return;
+        if (!confirm('\'' + currentDept.deptNm + '\' 부서를 삭제하시겠습니까?')) return;
+        $.ajax({ url: '/api/dept/' + currentDept.deptCd, method: 'DELETE' })
+            .done(function(res) {
+                if (res.success) { closeModal('detailModal'); loadDeptList(); }
+                else alert(res.message || '삭제에 실패했습니다.');
+            })
+            .fail(function() { alert('서버 오류가 발생했습니다.'); });
+    }
+
+    function closeModal(id) { $('#' + id).removeClass('open'); }
+    function showFormError(msg) { $('#formError').text(msg).show(); }
+
+    $('.modal-bg').on('click', function(e) {
+        if ($(e.target).hasClass('modal-bg')) $(this).removeClass('open');
+    });
+
+    loadDeptList();
+</script>
+</body>
+</html>

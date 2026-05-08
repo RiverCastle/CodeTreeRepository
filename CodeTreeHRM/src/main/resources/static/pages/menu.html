@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<style>
+    :root { --primary: #2C3E50; --accent: #82A67D; --danger: #E74C3C; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Pretendard', -apple-system, sans-serif; }
+
+    /* ── 카드 ── */
+    .card { background: white; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); }
+    .card-header {
+        display: flex; align-items: center; justify-content: space-between;
+        padding: 16px 20px; border-bottom: 1px solid #f0f0f0;
+    }
+    .card-header-title { font-weight: 700; color: var(--primary); font-size: 0.95rem; }
+    .card-header-right { display: flex; align-items: center; gap: 10px; }
+    .total { font-size: 0.8rem; color: #aaa; }
+
+    /* ── 추가 버튼 ── */
+    .btn-add {
+        padding: 7px 16px; background: var(--primary); color: white;
+        border: none; border-radius: 7px; font-size: 0.84rem; font-weight: 600;
+        cursor: pointer; transition: background 0.2s;
+    }
+    .btn-add:hover { background: var(--accent); }
+
+    /* ── 트리 테이블 ── */
+    .tree-table { width: 100%; border-collapse: collapse; }
+    .tree-table thead th {
+        padding: 10px 16px; text-align: left; font-size: 0.78rem;
+        font-weight: 600; color: #888; background: #fafafa;
+        border-bottom: 1px solid #eee;
+    }
+    .tree-table thead th:last-child { text-align: center; }
+
+    /* 드래그 - 메뉴명 셀 */
+    .name-cell { cursor: ns-resize; user-select: none; }
+
+    /* 드래그 힌트 아이콘 (hover 시 노출) */
+    .drag-grip {
+        display: inline-flex; align-items: center; flex-shrink: 0;
+        width: 10px; margin-right: 7px;
+        color: #c8cdd4; opacity: 0;
+        transition: opacity 0.18s, color 0.18s;
+        vertical-align: middle; position: relative; top: -1px;
+    }
+    tr:hover .drag-grip { opacity: 1; color: #6b7280; }
+
+    /* SortableJS 상태 */
+    .sortable-ghost td { background: #f3f4f6 !important; opacity: 0.6; }
+    .sortable-chosen { opacity: 0.95; box-shadow: 0 2px 10px rgba(0,0,0,0.08); }
+    .sortable-drag { opacity: 0.9; }
+
+    /* 1뎁스 행 */
+    .row-d1 { background: #f4f6fb; }
+    .row-d1 td { padding: 11px 16px; font-weight: 700; color: var(--primary); font-size: 0.88rem; border-bottom: 1px solid #eef0f7; }
+
+    /* 2뎁스 행 */
+    .row-d2 td { padding: 9px 16px; font-size: 0.86rem; color: #444; border-bottom: 1px solid #f5f5f5; }
+    .row-d2:hover td { background: #f9f9f9; }
+
+    .depth-indent { display: flex; align-items: center; gap: 0; }
+    .depth-line { color: #d0d0d0; font-size: 0.8rem; padding-left: 12px; margin-right: 8px; }
+
+    /* 1뎁스 폴더 아이콘 */
+    .icon-folder { display: inline-flex; align-items: center; margin-right: 8px; color: #7f9db3; flex-shrink: 0; }
+    /* 2뎁스 메뉴 아이콘 */
+    .icon-menu { display: inline-flex; align-items: center; margin-right: 8px; color: #b0bec5; flex-shrink: 0; }
+
+    .badge {
+        display: inline-block; font-size: 0.68rem; padding: 2px 7px;
+        border-radius: 10px; background: var(--accent); color: white; font-weight: 500;
+    }
+    .badge.off { background: #ccc; }
+
+    .btn-detail {
+        padding: 4px 12px; border: 1px solid #ddd; background: white;
+        border-radius: 6px; font-size: 0.78rem; color: #555; cursor: pointer; transition: 0.15s;
+    }
+    .btn-detail:hover { border-color: var(--primary); color: var(--primary); }
+
+    .empty-row td { text-align: center; padding: 48px; color: #bbb; font-size: 0.88rem; }
+
+    /* ── 모달 ── */
+    .modal-bg {
+        display: none; position: fixed; inset: 0;
+        background: rgba(0,0,0,0.35); z-index: 100;
+        align-items: center; justify-content: center;
+    }
+    .modal-bg.open { display: flex; }
+    .modal {
+        background: white; border-radius: 14px; width: 460px;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.15); overflow: hidden;
+    }
+    .modal-header {
+        display: flex; align-items: center; justify-content: space-between;
+        padding: 18px 24px; border-bottom: 1px solid #f0f0f0;
+    }
+    .modal-title { font-weight: 700; color: var(--primary); font-size: 1rem; }
+    .modal-close { background: none; border: none; font-size: 1.3rem; color: #aaa; cursor: pointer; line-height: 1; }
+    .modal-close:hover { color: #555; }
+    .modal-body { padding: 24px; }
+    .modal-footer {
+        display: flex; justify-content: flex-end; gap: 8px;
+        padding: 16px 24px; border-top: 1px solid #f0f0f0; background: #fafafa;
+    }
+
+    /* 상세 뷰 */
+    .detail-row { display: flex; padding: 10px 0; border-bottom: 1px solid #f5f5f5; font-size: 0.88rem; }
+    .detail-row:last-child { border-bottom: none; }
+    .detail-label { width: 110px; color: #888; font-weight: 600; flex-shrink: 0; }
+    .detail-value { color: #333; }
+
+    /* 폼 */
+    .form-group { margin-bottom: 14px; }
+    .form-label { display: block; font-size: 0.82rem; font-weight: 600; color: #555; margin-bottom: 5px; }
+    .form-label .req { color: var(--danger); }
+    .form-control {
+        width: 100%; padding: 9px 12px; border: 1px solid #ddd;
+        border-radius: 7px; font-size: 0.88rem; transition: border-color 0.2s;
+    }
+    .form-control:focus { outline: none; border-color: var(--accent); }
+    .form-control[readonly] { background: #f5f5f5; color: #888; }
+    .radio-row { display: flex; gap: 16px; margin-top: 4px; }
+    .radio-row label { display: flex; align-items: center; gap: 5px; font-size: 0.88rem; cursor: pointer; }
+
+    .btn { padding: 9px 20px; border: none; border-radius: 7px; font-weight: 600; font-size: 0.86rem; cursor: pointer; transition: 0.2s; }
+    .btn-primary { background: var(--primary); color: white; }
+    .btn-primary:hover { background: #3d5166; }
+    .btn-secondary { background: #f0f0f0; color: #555; }
+    .btn-secondary:hover { background: #e0e0e0; }
+    .btn-danger { background: var(--danger); color: white; }
+    .btn-danger:hover { background: #c0392b; }
+    .btn-edit { background: #e8f4fd; color: #2980b9; }
+    .btn-edit:hover { background: #d0eaf8; }
+
+    .alert { padding: 10px 14px; border-radius: 7px; font-size: 0.84rem; margin-bottom: 14px; display: none; }
+    .alert-error { background: #fde8e8; color: var(--danger); border: 1px solid #f5c6cb; }
+</style>
+</head>
+<body>
+
+<!-- 메뉴 목록 카드 -->
+<div class="card">
+    <div class="card-header">
+        <span class="card-header-title">메뉴 목록</span>
+        <div class="card-header-right">
+            <span class="total" id="totalCount"></span>
+            <button class="btn-add" onclick="openAddModal()">+ 추가</button>
+        </div>
+    </div>
+    <table class="tree-table">
+        <thead>
+            <tr>
+                <th style="width:42%">메뉴명</th>
+                <th style="width:15%">메뉴코드</th>
+                <th style="width:18%">URL</th>
+                <th style="width:8%">순서</th>
+                <th style="width:10%">사용여부</th>
+                <th style="width:7%">상세</th>
+            </tr>
+        </thead>
+        <tbody id="menuBody">
+            <tr class="empty-row"><td colspan="6">로딩 중...</td></tr>
+        </tbody>
+    </table>
+</div>
+
+<!-- 상세 모달 -->
+<div class="modal-bg" id="detailModal">
+    <div class="modal">
+        <div class="modal-header">
+            <span class="modal-title">메뉴 상세</span>
+            <button class="modal-close" onclick="closeModal('detailModal')">×</button>
+        </div>
+        <div class="modal-body" id="detailBody"></div>
+        <div class="modal-footer">
+            <button class="btn btn-danger" id="btnDetailDelete" onclick="deleteFromDetail()">삭제</button>
+            <button class="btn btn-edit" onclick="switchToEdit()">수정</button>
+            <button class="btn btn-secondary" onclick="closeModal('detailModal')">닫기</button>
+        </div>
+    </div>
+</div>
+
+<!-- 추가/수정 모달 -->
+<div class="modal-bg" id="formModal">
+    <div class="modal">
+        <div class="modal-header">
+            <span class="modal-title" id="formModalTitle">메뉴 추가</span>
+            <button class="modal-close" onclick="closeModal('formModal')">×</button>
+        </div>
+        <div class="modal-body">
+            <div class="alert alert-error" id="formError"></div>
+            <div class="form-group">
+                <label class="form-label">메뉴코드 <span class="req">*</span></label>
+                <input type="text" class="form-control" id="fMenuCd" placeholder="예) MNU001" maxlength="20">
+            </div>
+            <div class="form-group">
+                <label class="form-label">메뉴명 <span class="req">*</span></label>
+                <input type="text" class="form-control" id="fMenuNm" placeholder="메뉴명 입력" maxlength="100">
+            </div>
+            <div class="form-group">
+                <label class="form-label">상위메뉴 <span style="color:#aaa;font-weight:400">(비워두면 1뎁스)</span></label>
+                <select class="form-control" id="fUpperMenuCd">
+                    <option value="">— 없음 (1뎁스) —</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">메뉴 URL</label>
+                <input type="text" class="form-control" id="fMenuUrl" placeholder="예) /emp/list">
+            </div>
+            <div class="form-group">
+                <label class="form-label">정렬 순서</label>
+                <input type="number" class="form-control" id="fMenuOrdr" value="0" min="0">
+            </div>
+            <div class="form-group">
+                <label class="form-label">사용여부</label>
+                <div class="radio-row">
+                    <label><input type="radio" name="fUseYn" value="Y" checked> 사용</label>
+                    <label><input type="radio" name="fUseYn" value="N"> 미사용</label>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-primary" onclick="saveMenu()">저장</button>
+            <button class="btn btn-secondary" onclick="closeModal('formModal')">취소</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let currentMenu = null;
+    let isEditMode = false;
+    let menuSortable = null;
+
+    const GRIP_SVG = `<svg class="drag-grip" width="9" height="14" viewBox="0 0 9 14" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><polyline points="1.5,5 4.5,1.5 7.5,5"/><line x1="4.5" y1="2" x2="4.5" y2="12"/><polyline points="1.5,9 4.5,12.5 7.5,9"/></svg>`;
+    const FOLDER_SVG = `<span class="icon-folder"><svg width="14" height="13" viewBox="0 0 14 13" fill="none"><path d="M1 3.5C1 2.67 1.67 2 2.5 2H5.382a1 1 0 0 1 .894.553L6.618 3.5H11.5C12.33 3.5 13 4.17 13 5v5.5c0 .83-.67 1.5-1.5 1.5h-9A1.5 1.5 0 0 1 1 10.5v-7Z" fill="currentColor" opacity=".18"/><path d="M1 5C1 4.17 1.67 3.5 2.5 3.5H6.618l-.342-.671A1 1 0 0 0 5.382 2.5H2.5A1.5 1.5 0 0 0 1 4v1Z" fill="currentColor" opacity=".35"/><path d="M1 5h12v5.5A1.5 1.5 0 0 1 11.5 12h-9A1.5 1.5 0 0 1 1 10.5V5Z" fill="currentColor"/></svg></span>`;
+    const PAGE_SVG = `<span class="icon-menu"><svg width="12" height="13" viewBox="0 0 12 13" fill="none"><rect x="1" y="1.5" width="10" height="10" rx="1.5" fill="currentColor" opacity=".15"/><path d="M3 4.5h6M3 6.5h6M3 8.5h4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg></span>`;
+
+    function loadMenuTree() {
+        $.get('/api/menu', function(tree) {
+            const $body = $('#menuBody').empty();
+            let total = 0;
+
+            if (!tree.length) {
+                $body.html('<tr class="empty-row"><td colspan="6">등록된 메뉴가 없습니다.</td></tr>');
+                $('#totalCount').text('');
+                return;
+            }
+
+            tree.forEach(function(menu) {
+                total++;
+                $body.append(`
+                    <tr class="row-d1" data-depth="1" data-cd="${menu.menuCd}">
+                        <td class="name-cell"><div class="depth-indent">${GRIP_SVG}${FOLDER_SVG}${menu.menuNm}</div></td>
+                        <td>${menu.menuCd}</td>
+                        <td style="color:#aaa">${menu.menuUrl || '—'}</td>
+                        <td>${menu.menuOrdr}</td>
+                        <td><span class="badge ${menu.useYn==='Y'?'':'off'}">${menu.useYn==='Y'?'사용':'미사용'}</span></td>
+                        <td style="text-align:center">
+                            <button class="btn-detail" onclick='openDetail(${JSON.stringify(menu)})'>상세</button>
+                        </td>
+                    </tr>`);
+
+                (menu.children || []).forEach(function(child) {
+                    total++;
+                    $body.append(`
+                        <tr class="row-d2" data-depth="2" data-cd="${child.menuCd}" data-parent="${child.upperMenuCd}">
+                            <td class="name-cell"><div class="depth-indent">${GRIP_SVG}<span class="depth-line">└</span>${PAGE_SVG}${child.menuNm}</div></td>
+                            <td style="color:#888">${child.menuCd}</td>
+                            <td style="color:#888">${child.menuUrl || '—'}</td>
+                            <td style="color:#888">${child.menuOrdr}</td>
+                            <td><span class="badge ${child.useYn==='Y'?'':'off'}">${child.useYn==='Y'?'사용':'미사용'}</span></td>
+                            <td style="text-align:center">
+                                <button class="btn-detail" onclick='openDetail(${JSON.stringify(child)})'>상세</button>
+                            </td>
+                        </tr>`);
+                });
+            });
+
+            $('#totalCount').text('총 ' + total + '개');
+            initSortable();
+        });
+    }
+
+    function initSortable() {
+        if (menuSortable) menuSortable.destroy();
+        menuSortable = Sortable.create(document.getElementById('menuBody'), {
+            handle: '.name-cell',
+            animation: 150,
+            onMove: function(evt) {
+                const fromDepth = evt.dragged.dataset.depth;
+                const toDepth = evt.related.dataset.depth;
+                if (!toDepth || fromDepth !== toDepth) return false;
+                if (fromDepth === '2' && evt.dragged.dataset.parent !== evt.related.dataset.parent) return false;
+            },
+            onEnd: function() {
+                saveOrder();
+            }
+        });
+    }
+
+    function saveOrder() {
+        const orders = [];
+        let d1Idx = 0;
+        const d2Counters = {};
+
+        $('#menuBody tr[data-depth]').each(function() {
+            const depth = $(this).data('depth');
+            const cd = String($(this).data('cd'));
+            const parent = String($(this).data('parent') || '');
+
+            if (depth === 1) {
+                orders.push({ menuCd: cd, menuOrdr: ++d1Idx });
+            } else {
+                if (!d2Counters[parent]) d2Counters[parent] = 0;
+                orders.push({ menuCd: cd, menuOrdr: ++d2Counters[parent] });
+            }
+        });
+
+        $.ajax({
+            url: '/api/menu/order',
+            method: 'PUT',
+            contentType: 'application/json',
+            data: JSON.stringify(orders)
+        }).done(function(res) {
+            if (res.success) loadMenuTree();
+        });
+    }
+
+    function openDetail(menu) {
+        currentMenu = menu;
+        $('#detailBody').html(`
+            <div class="detail-row"><span class="detail-label">메뉴코드</span><span class="detail-value">${menu.menuCd}</span></div>
+            <div class="detail-row"><span class="detail-label">메뉴명</span><span class="detail-value">${menu.menuNm}</span></div>
+            <div class="detail-row"><span class="detail-label">상위메뉴</span><span class="detail-value">${menu.upperMenuCd || '—'}</span></div>
+            <div class="detail-row"><span class="detail-label">URL</span><span class="detail-value">${menu.menuUrl || '—'}</span></div>
+            <div class="detail-row"><span class="detail-label">정렬 순서</span><span class="detail-value">${menu.menuOrdr}</span></div>
+            <div class="detail-row"><span class="detail-label">사용여부</span><span class="detail-value"><span class="badge ${menu.useYn==='Y'?'':'off'}">${menu.useYn==='Y'?'사용':'미사용'}</span></span></div>
+        `);
+        $('#btnDetailDelete').toggle(!menu.upperMenuCd === false || menu.upperMenuCd !== null);
+        $('#detailModal').addClass('open');
+    }
+
+    function switchToEdit() {
+        closeModal('detailModal');
+        openFormModal(currentMenu);
+    }
+
+    function openAddModal() {
+        isEditMode = false;
+        currentMenu = null;
+        $('#formModalTitle').text('메뉴 추가');
+        $('#fMenuCd').val('').prop('readonly', false);
+        $('#fMenuNm, #fMenuUrl').val('');
+        $('#fUpperMenuCd').val('');
+        $('#fMenuOrdr').val(0);
+        $('input[name=fUseYn][value=Y]').prop('checked', true);
+        $('#formError').hide();
+        loadUpperMenuOptions(null);
+        $('#formModal').addClass('open');
+    }
+
+    function openFormModal(menu) {
+        isEditMode = true;
+        $('#formModalTitle').text('메뉴 수정');
+        $('#fMenuCd').val(menu.menuCd).prop('readonly', true);
+        $('#fMenuNm').val(menu.menuNm);
+        $('#fMenuUrl').val(menu.menuUrl || '');
+        $('#fMenuOrdr').val(menu.menuOrdr);
+        $('input[name=fUseYn][value=' + menu.useYn + ']').prop('checked', true);
+        $('#formError').hide();
+        loadUpperMenuOptions(menu.upperMenuCd);
+        $('#formModal').addClass('open');
+    }
+
+    function loadUpperMenuOptions(selectedCd) {
+        $.get('/api/menu/first-depth', function(list) {
+            const $sel = $('#fUpperMenuCd').empty().append('<option value="">— 없음 (1뎁스) —</option>');
+            list.forEach(function(m) {
+                const opt = $(`<option value="${m.menuCd}">${m.menuNm} [${m.menuCd}]</option>`);
+                if (m.menuCd === selectedCd) opt.prop('selected', true);
+                $sel.append(opt);
+            });
+        });
+    }
+
+    function saveMenu() {
+        const menuCd = $('#fMenuCd').val().trim();
+        const menuNm = $('#fMenuNm').val().trim();
+        if (!menuCd) { showFormError('메뉴코드를 입력해주세요.'); return; }
+        if (!menuNm) { showFormError('메뉴명을 입력해주세요.'); return; }
+
+        const data = {
+            menuCd, menuNm,
+            upperMenuCd: $('#fUpperMenuCd').val() || null,
+            menuUrl: $('#fMenuUrl').val().trim() || null,
+            menuOrdr: parseInt($('#fMenuOrdr').val()) || 0,
+            useYn: $('input[name=fUseYn]:checked').val()
+        };
+
+        const url = isEditMode ? '/api/menu/' + menuCd : '/api/menu';
+        const method = isEditMode ? 'PUT' : 'POST';
+        $.ajax({ url, method, contentType: 'application/json', data: JSON.stringify(data) })
+            .done(function(res) {
+                if (res.success) { closeModal('formModal'); loadMenuTree(); }
+                else showFormError(res.message);
+            });
+    }
+
+    function deleteFromDetail() {
+        if (!currentMenu) return;
+        if (!confirm(`'${currentMenu.menuNm}' 메뉴를 삭제하시겠습니까?`)) return;
+        $.ajax({ url: '/api/menu/' + currentMenu.menuCd, method: 'DELETE' })
+            .done(function(res) {
+                if (res.success) { closeModal('detailModal'); loadMenuTree(); }
+                else alert(res.message);
+            });
+    }
+
+    function closeModal(id) { $('#' + id).removeClass('open'); }
+    function showFormError(msg) { $('#formError').text(msg).show(); }
+
+    $('.modal-bg').on('click', function(e) {
+        if ($(e.target).hasClass('modal-bg')) $(this).removeClass('open');
+    });
+
+    loadMenuTree();
+</script>
+</body>
+</html>
