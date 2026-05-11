@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.codetree.CodeTreeHRM.hr.mapper.DepartmentMapper">
+
+    <!-- ─────────────────────────────────────
+         전체 부서 목록 (트리 구성용)
+         상위 부서 코드 → 부서 순서 기준 정렬
+    ───────────────────────────────────── -->
+    <select id="findAllDepts" resultType="com.codetree.CodeTreeHRM.hr.dto.DepartmentDto">
+        SELECT
+            d.DEPT_CD                                       AS deptCd,
+            d.UPPER_DEPT_CD                                 AS upperDeptCd,
+            ud.DEPT_NM                                      AS upperDeptNm,
+            d.DEPT_LVL                                      AS deptLvl,
+            d.DEPT_ORDR                                     AS deptOrdr,
+            d.DEPT_NM                                       AS deptNm,
+            d.DEPT_ENG_NM                                   AS deptEngNm,
+            d.DEPT_SHRT_NM                                  AS deptShrtNm,
+            d.DEPT_SE_CD                                    AS deptSeCd,
+            d.DEPT_MNGR_NO                                  AS deptMngrNo,
+            e.EMP_NM                                        AS deptMngrNm,
+            d.DEPT_TELNO                                    AS deptTelno,
+            d.DEPT_LCTN_NM                                  AS deptLctnNm,
+            DATE_FORMAT(d.ESTBL_YMD, '%Y-%m-%d')            AS estblYmd,
+            DATE_FORMAT(d.CLSG_YMD,  '%Y-%m-%d')            AS clsgYmd,
+            d.USE_YN                                        AS useYn,
+            DATE_FORMAT(d.REGIST_DT, '%Y-%m-%d %H:%i')     AS registDt,
+            DATE_FORMAT(d.UPDT_DT,   '%Y-%m-%d %H:%i')     AS updtDt
+        FROM hrm_dept_master d
+        LEFT JOIN hrm_dept_master ud ON d.UPPER_DEPT_CD = ud.DEPT_CD
+        LEFT JOIN hrm_emp_master  e  ON d.DEPT_MNGR_NO  = e.EMP_NO
+        ORDER BY IFNULL(d.DEPT_LVL, 1), d.DEPT_ORDR
+    </select>
+
+    <!-- ─────────────────────────────────────
+         단건 상세 조회
+    ───────────────────────────────────── -->
+    <select id="findByDeptCd" resultType="com.codetree.CodeTreeHRM.hr.dto.DepartmentDto">
+        SELECT
+            d.DEPT_CD                                       AS deptCd,
+            d.UPPER_DEPT_CD                                 AS upperDeptCd,
+            ud.DEPT_NM                                      AS upperDeptNm,
+            d.DEPT_LVL                                      AS deptLvl,
+            d.DEPT_ORDR                                     AS deptOrdr,
+            d.DEPT_NM                                       AS deptNm,
+            d.DEPT_ENG_NM                                   AS deptEngNm,
+            d.DEPT_SHRT_NM                                  AS deptShrtNm,
+            d.DEPT_SE_CD                                    AS deptSeCd,
+            d.DEPT_MNGR_NO                                  AS deptMngrNo,
+            e.EMP_NM                                        AS deptMngrNm,
+            d.DEPT_TELNO                                    AS deptTelno,
+            d.DEPT_LCTN_NM                                  AS deptLctnNm,
+            DATE_FORMAT(d.ESTBL_YMD, '%Y-%m-%d')            AS estblYmd,
+            DATE_FORMAT(d.CLSG_YMD,  '%Y-%m-%d')            AS clsgYmd,
+            d.USE_YN                                        AS useYn,
+            DATE_FORMAT(d.REGIST_DT, '%Y-%m-%d %H:%i')     AS registDt,
+            DATE_FORMAT(d.UPDT_DT,   '%Y-%m-%d %H:%i')     AS updtDt
+        FROM hrm_dept_master d
+        LEFT JOIN hrm_dept_master ud ON d.UPPER_DEPT_CD = ud.DEPT_CD
+        LEFT JOIN hrm_emp_master  e  ON d.DEPT_MNGR_NO  = e.EMP_NO
+        WHERE d.DEPT_CD = #{deptCd}
+    </select>
+
+    <!-- ─────────────────────────────────────
+         직접 하위 부서 조회 (레벨 cascade용)
+    ───────────────────────────────────── -->
+    <select id="findDirectChildren" resultType="com.codetree.CodeTreeHRM.hr.dto.DepartmentDto">
+        SELECT DEPT_CD AS deptCd, DEPT_LVL AS deptLvl
+        FROM hrm_dept_master
+        WHERE UPPER_DEPT_CD = #{upperDeptCd}
+    </select>
+
+    <!-- ─────────────────────────────────────
+         코드 존재 여부 확인 (중복 체크)
+    ───────────────────────────────────── -->
+    <select id="countByDeptCd" resultType="int">
+        SELECT COUNT(*) FROM hrm_dept_master WHERE DEPT_CD = #{deptCd}
+    </select>
+
+    <!-- ─────────────────────────────────────
+         활성 하위 부서 수 (폐지 제약 체크)
+    ───────────────────────────────────── -->
+    <select id="countActiveChildren" resultType="int">
+        SELECT COUNT(*)
+        FROM hrm_dept_master
+        WHERE UPPER_DEPT_CD = #{deptCd} AND USE_YN = 'Y'
+    </select>
+
+    <!-- ─────────────────────────────────────
+         재직 중인 사원 수 (폐지 제약 체크)
+    ───────────────────────────────────── -->
+    <select id="countActiveEmployees" resultType="int">
+        SELECT COUNT(*)
+        FROM hrm_emp_master
+        WHERE DEPT_CD = #{deptCd} AND EMP_STTS_CD != 'RESIGNED'
+    </select>
+
+    <!-- ─────────────────────────────────────
+         신규 등록
+    ───────────────────────────────────── -->
+    <insert id="insertDepartment" parameterType="com.codetree.CodeTreeHRM.hr.dto.DepartmentDto">
+        INSERT INTO hrm_dept_master (
+            DEPT_CD, DEPT_NM, DEPT_ENG_NM, DEPT_SHRT_NM, DEPT_SE_CD,
+            UPPER_DEPT_CD, DEPT_LVL, DEPT_ORDR,
+            DEPT_MNGR_NO, DEPT_TELNO, DEPT_LCTN_NM,
+            ESTBL_YMD, USE_YN
+        ) VALUES (
+            #{deptCd}, #{deptNm}, #{deptEngNm}, #{deptShrtNm}, #{deptSeCd},
+            #{upperDeptCd}, #{deptLvl}, #{deptOrdr},
+            #{deptMngrNo}, #{deptTelno}, #{deptLctnNm},
+            #{estblYmd}, IFNULL(#{useYn}, 'Y')
+        )
+    </insert>
+
+    <!-- ─────────────────────────────────────
+         수정 (UPDT_DT는 DB 자동 갱신)
+    ───────────────────────────────────── -->
+    <update id="updateDepartment" parameterType="com.codetree.CodeTreeHRM.hr.dto.DepartmentDto">
+        UPDATE hrm_dept_master
+        <set>
+            DEPT_NM        = #{deptNm},
+            DEPT_ENG_NM    = #{deptEngNm},
+            DEPT_SHRT_NM   = #{deptShrtNm},
+            DEPT_SE_CD     = #{deptSeCd},
+            UPPER_DEPT_CD  = #{upperDeptCd},
+            DEPT_LVL       = #{deptLvl},
+            DEPT_ORDR      = #{deptOrdr},
+            DEPT_MNGR_NO   = #{deptMngrNo},
+            DEPT_TELNO     = #{deptTelno},
+            DEPT_LCTN_NM   = #{deptLctnNm},
+            ESTBL_YMD      = #{estblYmd},
+            USE_YN         = #{useYn}
+        </set>
+        WHERE DEPT_CD = #{deptCd}
+    </update>
+
+    <!-- ─────────────────────────────────────
+         레벨만 단독 업데이트 (cascade 처리용)
+    ───────────────────────────────────── -->
+    <update id="updateDeptLevel">
+        UPDATE hrm_dept_master
+        SET DEPT_LVL = #{deptLvl}
+        WHERE DEPT_CD = #{deptCd}
+    </update>
+
+    <!-- ─────────────────────────────────────
+         폐지 처리: USE_YN = 'N', CLSG_YMD = 오늘
+    ───────────────────────────────────── -->
+    <update id="closeDepartment">
+        UPDATE hrm_dept_master
+        SET USE_YN   = 'N',
+            CLSG_YMD = CURDATE()
+        WHERE DEPT_CD = #{deptCd}
+    </update>
+
+    <!-- ─────────────────────────────────────
+         DEPT-NNN 패턴 최대 시퀀스 조회
+         예) DEPT-001 ~ DEPT-004 중 최댓값 → 4
+         신규 코드 생성 시 +1 하여 DEPT-005 반환
+    ───────────────────────────────────── -->
+    <select id="findMaxDeptSeq" resultType="int">
+        SELECT IFNULL(
+            MAX(CAST(SUBSTRING_INDEX(DEPT_CD, '-', -1) AS UNSIGNED)),
+            0
+        )
+        FROM hrm_dept_master
+        WHERE DEPT_CD REGEXP '^DEPT-[0-9]+$'
+    </select>
+
+</mapper>
