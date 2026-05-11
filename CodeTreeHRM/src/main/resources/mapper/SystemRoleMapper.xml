@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.codetree.CodeTreeHRM.system.mapper.SystemRoleMapper">
+
+    <!-- ─────────────────────────────────────
+         권한 전체 목록 (보유 사원 수 포함)
+    ───────────────────────────────────── -->
+    <select id="findAllRoles" resultType="com.codetree.CodeTreeHRM.system.dto.SystemRoleDto">
+        SELECT
+            r.ROLE_CD                                       AS roleCd,
+            r.ROLE_NM                                       AS roleNm,
+            r.ROLE_LEVEL                                    AS roleLevel,
+            r.DC                                            AS dc,
+            r.USE_YN                                        AS useYn,
+            DATE_FORMAT(r.REGIST_DT, '%Y-%m-%d %H:%i')     AS registDt,
+            DATE_FORMAT(r.UPDT_DT,   '%Y-%m-%d %H:%i')     AS updtDt,
+            COUNT(er.EMP_NO)                                AS empCount
+        FROM com_role r
+        LEFT JOIN com_emp_role er ON r.ROLE_CD = er.ROLE_CD
+        GROUP BY r.ROLE_CD, r.ROLE_NM, r.ROLE_LEVEL, r.DC, r.USE_YN, r.REGIST_DT, r.UPDT_DT
+        ORDER BY r.ROLE_LEVEL ASC, r.ROLE_CD ASC
+    </select>
+
+    <!-- ─────────────────────────────────────
+         단건 조회
+    ───────────────────────────────────── -->
+    <select id="findByRoleCd" resultType="com.codetree.CodeTreeHRM.system.dto.SystemRoleDto">
+        SELECT
+            ROLE_CD                                         AS roleCd,
+            ROLE_NM                                         AS roleNm,
+            ROLE_LEVEL                                      AS roleLevel,
+            DC                                              AS dc,
+            USE_YN                                          AS useYn,
+            DATE_FORMAT(REGIST_DT, '%Y-%m-%d %H:%i')       AS registDt,
+            DATE_FORMAT(UPDT_DT,   '%Y-%m-%d %H:%i')       AS updtDt
+        FROM com_role
+        WHERE ROLE_CD = #{roleCd}
+    </select>
+
+    <!-- ─────────────────────────────────────
+         중복 체크
+    ───────────────────────────────────── -->
+    <select id="countByRoleCd" resultType="int">
+        SELECT COUNT(*) FROM com_role WHERE ROLE_CD = #{roleCd}
+    </select>
+
+    <!-- ─────────────────────────────────────
+         신규 등록
+    ───────────────────────────────────── -->
+    <insert id="insertRole" parameterType="com.codetree.CodeTreeHRM.system.dto.SystemRoleDto">
+        INSERT INTO com_role (ROLE_CD, ROLE_NM, ROLE_LEVEL, DC, USE_YN)
+        VALUES (#{roleCd}, #{roleNm}, #{roleLevel}, #{dc}, IFNULL(#{useYn}, 'Y'))
+    </insert>
+
+    <!-- ─────────────────────────────────────
+         수정 (UPDT_DT DB 자동 갱신)
+    ───────────────────────────────────── -->
+    <update id="updateRole" parameterType="com.codetree.CodeTreeHRM.system.dto.SystemRoleDto">
+        UPDATE com_role
+        <set>
+            ROLE_NM    = #{roleNm},
+            ROLE_LEVEL = #{roleLevel},
+            DC         = #{dc},
+            USE_YN     = #{useYn}
+        </set>
+        WHERE ROLE_CD = #{roleCd}
+    </update>
+
+    <!-- ─────────────────────────────────────
+         사용 여부 단독 토글
+    ───────────────────────────────────── -->
+    <update id="updateRoleStatus">
+        UPDATE com_role SET USE_YN = #{useYn} WHERE ROLE_CD = #{roleCd}
+    </update>
+
+    <!-- ─────────────────────────────────────
+         특정 권한을 보유한 사원 목록
+         (hrm_emp_master + com_user + com_emp_role 조인)
+    ───────────────────────────────────── -->
+    <select id="findEmpsByRoleCd" resultType="com.codetree.CodeTreeHRM.system.dto.EmpRoleDto">
+        SELECT
+            e.EMP_NO                                        AS empNo,
+            e.EMP_NM                                        AS empNm,
+            e.DEPT_CD                                       AS deptCd,
+            d.DEPT_NM                                       AS deptNm,
+            p.JBGD_NM                                       AS jbgdNm,
+            e.EMP_STTS_CD                                   AS empSttsCd,
+            u.USER_ID                                       AS userId,
+            u.ACCT_LOCK_YN                                  AS acctLockYn,
+            u.USE_YN                                        AS userUseYn,
+            er.ROLE_CD                                      AS roleCd,
+            r.ROLE_NM                                       AS roleNm,
+            DATE_FORMAT(er.GRNT_DT, '%Y-%m-%d')             AS grntDt,
+            er.GRNT_EMP_NO                                  AS grntEmpNo,
+            er.EMP_ROLE_NO                                  AS empRoleNo
+        FROM com_emp_role er
+        INNER JOIN hrm_emp_master e  ON er.EMP_NO  = e.EMP_NO
+        INNER JOIN com_role       r  ON er.ROLE_CD = r.ROLE_CD
+        LEFT  JOIN hrm_dept_master d ON e.DEPT_CD  = d.DEPT_CD
+        LEFT  JOIN hrm_pos_master  p ON e.JBGD_CD  = p.JBGD_CD
+        LEFT  JOIN com_user        u ON e.EMP_NO   = u.EMP_NO
+        WHERE er.ROLE_CD = #{roleCd}
+        ORDER BY e.DEPT_CD, e.EMP_NO
+    </select>
+
+    <!-- ─────────────────────────────────────
+         특정 사원이 보유한 권한 목록
+    ───────────────────────────────────── -->
+    <select id="findRolesByEmpNo" resultType="com.codetree.CodeTreeHRM.system.dto.EmpRoleDto">
+        SELECT
+            e.EMP_NO                                        AS empNo,
+            e.EMP_NM                                        AS empNm,
+            er.ROLE_CD                                      AS roleCd,
+            r.ROLE_NM                                       AS roleNm,
+            r.ROLE_LEVEL                                    AS roleLevel,
+            DATE_FORMAT(er.GRNT_DT, '%Y-%m-%d')             AS grntDt,
+            er.GRNT_EMP_NO                                  AS grntEmpNo,
+            er.EMP_ROLE_NO                                  AS empRoleNo
+        FROM com_emp_role er
+        INNER JOIN hrm_emp_master e ON er.EMP_NO  = e.EMP_NO
+        INNER JOIN com_role       r ON er.ROLE_CD = r.ROLE_CD
+        WHERE er.EMP_NO = #{empNo}
+        ORDER BY r.ROLE_LEVEL ASC
+    </select>
+
+    <!-- ─────────────────────────────────────
+         시스템 계정(com_user)이 있는 사원 전체
+         → 권한 할당 대상 셀렉트용
+    ───────────────────────────────────── -->
+    <select id="findAllUsableEmps" resultType="com.codetree.CodeTreeHRM.system.dto.EmpRoleDto">
+        SELECT
+            e.EMP_NO                AS empNo,
+            e.EMP_NM                AS empNm,
+            d.DEPT_NM               AS deptNm,
+            u.USER_ID               AS userId,
+            u.ACCT_LOCK_YN          AS acctLockYn,
+            u.USE_YN                AS userUseYn
+        FROM hrm_emp_master e
+        INNER JOIN com_user        u ON e.EMP_NO  = u.EMP_NO
+        LEFT  JOIN hrm_dept_master d ON e.DEPT_CD = d.DEPT_CD
+        WHERE e.EMP_STTS_CD != 'RESIGNED'
+        ORDER BY e.DEPT_CD, e.EMP_NO
+    </select>
+
+    <!-- ─────────────────────────────────────
+         사원 권한 전체 삭제 후 재등록 (Delete-Insert)
+    ───────────────────────────────────── -->
+    <delete id="deleteEmpRoles">
+        DELETE FROM com_emp_role WHERE EMP_NO = #{empNo}
+    </delete>
+
+    <insert id="insertEmpRole">
+        INSERT INTO com_emp_role (EMP_NO, ROLE_CD, GRNT_EMP_NO)
+        VALUES (#{empNo}, #{roleCd}, #{grntEmpNo})
+    </insert>
+
+</mapper>
