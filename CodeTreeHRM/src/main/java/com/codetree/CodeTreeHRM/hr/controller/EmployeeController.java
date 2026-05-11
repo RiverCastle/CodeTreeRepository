@@ -1,7 +1,6 @@
 package com.codetree.CodeTreeHRM.hr.controller;
 
 import com.codetree.CodeTreeHRM.common.dto.ApiResponse;
-import com.codetree.CodeTreeHRM.hr.dto.DeptDto;
 import com.codetree.CodeTreeHRM.hr.dto.EmployeeDto;
 import com.codetree.CodeTreeHRM.hr.dto.EmployeeSearchDto;
 import com.codetree.CodeTreeHRM.hr.dto.JobGradeDto;
@@ -54,11 +53,6 @@ public class EmployeeController {
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
         }
-    }
-
-    @GetMapping("/departments")
-    public ResponseEntity<ApiResponse<List<DeptDto>>> getDepartments() {
-        return ResponseEntity.ok(ApiResponse.success(employeeService.findAllDepts()));
     }
 
     @GetMapping("/job-grades")
