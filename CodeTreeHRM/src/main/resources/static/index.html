@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
@@ -492,6 +492,44 @@
             </div>
         </div>
 
+        <!-- 시스템 사용자 관리 -->
+        <div id="page-user-mgmt" style="display:none;">
+            <div class="page-panel" style="padding: 24px;">
+                <div class="admin-toolbar">
+                    <div class="search-form">
+                        <input type="text" id="user-search-id"  placeholder="아이디 검색" style="width:130px"
+                               onkeydown="if(event.key==='Enter') searchUsers(1)">
+                        <input type="text" id="user-search-emp" placeholder="사번 검색" style="width:120px"
+                               onkeydown="if(event.key==='Enter') searchUsers(1)">
+                        <select id="user-search-use" style="min-width:100px">
+                            <option value="">사용여부 전체</option>
+                            <option value="Y">사용</option>
+                            <option value="N">미사용</option>
+                        </select>
+                        <button class="btn-primary" onclick="searchUsers(1)">검색</button>
+                    </div>
+                    <button class="btn-primary" onclick="openUserModal(null)">+ 신규 등록</button>
+                </div>
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>사용자 아이디</th>
+                            <th>사번</th>
+                            <th>성명</th>
+                            <th>부서</th>
+                            <th>사용여부</th>
+                            <th>계정잠금</th>
+                            <th>최근 로그인</th>
+                            <th>등록일시</th>
+                            <th style="text-align:center">관리</th>
+                        </tr>
+                    </thead>
+                    <tbody id="user-table-body"></tbody>
+                </table>
+                <div id="user-pagination" class="pagination" style="margin-top:16px;"></div>
+            </div>
+        </div>
+
         <!-- 권한별 메뉴 관리 -->
         <div id="page-role-menu" style="display:none;">
             <div style="display:flex; gap:16px; align-items:flex-start;">
@@ -600,6 +638,75 @@
         </div>
 
     </main>
+</div>
+
+<!-- 사용자 등록/수정 모달 -->
+<div id="user-modal" class="modal-overlay" style="display:none;">
+    <div class="modal-box">
+        <div class="modal-header">
+            <h3 id="user-modal-title">사용자 등록</h3>
+            <button class="modal-close" onclick="closeUserModal()">×</button>
+        </div>
+        <div class="modal-body">
+            <div class="form-row">
+                <label>사용자 아이디 <span class="req">*</span></label>
+                <input type="text" id="f-user-id" placeholder="영문/숫자 조합" maxlength="50" autocomplete="off">
+            </div>
+            <div class="form-row" id="user-pwd-row">
+                <label>비밀번호 <span class="req">*</span> <span style="font-size:0.75rem;color:#999;font-weight:400;">(8자 이상)</span></label>
+                <input type="password" id="f-user-pwd" placeholder="비밀번호 입력" maxlength="100" autocomplete="new-password">
+            </div>
+            <div class="form-row">
+                <label>사번 <span class="req">*</span></label>
+                <input type="text" id="f-user-emp-no" placeholder="예: 2026-001" maxlength="20">
+            </div>
+            <div class="form-row">
+                <label>사용여부</label>
+                <select id="f-user-use-yn">
+                    <option value="Y">사용</option>
+                    <option value="N">미사용</option>
+                </select>
+            </div>
+            <div class="form-row" id="user-lock-row" style="display:none;">
+                <label>계정 잠금</label>
+                <select id="f-user-acct-lock-yn">
+                    <option value="N">잠금 해제</option>
+                    <option value="Y">잠금</option>
+                </select>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-cancel" onclick="closeUserModal()">취소</button>
+            <button class="btn-primary" id="user-save-btn" onclick="saveUser()">등록</button>
+        </div>
+    </div>
+</div>
+
+<!-- 비밀번호 변경 모달 -->
+<div id="pwd-modal" class="modal-overlay" style="display:none;">
+    <div class="modal-box" style="width:380px;">
+        <div class="modal-header">
+            <h3>비밀번호 변경</h3>
+            <button class="modal-close" onclick="closePwdModal()">×</button>
+        </div>
+        <div class="modal-body">
+            <p style="font-size:0.84rem;color:#888;margin-bottom:14px;">
+                아이디: <strong id="pwd-modal-user-id" style="color:var(--primary);"></strong>
+            </p>
+            <div class="form-row">
+                <label>새 비밀번호 <span class="req">*</span> <span style="font-size:0.75rem;color:#999;font-weight:400;">(8자 이상)</span></label>
+                <input type="password" id="f-new-pwd" placeholder="새 비밀번호 입력" maxlength="100" autocomplete="new-password">
+            </div>
+            <div class="form-row">
+                <label>비밀번호 확인 <span class="req">*</span></label>
+                <input type="password" id="f-new-pwd-confirm" placeholder="비밀번호 재입력" maxlength="100" autocomplete="new-password">
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-cancel" onclick="closePwdModal()">취소</button>
+            <button class="btn-primary" onclick="savePwd()">변경</button>
+        </div>
+    </div>
 </div>
 
 <!-- 직급 등록/수정 모달 -->
@@ -1004,6 +1111,8 @@
             loadDeptMgmtPage();
         } else if (menuUrl === '/system/role' || nm === '시스템권한관리' || nm === '권한관리' || nm === '사원권한관리') {
             loadSysRolePage();
+        } else if (menuUrl === '/system/user' || nm === '사용자관리' || nm === '시스템사용자관리') {
+            loadUserMgmtPage();
         } else {
             showPlaceholder(menuNm);
         }
@@ -1027,7 +1136,7 @@
     }
 
     function hideAllPages() {
-        $('#page-home, #page-placeholder, #page-menu-mgmt, #page-role-menu, #page-emp-reg, #page-pos-mgmt, #page-dept-mgmt, #page-system-role').hide();
+        $('#page-home, #page-placeholder, #page-menu-mgmt, #page-role-menu, #page-emp-reg, #page-pos-mgmt, #page-dept-mgmt, #page-system-role, #page-user-mgmt').hide();
     }
 
     function logout() {
@@ -2311,6 +2420,211 @@
             },
             error: function(xhr) {
                 var msg = (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : '저장 중 오류가 발생했습니다.';
+                alert(msg);
+            }
+        });
+    }
+
+    /* ═══════════════════════════════════════
+       시스템 사용자 관리 (com_user CRUD)
+    ═══════════════════════════════════════ */
+    var _editUserId      = null;
+    var _userCurrentPage = 1;
+    var _pwdTargetUserId = null;
+
+    function loadUserMgmtPage() {
+        hideAllPages();
+        $('#page-user-mgmt').show();
+        searchUsers(1);
+    }
+
+    /* ── 목록 조회 ── */
+    function searchUsers(page) {
+        if (page) _userCurrentPage = page;
+        var params = {
+            userId: $('#user-search-id').val(),
+            empNo:  $('#user-search-emp').val(),
+            useYn:  $('#user-search-use').val(),
+            page:   _userCurrentPage,
+            size:   20
+        };
+        $.ajax({
+            url: '/api/system/users',
+            method: 'GET',
+            data: params,
+            success: function(res) {
+                if (res.success) {
+                    renderUserTable(res.data.content);
+                    renderUserPagination(res.data.page, res.data.totalPages, res.data.totalCount);
+                }
+            },
+            error: function(xhr) { if (xhr.status === 401) logout(); }
+        });
+    }
+
+    /* ── 목록 테이블 렌더링 ── */
+    function renderUserTable(list) {
+        var $tbody = $('#user-table-body').empty();
+        if (!list || list.length === 0) {
+            $tbody.append('<tr><td colspan="9" style="text-align:center;padding:36px;color:#aaa;">조회된 사용자가 없습니다.</td></tr>');
+            return;
+        }
+        list.forEach(function(u) {
+            var useBadge  = u.useYn === 'Y'
+                ? '<span class="badge-y">사용</span>'
+                : '<span class="badge-n">미사용</span>';
+            var lockBadge = u.acctLockYn === 'Y'
+                ? '<span class="badge-n">잠금</span>'
+                : '<span style="color:#bbb;font-size:0.8rem;">-</span>';
+            var $tr = $('<tr>');
+            $tr.append('<td><strong style="color:var(--primary)">' + escHtml(u.userId) + '</strong></td>');
+            $tr.append('<td><code style="font-size:0.82rem">' + escHtml(u.empNo || '-') + '</code></td>');
+            $tr.append('<td>' + escHtml(u.empNm || '-') + '</td>');
+            $tr.append('<td>' + escHtml(u.deptNm || '-') + '</td>');
+            $tr.append('<td>' + useBadge + '</td>');
+            $tr.append('<td>' + lockBadge + '</td>');
+            $tr.append('<td style="color:#888;font-size:0.8rem">' + (u.lastLoginDt ? u.lastLoginDt.substring(0, 16) : '-') + '</td>');
+            $tr.append('<td style="color:#999;font-size:0.8rem">' + (u.registDt ? u.registDt.substring(0, 10) : '-') + '</td>');
+            var $acts = $('<td style="text-align:center;white-space:nowrap">');
+            $('<button class="btn-sm btn-edit">수정</button>').on('click', function() { openUserModal(u.userId); }).appendTo($acts);
+            $('<button class="btn-sm btn-del" style="border-color:#7B68EE;color:#7B68EE;">비밀번호</button>').on('click', function() { openPwdModal(u.userId); }).appendTo($acts);
+            $tr.append($acts);
+            $tbody.append($tr);
+        });
+    }
+
+    /* ── 페이지네이션 ── */
+    function renderUserPagination(page, totalPages, totalCount) {
+        var $pg = $('#user-pagination').empty();
+        if (totalPages <= 0) return;
+        $pg.append('<span class="page-info">총 ' + totalCount + '명</span>');
+        $('<button>◀</button>').prop('disabled', page <= 1)
+            .on('click', function() { searchUsers(page - 1); }).appendTo($pg);
+        var startPage = Math.max(1, page - 2);
+        var endPage   = Math.min(totalPages, startPage + 4);
+        if (endPage - startPage < 4) startPage = Math.max(1, endPage - 4);
+        for (var i = startPage; i <= endPage; i++) {
+            (function(p) {
+                $('<button>' + p + '</button>').toggleClass('active', p === page)
+                    .on('click', function() { searchUsers(p); }).appendTo($pg);
+            })(i);
+        }
+        $('<button>▶</button>').prop('disabled', page >= totalPages)
+            .on('click', function() { searchUsers(page + 1); }).appendTo($pg);
+    }
+
+    /* ── 등록/수정 모달 열기 ── */
+    function openUserModal(userId) {
+        _editUserId = userId || null;
+        var isEdit  = _editUserId !== null;
+        $('#user-modal-title').text(isEdit ? '사용자 수정' : '사용자 등록');
+        $('#user-save-btn').text(isEdit ? '수정' : '등록');
+
+        /* 초기화 */
+        $('#f-user-id').val('').prop('readonly', false);
+        $('#f-user-pwd').val('');
+        $('#f-user-emp-no').val('');
+        $('#f-user-use-yn').val('Y');
+        $('#f-user-acct-lock-yn').val('N');
+        $('#user-pwd-row').show();
+        $('#user-lock-row').hide();
+
+        if (isEdit) {
+            $('#f-user-id').prop('readonly', true);
+            $('#user-pwd-row').hide();   /* 수정 시 비밀번호는 별도 모달에서 변경 */
+            $('#user-lock-row').show();
+            $.ajax({
+                url: '/api/system/users/' + encodeURIComponent(_editUserId),
+                method: 'GET',
+                success: function(res) {
+                    if (res.success && res.data) {
+                        var u = res.data;
+                        $('#f-user-id').val(u.userId);
+                        $('#f-user-emp-no').val(u.empNo).prop('readonly', true);
+                        $('#f-user-use-yn').val(u.useYn || 'Y');
+                        $('#f-user-acct-lock-yn').val(u.acctLockYn || 'N');
+                    }
+                },
+                error: function() { alert('사용자 정보를 불러올 수 없습니다.'); closeUserModal(); }
+            });
+        }
+        $('#user-modal').show();
+    }
+
+    function closeUserModal() { $('#user-modal').hide(); _editUserId = null; }
+
+    /* ── 저장 ── */
+    function saveUser() {
+        var isEdit  = _editUserId !== null;
+        var userId  = $('#f-user-id').val().trim();
+        var empNo   = $('#f-user-emp-no').val().trim();
+
+        if (!userId) { alert('사용자 아이디를 입력하세요.'); $('#f-user-id').focus(); return; }
+        if (!empNo)  { alert('사번을 입력하세요.'); $('#f-user-emp-no').focus(); return; }
+
+        var payload = { userId: userId, empNo: empNo, useYn: $('#f-user-use-yn').val() };
+
+        if (!isEdit) {
+            var pwd = $('#f-user-pwd').val();
+            if (!pwd || pwd.length < 8) { alert('비밀번호는 8자 이상이어야 합니다.'); $('#f-user-pwd').focus(); return; }
+            payload.userPwd = pwd;
+        } else {
+            payload.acctLockYn = $('#f-user-acct-lock-yn').val();
+        }
+
+        $.ajax({
+            url:         '/api/system/users',
+            method:      'POST',
+            contentType: 'application/json',
+            data:        JSON.stringify(payload),
+            success: function(res) {
+                if (res.success) {
+                    closeUserModal();
+                    searchUsers(_userCurrentPage);
+                    alert(isEdit ? '수정되었습니다.' : '등록되었습니다.');
+                } else {
+                    alert(res.message || '저장 중 오류가 발생했습니다.');
+                }
+            },
+            error: function(xhr) {
+                var msg = (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : '저장 중 오류가 발생했습니다.';
+                alert(msg);
+            }
+        });
+    }
+
+    /* ── 비밀번호 변경 모달 ── */
+    function openPwdModal(userId) {
+        _pwdTargetUserId = userId;
+        $('#pwd-modal-user-id').text(userId);
+        $('#f-new-pwd').val('');
+        $('#f-new-pwd-confirm').val('');
+        $('#pwd-modal').show();
+    }
+
+    function closePwdModal() { $('#pwd-modal').hide(); _pwdTargetUserId = null; }
+
+    function savePwd() {
+        var newPwd     = $('#f-new-pwd').val();
+        var confirmPwd = $('#f-new-pwd-confirm').val();
+        if (!newPwd || newPwd.length < 8) { alert('비밀번호는 8자 이상이어야 합니다.'); $('#f-new-pwd').focus(); return; }
+        if (newPwd !== confirmPwd) { alert('비밀번호가 일치하지 않습니다.'); $('#f-new-pwd-confirm').focus(); return; }
+
+        $.ajax({
+            url:         '/api/system/users/' + encodeURIComponent(_pwdTargetUserId) + '/password',
+            method:      'PATCH',
+            contentType: 'application/json',
+            data:        JSON.stringify({ newPassword: newPwd }),
+            success: function(res) {
+                if (res.success) {
+                    closePwdModal();
+                    alert('비밀번호가 변경되었습니다.');
+                } else {
+                    alert(res.message || '변경 중 오류가 발생했습니다.');
+                }
+            },
+            error: function(xhr) {
+                var msg = (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : '변경 중 오류가 발생했습니다.';
                 alert(msg);
             }
         });

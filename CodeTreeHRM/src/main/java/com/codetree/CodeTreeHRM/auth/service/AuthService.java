@@ -35,6 +35,11 @@ public class AuthService {
             throw new UnauthorizedException(ERR_INVALID_CREDENTIALS);
         }
 
+        if ("N".equals(user.getUseYn())) {
+            log(request.getUserId(), user.getEmpNo(), "F", "ACCOUNT_DISABLED", ipAddr, userAgent);
+            throw new UnauthorizedException(ERR_INVALID_CREDENTIALS);
+        }
+
         if ("Y".equals(user.getAcctLockYn())) {
             log(request.getUserId(), user.getEmpNo(), "F", "ACCOUNT_LOCKED", ipAddr, userAgent);
             throw new AccountLockedException("잠긴 계정입니다. 관리자에게 문의하세요.");
