@@ -114,6 +114,17 @@ public class DepartmentService {
     }
 
     /* ─────────────────────────────────────
+       다음 부서코드 자동 생성
+       규칙: DEPT-NNN (현재 최대 시퀀스 + 1, 3자리 zero-pad)
+       예) 현재 최대 DEPT-004 → DEPT-005
+    ───────────────────────────────────── */
+    @Transactional(readOnly = true)
+    public String generateNextDeptCd() {
+        int nextSeq = departmentMapper.findMaxDeptSeq() + 1;
+        return String.format("DEPT-%03d", nextSeq);
+    }
+
+    /* ─────────────────────────────────────
        유효성 검사
     ───────────────────────────────────── */
     private void validateRequired(DepartmentDto dto) {

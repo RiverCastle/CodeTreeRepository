@@ -28,4 +28,7 @@ public interface DepartmentMapper {
     void updateDeptLevel(@Param("deptCd") String deptCd, @Param("deptLvl") int deptLvl);
 
     void closeDepartment(String deptCd);
+
+    /** DEPT-NNN 패턴에서 현재 최대 시퀀스 번호 조회 */
+    int findMaxDeptSeq();
 }

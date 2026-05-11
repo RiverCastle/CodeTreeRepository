@@ -16,6 +16,12 @@ public class DepartmentController {
 
     private final DepartmentService departmentService;
 
+    /** 다음 부서코드 자동 생성 (DEPT-NNN 패턴) */
+    @GetMapping("/next-code")
+    public ResponseEntity<ApiResponse<String>> getNextCode() {
+        return ResponseEntity.ok(ApiResponse.success(departmentService.generateNextDeptCd()));
+    }
+
     /** 부서 트리 조회 - 계층 구조 포함 전체 목록 */
     @GetMapping("/tree")
     public ResponseEntity<ApiResponse<List<DepartmentDto>>> getDeptTree() {
