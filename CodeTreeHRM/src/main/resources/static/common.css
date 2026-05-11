@@ -1,0 +1,157 @@
+/**
+ * common.css — CodeTreeHRM 공통 스타일
+ *
+ * 모든 업무 화면에서 공통으로 사용하는 UI 컴포넌트 스타일.
+ * <link rel="stylesheet" href="/common.css"> 한 줄로 포함한다.
+ *
+ * ┌────────────────────────────────┐
+ * │  포함 컴포넌트                  │
+ * │  § 1. 모달 팝업                 │
+ * │      .modal-backdrop           │
+ * │      .modal-box                │
+ * │      .modal-icon / title / desc│
+ * │      .modal-btns / .modal-btn  │
+ * │      버튼 색상 변형 4종         │
+ * │      하위 호환 alias 3종        │
+ * │  § 2. 토스트 알림               │
+ * │      .toast                    │
+ * └────────────────────────────────┘
+ */
+
+
+/* ════════════════════════════════════════════════════════════════
+   § 1. 모달 팝업
+   ────────────────────────────────────────────────────────────────
+   .modal-backdrop 이 전체 화면을 반투명으로 덮고,
+   그 위에 .modal-box 가 중앙 정렬되어 표시된다.
+
+   기본 상태(display: none)에서 .show 클래스가 추가되면
+   display: flex 로 전환되어 모달이 나타난다.
+   z-index: 99990 으로 대부분의 요소보다 위에 위치한다.
+════════════════════════════════════════════════════════════════ */
+
+/**
+ * 모달 배경 오버레이
+ * - position: fixed + inset: 0 으로 뷰포트 전체를 커버
+ * - 기본 display: none, .show 클래스 추가 시 flex 로 전환
+ * - align-items / justify-content: center 로 modal-box 를 정중앙에 배치
+ */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;                           /* top/right/bottom/left 모두 0 */
+  background: rgba(0, 0, 0, 0.35);   /* 반투명 검정 오버레이 */
+  z-index: 99990;                     /* 토스트(99999)보다 낮게 */
+  display: none;                      /* 기본 숨김 */
+  align-items: center;
+  justify-content: center;
+}
+
+/** .show 클래스 추가 시 모달 표시 (common.js 에서 classList.add('show') 호출) */
+.modal-backdrop.show { display: flex; }
+
+/**
+ * 모달 내용 컨테이너
+ * - 흰 배경, 둥근 모서리, 그림자로 카드 스타일
+ * - width: 360px 고정 (반응형 필요 시 max-width 로 변경 고려)
+ * - text-align: center 로 내부 콘텐츠 가운데 정렬
+ */
+.modal-box {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.18);  /* 입체감 있는 그림자 */
+  padding: 28px 32px;
+  width: 360px;
+  text-align: center;
+}
+
+/** 모달 상단 이모지 아이콘 영역 */
+.modal-icon  { font-size: 2rem; margin-bottom: 10px; }
+
+/** 모달 제목 — 굵은 텍스트, 어두운 남색 */
+.modal-title { font-size: 1rem; font-weight: 700; color: #2C3E50; margin-bottom: 8px; }
+
+/** 모달 설명 — 작은 회색 텍스트, HTML 허용(줄바꿈 <br> 등) */
+.modal-desc  { font-size: 0.83rem; color: #777; margin-bottom: 22px; line-height: 1.5; }
+
+/** 버튼 영역 — 가운데 정렬, 버튼 간 8px 간격 */
+.modal-btns  { display: flex; gap: 8px; justify-content: center; }
+
+/**
+ * 모달 버튼 공통 스타일
+ * - 패딩/라운드/크기/굵기 고정
+ * - border: 1.5px solid 는 색상 변형 클래스에서 덮어씀
+ * - hover 시 opacity 0.8 로 눌린 느낌 표현
+ */
+.modal-btn {
+  padding: 8px 18px;
+  border-radius: 8px;
+  font-size: 0.83rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1.5px solid;          /* 색상은 변형 클래스에서 결정 */
+  transition: opacity .15s;
+}
+.modal-btn:hover { opacity: .8; }
+
+/**
+ * 버튼 색상 변형 4종
+ *
+ * modal-btn-primary : 초록 채움 — 주 동작(확인·저장) 강조
+ * modal-btn-danger  : 빨간 테두리 — 파괴적 동작(삭제·취소) 경고
+ * modal-btn-default : 회색 테두리 — 보조 동작(취소·닫기) 중립
+ */
+.modal-btn-primary { background: #82A67D; border-color: #82A67D; color: white; }  /* 초록 */
+.modal-btn-danger  { background: white;   border-color: #E74C3C; color: #E74C3C; } /* 빨강 아웃라인 */
+.modal-btn-default { background: white;   border-color: #ccc;    color: #555; }    /* 회색 아웃라인 */
+
+/**
+ * 하위 호환(backward-compat) 클래스 alias
+ * 이전 코드에서 modal-btn-save 등으로 사용된 경우를 지원하기 위해 남겨둠.
+ * 신규 코드에서는 위 4종(primary/danger/default)을 사용할 것.
+ */
+.modal-btn-save    { background: #82A67D; border-color: #82A67D; color: white; }  /* = primary */
+.modal-btn-discard { background: white;   border-color: #ccc;    color: #555; }   /* = default */
+.modal-btn-cancel  { background: white;   border-color: #E74C3C; color: #E74C3C; }/* = danger  */
+
+
+/* ════════════════════════════════════════════════════════════════
+   § 2. 토스트 알림
+   ────────────────────────────────────────────────────────────────
+   화면 하단 중앙에 고정된 작은 메시지 팝업.
+   opacity 트랜지션으로 부드럽게 나타나고 사라진다.
+
+   showToast() 호출 흐름:
+     1. t.className = 'toast show [type]'  → opacity 1 (표시)
+     2. 2600ms 후 t.className = 'toast'    → opacity 0 (페이드아웃)
+════════════════════════════════════════════════════════════════ */
+
+/**
+ * 토스트 컨테이너 기본 스타일
+ * - position: fixed + bottom + translateX(-50%) 로 하단 중앙 고정
+ * - pointer-events: none 으로 사용자 클릭 방해 방지
+ * - opacity: 0 (숨김) → .show 클래스 추가 시 opacity: 1 (표시)
+ */
+.toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);    /* 정확한 수평 중앙 정렬 */
+  background: #34495E;            /* 기본 어두운 청회색 */
+  color: white;
+  padding: 9px 20px;
+  border-radius: 24px;            /* pill 형태 */
+  font-size: 0.84rem;
+  z-index: 99999;                 /* 모달(99990)보다 위 */
+  opacity: 0;                     /* 기본 투명 */
+  transition: opacity .3s;        /* 부드러운 페이드 전환 */
+  pointer-events: none;           /* 클릭 투과 */
+}
+
+/** .show 추가 시 토스트 표시 (showToast() 에서 className 에 포함) */
+.toast.show    { opacity: 1; }
+
+/** 성공 타입 — 초록 배경 (= --accent 색상) */
+.toast.success { background: #82A67D; }
+
+/** 오류 타입 — 빨간 배경 (= --danger 색상) */
+.toast.error   { background: #E74C3C; }

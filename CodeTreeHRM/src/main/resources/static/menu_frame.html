@@ -1,88 +1,226 @@
 <!DOCTYPE html>
+<!--
+  menu_frame.html — 사이드바 메뉴 프레임
+  ════════════════════════════════════════════════════════════════
+  index.html 의 <iframe name="menu_frame"> 에 로드되는 좌측 사이드바.
+  서버 API(/api/menus)에서 USE_YN='Y' 인 메뉴 데이터를 조회해
+  트리 형태의 내비게이션을 동적으로 생성한다.
+
+  [프레임 구조]
+    index.html
+    ├── iframe name="menu_frame"  ← 이 파일
+    ├── iframe name="top_frame"
+    └── iframe name="work_frame"
+
+  [메뉴 렌더링 규칙]
+    UPPER_MENU_CD = NULL  → 최상위(루트) 메뉴: 접이식 그룹 헤더로 표시
+    UPPER_MENU_CD != NULL → 하위 메뉴: 들여쓰기된 링크 아이템으로 표시
+
+  [화면 이동 방식]
+    하위 메뉴 클릭 → parent.navigate(url, breadcrumb) 호출
+    → index.html 의 navigate() 함수가 work_frame 의 src 를 변경
+    → 브라우저 URL 은 그대로, work_frame 콘텐츠만 교체
+
+  [인증 처리]
+    /api/menus 가 401 을 반환하면 세션 만료로 판단,
+    parent.location.href = '/login' 으로 전체 프레임을 로그인 페이지로 이동
+  ════════════════════════════════════════════════════════════════
+-->
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
     <style>
-        :root { --primary: #2C3E50; --accent: #82A67D; }
+        /* ── CSS 변수 ── */
+        :root {
+            --primary: #2C3E50;  /* 사이드바 배경: 진한 남색 */
+            --accent:  #82A67D;  /* 강조색: 녹색 (활성 메뉴 하이라이트) */
+        }
+
+        /* 기본 리셋 */
         * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        /* html/body 를 100% 로 채워 사이드바가 프레임 전체를 덮도록 */
         html, body { height: 100%; }
+
         body {
             font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
-            background: var(--primary);
+            background: var(--primary);  /* 사이드바 전체 배경 */
         }
-        #sidebar { display: flex; flex-direction: column; height: 100vh; overflow-y: auto; }
+
+        /* ── 사이드바 컨테이너 ──
+           flex-direction: column 으로 logo → nav → footer 수직 배치
+           overflow-y: auto 로 메뉴가 많을 때 스크롤 허용 */
+        #sidebar {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow-y: auto;
+        }
+
+        /* ── 로고 영역 ──
+           클릭 시 goHome() 호출 → work_frame 을 home.html 로 전환 */
         .sidebar-logo {
-            display: flex; align-items: center; gap: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
             padding: 18px 20px;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
-            cursor: pointer; flex-shrink: 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            cursor: pointer;
+            flex-shrink: 0;  /* 공간 부족해도 로고 영역 줄어들지 않음 */
         }
         .sidebar-logo img { width: 32px; height: 32px; }
-        .sidebar-logo-text { font-size: 1.1rem; font-weight: 800; color: white; letter-spacing: -0.03em; }
-        .sidebar-logo-text span { font-weight: 300; color: var(--accent); }
-        .sidebar-nav { flex: 1; padding: 12px 0; }
-        .nav-group { margin-bottom: 4px; }
-        .nav-group-title {
-            display: flex; align-items: center; justify-content: space-between;
-            padding: 10px 20px;
-            color: rgba(255,255,255,0.75);
-            font-size: 0.88rem; font-weight: 600;
-            cursor: pointer; transition: background 0.2s; user-select: none;
+        .sidebar-logo-text {
+            font-size: 1.1rem;
+            font-weight: 800;
+            color: white;
+            letter-spacing: -0.03em;
         }
-        .nav-group-title:hover { background: rgba(255,255,255,0.07); }
+        /* 'TREE' 부분만 accent 색으로 표시 */
+        .sidebar-logo-text span { font-weight: 300; color: var(--accent); }
+
+        /* ── 내비게이션 영역 ──
+           flex: 1 로 남은 세로 공간을 모두 차지 */
+        .sidebar-nav { flex: 1; padding: 12px 0; }
+
+        /* ── 메뉴 그룹 (최상위 메뉴 단위) ── */
+        .nav-group { margin-bottom: 4px; }
+
+        /* 그룹 헤더 (최상위 메뉴명)
+           justify-content: space-between 으로 메뉴명과 화살표 양 끝 배치
+           user-select: none 으로 텍스트 드래그 선택 방지 */
+        .nav-group-title {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 20px;
+            color: rgba(255, 255, 255, 0.75);
+            font-size: 0.88rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+            user-select: none;
+        }
+        .nav-group-title:hover { background: rgba(255, 255, 255, 0.07); }
         .nav-group-title .icon { font-size: 1rem; margin-right: 8px; }
+
+        /* 화살표 아이콘: 기본 ▼, .open 상태에서 180도 회전 → ▲ */
         .nav-group-title .arrow { font-size: 0.7rem; transition: transform 0.2s; }
-        .nav-group.open .arrow { transform: rotate(180deg); }
-        .nav-sub { display: none; background: rgba(0,0,0,0.15); }
+        .nav-group.open .arrow  { transform: rotate(180deg); }
+
+        /* ── 하위 메뉴 목록 ──
+           기본 display: none, .open 클래스 추가 시 block 으로 전환
+           약간 어두운 배경으로 계층 구분 */
+        .nav-sub { display: none; background: rgba(0, 0, 0, 0.15); }
         .nav-group.open .nav-sub { display: block; }
+
+        /* 하위 메뉴 링크 아이템
+           padding-left: 44px 으로 들여쓰기 표현
+           active 상태: 왼쪽에 accent 색 3px 보더 + 텍스트 흰색 */
         .nav-sub a {
-            display: block; padding: 9px 20px 9px 44px;
-            color: rgba(255,255,255,0.6); font-size: 0.84rem;
-            text-decoration: none; cursor: pointer;
+            display: block;
+            padding: 9px 20px 9px 44px;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 0.84rem;
+            text-decoration: none;
+            cursor: pointer;
             transition: background 0.2s, color 0.2s;
         }
-        .nav-sub a:hover, .nav-sub a.active { background: rgba(255,255,255,0.07); color: white; }
-        .nav-sub a.active { border-left: 3px solid var(--accent); padding-left: 41px; }
+        .nav-sub a:hover,
+        .nav-sub a.active {
+            background: rgba(255, 255, 255, 0.07);
+            color: white;
+        }
+        /* 활성 메뉴: 왼쪽 3px accent 보더, 보더 너비만큼 패딩 보정 */
+        .nav-sub a.active {
+            border-left: 3px solid var(--accent);
+            padding-left: 41px;  /* 44px - 3px(border) */
+        }
+
+        /* ── 사이드바 하단 버전 표시 ── */
         .sidebar-footer {
             padding: 16px 20px;
-            border-top: 1px solid rgba(255,255,255,0.1);
-            font-size: 0.78rem; color: rgba(255,255,255,0.35); text-align: center;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 0.78rem;
+            color: rgba(255, 255, 255, 0.35);
+            text-align: center;
         }
     </style>
 </head>
 <body>
+
+<!-- 사이드바 전체 컨테이너 -->
 <div id="sidebar">
+
+    <!-- 로고 영역: 클릭 시 대시보드(home.html)로 이동 -->
     <div class="sidebar-logo" onclick="goHome()">
         <img src="assets/logo/logo.svg" alt="Logo">
         <span class="sidebar-logo-text">CODE<span>TREE</span></span>
     </div>
+
+    <!-- 동적 메뉴 영역: buildMenu() 가 이 요소 안에 HTML 을 생성 -->
     <div class="sidebar-nav" id="sidebar-nav"></div>
+
+    <!-- 하단 버전 표시 -->
     <div class="sidebar-footer">CodeTree HRM v0.1</div>
+
 </div>
 
 <script>
+    /**
+     * buildMenu — API 응답 데이터로 사이드바 HTML 을 동적 생성
+     *
+     * [메뉴 트리 구조]
+     *   menus 배열은 최상위(UPPER_MENU_CD=null)와 하위 메뉴가 평탄(flat)하게 섞여있다.
+     *   이 함수에서 parentCd 기준으로 roots/childMap 으로 분리한 뒤
+     *   트리 형태의 HTML 을 생성한다.
+     *
+     * [렌더링 규칙]
+     *   - 자식이 있는 최상위 메뉴 → 접이식 그룹 + 하위 링크
+     *   - 자식 없고 URL 있는 최상위 메뉴 → 단독 링크 (바로 이동)
+     *   - 자식 없고 URL 없는 최상위 메뉴 → 빈 그룹 헤더 (하위 추가 예정)
+     *
+     * @param {Array<{menuCd:string, menuNm:string, menuIcon:string,
+     *                upperMenuCd:string|null, menuUrl:string|null,
+     *                menuOrdr:number}>} menus - /api/menus 응답 배열
+     */
     function buildMenu(menus) {
-        const roots    = menus.filter(m => !m.upperMenuCd).sort((a, b) => a.menuOrdr - b.menuOrdr);
+        // 1. 최상위 메뉴만 추출하여 정렬순서(menuOrdr) 오름차순 정렬
+        const roots = menus
+            .filter(m => !m.upperMenuCd)
+            .sort((a, b) => a.menuOrdr - b.menuOrdr);
+
+        // 2. 하위 메뉴를 parentCd 기준으로 그룹화 (childMap)
+        //    { 'M001': [하위메뉴1, 하위메뉴2], 'M002': [...], ... }
         const childMap = {};
         menus.filter(m => m.upperMenuCd).forEach(m => {
             if (!childMap[m.upperMenuCd]) childMap[m.upperMenuCd] = [];
             childMap[m.upperMenuCd].push(m);
         });
 
+        // 3. 기존 사이드바 내용을 비우고 새로 생성
         const nav = document.getElementById('sidebar-nav');
         nav.innerHTML = '';
 
+        // 4. 루트 메뉴마다 그룹 요소 생성
         roots.forEach((root, idx) => {
-            const children = (childMap[root.menuCd] || []).sort((a, b) => a.menuOrdr - b.menuOrdr);
-            const groupId  = 'group-' + idx;
-            const icon     = root.menuIcon || '📁';
+            // 하위 메뉴 목록을 정렬순서 오름차순 정렬
+            const children = (childMap[root.menuCd] || [])
+                .sort((a, b) => a.menuOrdr - b.menuOrdr);
 
+            // 그룹 고유 ID (CSS toggle 대상)
+            const groupId = 'group-' + idx;
+
+            // 아이콘: menuIcon 없으면 기본 폴더 이모지
+            const icon = root.menuIcon || '📁';
+
+            // div.nav-group 요소 생성
             const group = document.createElement('div');
             group.className = 'nav-group';
             group.id = groupId;
 
             if (children.length > 0) {
-                /* 자식이 있으면 → 접히는 그룹 */
+                /* ── 케이스 A: 자식이 있는 그룹 ──
+                   클릭 시 toggleGroup() 으로 접이식 동작 */
                 group.innerHTML = `
                     <div class="nav-group-title" onclick="toggleGroup('${groupId}')">
                         <span><span class="icon">${icon}</span>${root.menuNm}</span>
@@ -90,23 +228,33 @@
                     </div>
                     <div class="nav-sub" id="sub-${groupId}"></div>`;
 
+                // 하위 메뉴 링크를 nav-sub 안에 appendChild
                 const sub = group.querySelector('.nav-sub');
                 children.forEach(child => {
                     const a = document.createElement('a');
                     const childIcon = child.menuIcon || '';
+                    // 메뉴명 앞에 아이콘이 있으면 공백 포함해서 표시
                     a.textContent = (childIcon ? childIcon + ' ' : '') + child.menuNm;
-                    a.onclick = () => go(a, child.menuUrl || 'placeholder.html?title=' + encodeURIComponent(child.menuNm),
-                                           root.menuNm + ' > ' + child.menuNm);
+                    // 클릭 시 go() → work_frame URL 변경 + active 클래스 설정
+                    a.onclick = () => go(
+                        a,
+                        child.menuUrl || 'placeholder.html?title=' + encodeURIComponent(child.menuNm),
+                        root.menuNm + ' > ' + child.menuNm   // 브레드크럼 텍스트
+                    );
                     sub.appendChild(a);
                 });
+
             } else if (root.menuUrl) {
-                /* 자식 없고 URL 있으면 → 단독 링크 */
+                /* ── 케이스 B: 자식 없고 URL 있는 최상위 단독 링크 ──
+                   goLink() 로 바로 이동 (화살표 없음) */
                 group.innerHTML = `
                     <div class="nav-group-title" onclick="goLink('${root.menuUrl}','${root.menuNm}')">
                         <span><span class="icon">${icon}</span>${root.menuNm}</span>
                     </div>`;
+
             } else {
-                /* 자식 없고 URL 없으면 → 빈 그룹 헤더 */
+                /* ── 케이스 C: 자식도 URL 도 없는 빈 그룹 헤더 ──
+                   현재는 빈 nav-sub 를 렌더링 (추후 하위 메뉴 추가 예정) */
                 group.innerHTML = `
                     <div class="nav-group-title" onclick="toggleGroup('${groupId}')">
                         <span><span class="icon">${icon}</span>${root.menuNm}</span>
@@ -119,33 +267,78 @@
         });
     }
 
+    /**
+     * toggleGroup — 메뉴 그룹의 펼침/접힘 토글
+     *
+     * .nav-group 요소에 .open 클래스를 추가/제거한다.
+     * CSS 에서 .open .nav-sub { display: block } 으로 하위 메뉴가 표시된다.
+     *
+     * @param {string} id nav-group 요소의 id (예: 'group-0')
+     */
     function toggleGroup(id) {
         document.getElementById(id).classList.toggle('open');
     }
 
+    /**
+     * go — 하위 메뉴 클릭 시 work_frame 화면 전환 + active 상태 설정
+     *
+     * 1. 모든 .nav-sub a 의 .active 클래스를 제거
+     * 2. 클릭된 <a> 요소에 .active 클래스 추가
+     * 3. parent.navigate(url, breadcrumb) 호출 → index.html 에서 work_frame src 변경
+     *
+     * @param {HTMLElement} el  클릭된 <a> 요소
+     * @param {string}      url 이동할 URL (예: '/system/menu')
+     * @param {string}      bc  브레드크럼 텍스트 (예: '시스템관리 > 메뉴관리')
+     */
     function go(el, url, bc) {
+        // 기존 active 제거 (한 번에 하나만 활성화)
         document.querySelectorAll('.nav-sub a').forEach(a => a.classList.remove('active'));
         el.classList.add('active');
+        // 부모 프레임(index.html)의 navigate 함수 호출
         parent.navigate(url, bc);
     }
 
+    /**
+     * goLink — 단독 링크 최상위 메뉴 클릭 시 work_frame 화면 전환
+     *
+     * 자식 없고 URL 이 있는 최상위 메뉴 전용.
+     * active 상태는 하위 메뉴가 없으므로 nav-sub a 초기화만 처리.
+     *
+     * @param {string} url 이동할 URL
+     * @param {string} bc  브레드크럼 텍스트
+     */
     function goLink(url, bc) {
         document.querySelectorAll('.nav-sub a').forEach(a => a.classList.remove('active'));
         parent.navigate(url, bc);
     }
 
+    /**
+     * goHome — 로고 클릭 시 대시보드 화면으로 이동
+     *
+     * 모든 메뉴 active 를 초기화하고 home.html 을 work_frame 에 로드한다.
+     */
     function goHome() {
         document.querySelectorAll('.nav-sub a').forEach(a => a.classList.remove('active'));
         parent.navigate('home.html', '대시보드');
     }
 
-    /* 메뉴 로드 */
+    /* ── 메뉴 데이터 로드 ──
+       DOMContentLoaded 없이 인라인 실행 → 스크립트 도달 시 즉시 실행.
+       /api/menus: USE_YN='Y' 인 메뉴만 반환 (사이드바 전용 API).
+       401 → 세션 만료 → 전체 페이지를 /login 으로 이동 */
     fetch('/api/menus')
         .then(r => {
-            if (r.status === 401) { parent.location.href = '/login'; return null; }
+            if (r.status === 401) {
+                // parent.location 으로 최상위 프레임(index.html)을 로그인 페이지로 이동
+                parent.location.href = '/login';
+                return null;
+            }
             return r.json();
         })
-        .then(data => { if (data) buildMenu(data); });
+        .then(data => {
+            // data 가 null 이면 리다이렉트 중이므로 buildMenu 호출 생략
+            if (data) buildMenu(data);
+        });
 </script>
 </body>
 </html>
