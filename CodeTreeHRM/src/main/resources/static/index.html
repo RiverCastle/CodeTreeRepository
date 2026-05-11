@@ -157,6 +157,18 @@
         .dept-no-select { text-align:center; padding:60px 20px; color:#aaa; }
         .btn-danger { background:white; color:var(--danger); border:1px solid var(--danger); padding:7px 16px; border-radius:6px; cursor:pointer; font-size:0.84rem; }
         .btn-danger:hover { background:#fef0ef; }
+
+        /* ── 공통 결과 Toast ── */
+        .result-toast { position:fixed; top:-90px; left:50%; transform:translateX(-50%); min-width:280px; max-width:500px; background:#fff; border-radius:10px; box-shadow:0 6px 28px rgba(0,0,0,0.14); padding:14px 16px 14px 18px; display:flex; align-items:center; gap:10px; z-index:9999; transition:top 0.32s cubic-bezier(0.175,0.885,0.32,1.275); border-left:4px solid #ccc; }
+        .result-toast.show { top:24px; }
+        .result-toast.success { border-left-color:#4CAF50; }
+        .result-toast.error   { border-left-color:#E74C3C; }
+        .result-toast-icon { font-size:1.15rem; flex-shrink:0; line-height:1; }
+        .result-toast.success .result-toast-icon { color:#4CAF50; }
+        .result-toast.error   .result-toast-icon { color:#E74C3C; }
+        .result-toast-msg { flex:1; font-size:0.88rem; color:#2C3E50; font-weight:500; line-height:1.4; }
+        .result-toast-close { background:none; border:none; color:#bbb; cursor:pointer; font-size:1rem; padding:0 2px; line-height:1; flex-shrink:0; }
+        .result-toast-close:hover { color:#555; }
     </style>
 </head>
 <body>
@@ -1150,6 +1162,25 @@
         return $('<div>').text(str || '').html();
     }
 
+    /* ── 공통 결과 Toast ── */
+    var _toastTimer = null;
+
+    function showToast(message, type) {
+        type = type || 'success';
+        var $t = $('#result-toast');
+        $t.removeClass('success error show').addClass(type);
+        $t.find('.result-toast-icon').text(type === 'success' ? '✓' : '✕');
+        $t.find('.result-toast-msg').text(message);
+        if (_toastTimer) { clearTimeout(_toastTimer); _toastTimer = null; }
+        setTimeout(function() { $t.addClass('show'); }, 10);
+        _toastTimer = setTimeout(closeToast, 3000);
+    }
+
+    function closeToast() {
+        $('#result-toast').removeClass('show');
+        if (_toastTimer) { clearTimeout(_toastTimer); _toastTimer = null; }
+    }
+
     /* ═══════════════════════════════════════
        메뉴 관리 (Menu Master CRUD)
     ═══════════════════════════════════════ */
@@ -1311,14 +1342,14 @@
                 if (res.success) {
                     closeMenuModal();
                     searchMenus();
-                    alert(isEdit ? '수정되었습니다.' : '등록되었습니다.');
+                    showToast(isEdit ? '수정되었습니다.' : '등록되었습니다.');
                 } else {
-                    alert(res.message || '저장 중 오류가 발생했습니다.');
+                    showToast(res.message || '저장 중 오류가 발생했습니다.', 'error');
                 }
             },
             error: function(xhr) {
                 var msg = (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : '저장 중 오류가 발생했습니다.';
-                alert(msg);
+                showToast(msg, 'error');
             }
         });
     }
@@ -1331,14 +1362,14 @@
             success: function(res) {
                 if (res.success) {
                     searchMenus();
-                    alert('삭제되었습니다.');
+                    showToast('삭제되었습니다.');
                 } else {
-                    alert(res.message || '삭제 중 오류가 발생했습니다.');
+                    showToast(res.message || '삭제 중 오류가 발생했습니다.', 'error');
                 }
             },
             error: function(xhr) {
                 var msg = (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : '삭제 중 오류가 발생했습니다.';
-                alert(msg);
+                showToast(msg, 'error');
             }
         });
     }
@@ -1447,14 +1478,14 @@
             data:        JSON.stringify({ menuCdList: menuCdList }),
             success: function(res) {
                 if (res.success) {
-                    alert('저장되었습니다. (' + menuCdList.length + '개 메뉴 할당)');
+                    showToast('저장되었습니다. (' + menuCdList.length + '개 메뉴 할당)');
                 } else {
-                    alert(res.message || '저장 중 오류가 발생했습니다.');
+                    showToast(res.message || '저장 중 오류가 발생했습니다.', 'error');
                 }
             },
             error: function(xhr) {
                 if (xhr.status === 401) logout();
-                else alert('저장 중 오류가 발생했습니다.');
+                else showToast('저장 중 오류가 발생했습니다.', 'error');
             }
         });
     }
@@ -1623,13 +1654,13 @@
                         }
                     },
                     error: function() {
-                        alert('사원 정보를 불러오는 중 오류가 발생했습니다.');
+                        showToast('사원 정보를 불러오는 중 오류가 발생했습니다.', 'error');
                         closeEmpModal();
                     }
                 });
             }
         }).fail(function() {
-            alert('부서/직급 목록을 불러오는 중 오류가 발생했습니다.');
+            showToast('부서/직급 목록을 불러오는 중 오류가 발생했습니다.', 'error');
             closeEmpModal();
         });
 
@@ -1744,15 +1775,15 @@
                     var msg = isEdit ? '수정되었습니다.' : '등록되었습니다. (사번: ' + res.data + ')';
                     closeEmpModal();
                     searchEmployees(isEdit ? _empCurrentPage : 1);
-                    alert(msg);
+                    showToast(msg);
                 } else {
-                    alert(res.message || '저장 중 오류가 발생했습니다.');
+                    showToast(res.message || '저장 중 오류가 발생했습니다.', 'error');
                 }
             },
             error: function(xhr) {
                 var msg = (xhr.responseJSON && xhr.responseJSON.message)
                     ? xhr.responseJSON.message : '저장 중 오류가 발생했습니다.';
-                alert(msg);
+                showToast(msg, 'error');
             }
         });
     }
@@ -1982,15 +2013,15 @@
                     var prevSelected = _editDeptCd || deptCd;
                     loadDeptTree();
                     setTimeout(function() { selectDept(prevSelected); }, 300);
-                    alert(_editDeptCd ? '수정되었습니다.' : '등록되었습니다.');
+                    showToast(_editDeptCd ? '수정되었습니다.' : '등록되었습니다.');
                 } else {
-                    alert(res.message || '저장 중 오류가 발생했습니다.');
+                    showToast(res.message || '저장 중 오류가 발생했습니다.', 'error');
                 }
             },
             error: function(xhr) {
                 var msg = (xhr.responseJSON && xhr.responseJSON.message)
                     ? xhr.responseJSON.message : '저장 중 오류가 발생했습니다.';
-                alert(msg);
+                showToast(msg, 'error');
             }
         });
     }
@@ -2006,15 +2037,15 @@
                     var cd = _selectedDeptCd;
                     loadDeptTree();
                     setTimeout(function() { selectDept(cd); }, 300);
-                    alert('폐지 처리되었습니다.');
+                    showToast('폐지 처리되었습니다.');
                 } else {
-                    alert(res.message || '폐지 처리 중 오류가 발생했습니다.');
+                    showToast(res.message || '폐지 처리 중 오류가 발생했습니다.', 'error');
                 }
             },
             error: function(xhr) {
                 var msg = (xhr.responseJSON && xhr.responseJSON.message)
                     ? xhr.responseJSON.message : '폐지 처리 중 오류가 발생했습니다.';
-                alert(msg);
+                showToast(msg, 'error');
             }
         });
     }
@@ -2116,14 +2147,14 @@
                 if (res.success) {
                     closePosModal();
                     loadPosList();
-                    alert(isEdit ? '수정되었습니다.' : '등록되었습니다.');
+                    showToast(isEdit ? '수정되었습니다.' : '등록되었습니다.');
                 } else {
-                    alert(res.message || '저장 중 오류가 발생했습니다.');
+                    showToast(res.message || '저장 중 오류가 발생했습니다.', 'error');
                 }
             },
             error: function(xhr) {
                 var msg = (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : '저장 중 오류가 발생했습니다.';
-                alert(msg);
+                showToast(msg, 'error');
             }
         });
     }
@@ -2142,14 +2173,14 @@
             success: function(res) {
                 if (res.success) {
                     loadPosList();
-                    alert('처리되었습니다.');
+                    showToast('처리되었습니다.');
                 } else {
-                    alert(res.message || '처리 중 오류가 발생했습니다.');
+                    showToast(res.message || '처리 중 오류가 발생했습니다.', 'error');
                 }
             },
             error: function(xhr) {
                 var msg = (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : '처리 중 오류가 발생했습니다.';
-                alert(msg);
+                showToast(msg, 'error');
             }
         });
     }
@@ -2299,11 +2330,11 @@
                 if (_selectedSysRoleCd) {
                     selectSysRole(_selectedSysRoleCd, $('#sys-role-selected-nm').text());
                 }
-                alert(isEdit ? '수정되었습니다.' : '등록되었습니다.');
+                showToast(isEdit ? '수정되었습니다.' : '등록되었습니다.');
             },
             error: function(xhr) {
                 var msg = (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : '저장 중 오류가 발생했습니다.';
-                alert(msg);
+                showToast(msg, 'error');
             }
         });
     }
@@ -2325,11 +2356,11 @@
                 if (_selectedSysRoleCd === role.roleCd) {
                     selectSysRole(role.roleCd, role.roleNm || role.roleCd);
                 }
-                alert('처리되었습니다.');
+                showToast('처리되었습니다.');
             },
             error: function(xhr) {
                 var msg = (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : '처리 중 오류가 발생했습니다.';
-                alert(msg);
+                showToast(msg, 'error');
             }
         });
     }
@@ -2425,11 +2456,11 @@
                     selectSysRole(_selectedSysRoleCd, $('#sys-role-selected-nm').text());
                 }
                 loadSysRoleList();
-                alert('권한이 저장되었습니다.');
+                showToast('권한이 저장되었습니다.');
             },
             error: function(xhr) {
                 var msg = (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : '저장 중 오류가 발생했습니다.';
-                alert(msg);
+                showToast(msg, 'error');
             }
         });
     }
@@ -2554,7 +2585,7 @@
                         $('#f-user-acct-lock-yn').val(u.acctLockYn || 'N');
                     }
                 },
-                error: function() { alert('사용자 정보를 불러올 수 없습니다.'); closeUserModal(); }
+                error: function() { showToast('사용자 정보를 불러올 수 없습니다.', 'error'); closeUserModal(); }
             });
         }
         $('#user-modal').show();
@@ -2590,14 +2621,14 @@
                 if (res.success) {
                     closeUserModal();
                     searchUsers(_userCurrentPage);
-                    alert(isEdit ? '수정되었습니다.' : '등록되었습니다.');
+                    showToast(isEdit ? '수정되었습니다.' : '등록되었습니다.');
                 } else {
-                    alert(res.message || '저장 중 오류가 발생했습니다.');
+                    showToast(res.message || '저장 중 오류가 발생했습니다.', 'error');
                 }
             },
             error: function(xhr) {
                 var msg = (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : '저장 중 오류가 발생했습니다.';
-                alert(msg);
+                showToast(msg, 'error');
             }
         });
     }
@@ -2627,14 +2658,14 @@
             success: function(res) {
                 if (res.success) {
                     closePwdModal();
-                    alert('비밀번호가 변경되었습니다.');
+                    showToast('비밀번호가 변경되었습니다.');
                 } else {
-                    alert(res.message || '변경 중 오류가 발생했습니다.');
+                    showToast(res.message || '변경 중 오류가 발생했습니다.', 'error');
                 }
             },
             error: function(xhr) {
                 var msg = (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : '변경 중 오류가 발생했습니다.';
-                alert(msg);
+                showToast(msg, 'error');
             }
         });
     }
@@ -2643,5 +2674,12 @@
     loadMenu();
     showHome();
 </script>
+
+<!-- 공통 결과 Toast -->
+<div id="result-toast" class="result-toast">
+    <span class="result-toast-icon"></span>
+    <span class="result-toast-msg"></span>
+    <button class="result-toast-close" onclick="closeToast()">✕</button>
+</div>
 </body>
 </html>
