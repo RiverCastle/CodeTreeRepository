@@ -542,6 +542,63 @@
             </div>
         </div>
 
+
+        <!-- 시스템 권한 관리 (M002-02) -->
+        <div id="page-system-role" style="display:none;">
+            <div style="display:flex; gap:16px; align-items:flex-start;">
+                <!-- 좌측: 권한 마스터 목록 -->
+                <div class="page-panel" style="width:400px; flex-shrink:0; padding:24px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+                        <h4 style="color:var(--primary); font-size:0.95rem;">권한 목록</h4>
+                        <button class="btn-primary" onclick="openSysRoleModal(null)">+ 권한 등록</button>
+                    </div>
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>권한코드</th>
+                                <th>권한명</th>
+                                <th style="text-align:center">레벨</th>
+                                <th style="text-align:center">사원수</th>
+                                <th>사용여부</th>
+                                <th style="text-align:center">관리</th>
+                            </tr>
+                        </thead>
+                        <tbody id="sys-role-table-body"></tbody>
+                    </table>
+                </div>
+                <!-- 우측: 선택된 권한의 보유 사원 명단 -->
+                <div class="page-panel" style="flex:1; padding:24px; min-height:300px;">
+                    <div id="sys-role-emp-placeholder" style="text-align:center; padding:60px 0; color:#aaa;">
+                        <p style="font-size:0.95rem;">좌측 목록에서 권한을 선택하세요.</p>
+                    </div>
+                    <div id="sys-role-emp-panel" style="display:none;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+                            <h4 style="color:var(--primary); font-size:0.95rem;">
+                                <span id="sys-role-selected-nm"></span>
+                                <span style="font-size:0.8rem; color:#888; margin-left:4px;" id="sys-role-selected-cd"></span>
+                                보유 사원
+                            </h4>
+                            <button class="btn-primary" onclick="openAssignModal()">사원 권한 할당</button>
+                        </div>
+                        <table class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>사번</th>
+                                    <th>성명</th>
+                                    <th>부서</th>
+                                    <th>직급</th>
+                                    <th>계정ID</th>
+                                    <th>부여일</th>
+                                    <th style="text-align:center">계정상태</th>
+                                </tr>
+                            </thead>
+                            <tbody id="sys-role-emp-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </main>
 </div>
 
@@ -771,6 +828,77 @@
     </div>
 </div>
 
+<!-- 권한 등록/수정 모달 -->
+<div id="sys-role-modal" class="modal-overlay" style="display:none;">
+    <div class="modal-box">
+        <div class="modal-header">
+            <h3 id="sys-role-modal-title">권한 등록</h3>
+            <button class="modal-close" onclick="closeSysRoleModal()">×</button>
+        </div>
+        <div class="modal-body">
+            <div class="form-row">
+                <label>권한코드 <span class="req">*</span></label>
+                <input type="text" id="f-role-cd" placeholder="예: ROLE_ADMIN" maxlength="50">
+            </div>
+            <div class="form-row">
+                <label>권한명 <span class="req">*</span></label>
+                <input type="text" id="f-role-nm" placeholder="권한명 입력" maxlength="100">
+            </div>
+            <div class="form-row">
+                <label>레벨 <span class="req">*</span></label>
+                <input type="number" id="f-role-level" value="1" min="1" max="99" placeholder="숫자 입력 (낮을수록 높은 권한)">
+            </div>
+            <div class="form-row">
+                <label>설명</label>
+                <input type="text" id="f-role-dc" placeholder="권한 설명 (선택)" maxlength="200">
+            </div>
+            <div class="form-row">
+                <label>사용여부</label>
+                <select id="f-role-use-yn">
+                    <option value="Y">사용</option>
+                    <option value="N">미사용</option>
+                </select>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-cancel" onclick="closeSysRoleModal()">취소</button>
+            <button class="btn-primary" id="sys-role-save-btn" onclick="saveSysRole()">등록</button>
+        </div>
+    </div>
+</div>
+
+<!-- 사원 권한 할당 모달 -->
+<div id="assign-modal" class="modal-overlay" style="display:none;">
+    <div class="modal-box modal-box-lg">
+        <div class="modal-header">
+            <h3>사원 권한 할당</h3>
+            <button class="modal-close" onclick="closeAssignModal()">×</button>
+        </div>
+        <div class="modal-body">
+            <div class="form-row">
+                <label>대상 사원 선택 <span class="req">*</span></label>
+                <select id="f-assign-emp" onchange="onAssignEmpChange()">
+                    <option value="">사원 선택</option>
+                </select>
+            </div>
+            <div id="assign-current-roles" style="display:none; margin-bottom:10px;">
+                <div style="font-size:0.82rem; font-weight:600; color:#555; margin-bottom:5px;">현재 보유 권한</div>
+                <div id="assign-current-role-list" style="font-size:0.82rem; color:#777; padding:6px 10px; background:#f8f9fa; border-radius:4px;"></div>
+            </div>
+            <div class="form-row">
+                <label>할당할 권한 <span style="font-size:0.78rem;color:#999;font-weight:400;">(기존 권한은 모두 대체됩니다)</span></label>
+                <div id="f-assign-roles" class="role-chk-box">
+                    <span class="role-chk-empty">사원을 먼저 선택하세요.</span>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-cancel" onclick="closeAssignModal()">취소</button>
+            <button class="btn-primary" onclick="saveAssignRoles()">저장</button>
+        </div>
+    </div>
+</div>
+
 <script>
     var token = localStorage.getItem('accessToken');
 
@@ -874,6 +1002,8 @@
             loadPosMgmtPage();
         } else if (menuUrl === '/dept/manage' || nm === '부서관리') {
             loadDeptMgmtPage();
+        } else if (menuUrl === '/system/role' || nm === '시스템권한관리' || nm === '권한관리' || nm === '사원권한관리') {
+            loadSysRolePage();
         } else {
             showPlaceholder(menuNm);
         }
@@ -897,7 +1027,7 @@
     }
 
     function hideAllPages() {
-        $('#page-home, #page-placeholder, #page-menu-mgmt, #page-role-menu, #page-emp-reg, #page-pos-mgmt, #page-dept-mgmt').hide();
+        $('#page-home, #page-placeholder, #page-menu-mgmt, #page-role-menu, #page-emp-reg, #page-pos-mgmt, #page-dept-mgmt, #page-system-role').hide();
     }
 
     function logout() {
@@ -1901,6 +2031,286 @@
             },
             error: function(xhr) {
                 var msg = (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : '처리 중 오류가 발생했습니다.';
+                alert(msg);
+            }
+        });
+    }
+
+    /* ═══════════════════════════════════════
+       시스템 권한 관리 (System Role CRUD + Emp-Role Assign)
+    ═══════════════════════════════════════ */
+    var _editRoleCd        = null;
+    var _selectedSysRoleCd = null;
+
+    function loadSysRolePage() {
+        hideAllPages();
+        $('#page-system-role').show();
+        _selectedSysRoleCd = null;
+        $('#sys-role-emp-placeholder').show();
+        $('#sys-role-emp-panel').hide();
+        loadSysRoleList();
+    }
+
+    function loadSysRoleList() {
+        $.ajax({
+            url: '/api/system/roles',
+            method: 'GET',
+            success: function(data) {
+                renderSysRoleTable(Array.isArray(data) ? data : []);
+            },
+            error: function(xhr) { if (xhr.status === 401) logout(); }
+        });
+    }
+
+    function renderSysRoleTable(data) {
+        var $tbody = $('#sys-role-table-body').empty();
+        if (!data || data.length === 0) {
+            $tbody.append('<tr><td colspan="6" style="text-align:center;padding:32px;color:#aaa;">등록된 권한이 없습니다.</td></tr>');
+            return;
+        }
+        data.forEach(function(r) {
+            var useYnBadge   = r.useYn === 'Y' ? '<span class="badge-y">사용</span>' : '<span class="badge-n">미사용</span>';
+            var toggleLabel  = r.useYn === 'Y' ? '미사용' : '사용';
+            var $acts = $('<td style="text-align:center;white-space:nowrap">');
+            $('<button class="btn-sm btn-edit">수정</button>').on('click', function(e) {
+                e.stopPropagation(); openSysRoleModal(r);
+            }).appendTo($acts);
+            $('<button class="btn-sm btn-del">' + toggleLabel + '</button>').on('click', function(e) {
+                e.stopPropagation(); toggleSysRoleStatus(r);
+            }).appendTo($acts);
+
+            var $tr = $('<tr class="role-row">')
+                .append('<td><code style="font-size:0.82rem">' + escHtml(r.roleCd) + '</code></td>')
+                .append('<td>' + escHtml(r.roleNm || '-') + '</td>')
+                .append('<td style="text-align:center">' + (r.roleLevel != null ? r.roleLevel : '-') + '</td>')
+                .append('<td style="text-align:center">' + (r.empCount || 0) + '</td>')
+                .append('<td>' + useYnBadge + '</td>')
+                .append($acts)
+                .on('click', function() {
+                    $('.role-row').removeClass('selected');
+                    $(this).addClass('selected');
+                    selectSysRole(r.roleCd, r.roleNm || r.roleCd);
+                });
+            $tbody.append($tr);
+        });
+    }
+
+    function selectSysRole(roleCd, roleNm) {
+        _selectedSysRoleCd = roleCd;
+        $('#sys-role-selected-nm').text(roleNm);
+        $('#sys-role-selected-cd').text('(' + roleCd + ')');
+        $.ajax({
+            url: '/api/system/roles/' + encodeURIComponent(roleCd) + '/emps',
+            method: 'GET',
+            success: function(data) {
+                renderSysRoleEmpTable(Array.isArray(data) ? data : []);
+                $('#sys-role-emp-placeholder').hide();
+                $('#sys-role-emp-panel').show();
+            },
+            error: function(xhr) { if (xhr.status === 401) logout(); }
+        });
+    }
+
+    function renderSysRoleEmpTable(data) {
+        var $tbody = $('#sys-role-emp-body').empty();
+        if (!data || data.length === 0) {
+            $tbody.append('<tr><td colspan="7" style="text-align:center;padding:32px;color:#aaa;">해당 권한을 보유한 사원이 없습니다.</td></tr>');
+            return;
+        }
+        data.forEach(function(e) {
+            var lockBadge = e.acctLockYn === 'Y'
+                ? '<span class="badge-n">잠금</span>'
+                : (e.userUseYn === 'Y' ? '<span class="badge-y">정상</span>' : '<span class="badge-n">비활성</span>');
+            var $tr = $('<tr>');
+            $tr.append('<td><code style="font-size:0.82rem">' + escHtml(e.empNo) + '</code></td>');
+            $tr.append('<td style="font-weight:500">' + escHtml(e.empNm || '-') + '</td>');
+            $tr.append('<td>' + escHtml(e.deptNm || '-') + '</td>');
+            $tr.append('<td>' + escHtml(e.jbgdNm || '-') + '</td>');
+            $tr.append('<td style="font-size:0.82rem;color:#666">' + escHtml(e.userId || '-') + '</td>');
+            $tr.append('<td style="font-size:0.82rem;color:#666">' + escHtml(e.grntDt || '-') + '</td>');
+            $tr.append('<td style="text-align:center">' + lockBadge + '</td>');
+            $tbody.append($tr);
+        });
+    }
+
+    /* ── 권한 등록/수정 모달 ── */
+    function openSysRoleModal(roleData) {
+        _editRoleCd = roleData ? roleData.roleCd : null;
+        var isEdit  = _editRoleCd !== null;
+        $('#sys-role-modal-title').text(isEdit ? '권한 수정' : '권한 등록');
+        $('#sys-role-save-btn').text(isEdit ? '수정' : '등록');
+        $('#f-role-cd').val(isEdit ? roleData.roleCd : '').prop('readonly', isEdit);
+        $('#f-role-nm').val(isEdit ? (roleData.roleNm || '') : '');
+        $('#f-role-level').val(isEdit ? (roleData.roleLevel || 1) : 1);
+        $('#f-role-dc').val(isEdit ? (roleData.dc || '') : '');
+        $('#f-role-use-yn').val(isEdit ? (roleData.useYn || 'Y') : 'Y');
+        $('#sys-role-modal').show();
+    }
+
+    function closeSysRoleModal() {
+        $('#sys-role-modal').hide();
+        _editRoleCd = null;
+    }
+
+    function saveSysRole() {
+        var roleCd    = $('#f-role-cd').val().trim();
+        var roleNm    = $('#f-role-nm').val().trim();
+        var roleLevel = parseInt($('#f-role-level').val()) || null;
+        var isEdit    = _editRoleCd !== null;
+
+        if (!isEdit && !roleCd)         { alert('권한코드를 입력하세요.'); $('#f-role-cd').focus(); return; }
+        if (!roleNm)                    { alert('권한명을 입력하세요.'); $('#f-role-nm').focus(); return; }
+        if (!roleLevel || roleLevel < 1){ alert('레벨을 올바르게 입력하세요.'); $('#f-role-level').focus(); return; }
+
+        var payload = {
+            roleCd:    isEdit ? _editRoleCd : roleCd,
+            roleNm:    roleNm,
+            roleLevel: roleLevel,
+            dc:        $('#f-role-dc').val().trim() || null,
+            useYn:     $('#f-role-use-yn').val()
+        };
+
+        $.ajax({
+            url:         '/api/system/roles',
+            method:      'POST',
+            contentType: 'application/json',
+            data:        JSON.stringify(payload),
+            success: function() {
+                closeSysRoleModal();
+                loadSysRoleList();
+                if (_selectedSysRoleCd) {
+                    selectSysRole(_selectedSysRoleCd, $('#sys-role-selected-nm').text());
+                }
+                alert(isEdit ? '수정되었습니다.' : '등록되었습니다.');
+            },
+            error: function(xhr) {
+                var msg = (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : '저장 중 오류가 발생했습니다.';
+                alert(msg);
+            }
+        });
+    }
+
+    function toggleSysRoleStatus(role) {
+        var nextUseYn  = role.useYn === 'Y' ? 'N' : 'Y';
+        var confirmMsg = nextUseYn === 'N'
+            ? '[' + role.roleNm + '] 권한을 미사용 처리하시겠습니까?'
+            : '[' + role.roleNm + '] 권한을 사용 처리하시겠습니까?';
+        if (!confirm(confirmMsg)) return;
+
+        $.ajax({
+            url:         '/api/system/roles/' + encodeURIComponent(role.roleCd) + '/status',
+            method:      'PATCH',
+            contentType: 'application/json',
+            data:        JSON.stringify({ useYn: nextUseYn }),
+            success: function() {
+                loadSysRoleList();
+                if (_selectedSysRoleCd === role.roleCd) {
+                    selectSysRole(role.roleCd, role.roleNm || role.roleCd);
+                }
+                alert('처리되었습니다.');
+            },
+            error: function(xhr) {
+                var msg = (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : '처리 중 오류가 발생했습니다.';
+                alert(msg);
+            }
+        });
+    }
+
+    /* ── 사원 권한 할당 모달 ── */
+    function openAssignModal() {
+        $('#f-assign-emp').empty().append('<option value="">사원 선택</option>');
+        $('#f-assign-roles').html('<span class="role-chk-empty">사원을 먼저 선택하세요.</span>');
+        $('#assign-current-roles').hide();
+
+        $.when(
+            $.ajax({ url: '/api/system/roles/usable-emps', method: 'GET' }),
+            $.ajax({ url: '/api/system/roles',             method: 'GET' })
+        ).done(function(empRes, roleRes) {
+            var emps  = Array.isArray(empRes[0])  ? empRes[0]  : [];
+            var roles = Array.isArray(roleRes[0]) ? roleRes[0] : [];
+
+            var $sel = $('#f-assign-emp');
+            emps.forEach(function(e) {
+                var label = '[' + e.empNo + '] ' + escHtml(e.empNm) + (e.deptNm ? ' / ' + escHtml(e.deptNm) : '');
+                $sel.append($('<option>').val(e.empNo).text('[' + e.empNo + '] ' + (e.empNm || '') + (e.deptNm ? ' / ' + e.deptNm : '')));
+            });
+
+            var $box = $('#f-assign-roles').empty();
+            if (roles.length === 0) {
+                $box.html('<span class="role-chk-empty">등록된 권한이 없습니다.</span>');
+            } else {
+                roles.forEach(function(r) {
+                    $('<label class="role-chk-item">')
+                        .append('<input type="checkbox" class="assign-role-chk" value="' + escHtml(r.roleCd) + '">')
+                        .append($('<span>').html(escHtml(r.roleNm) + ' <span style="color:#aaa;font-size:0.75rem;">Lv.' + r.roleLevel + '</span>'))
+                        .appendTo($box);
+                });
+            }
+        }).fail(function(xhr) {
+            if (xhr && xhr.status === 401) logout();
+        });
+
+        $('#assign-modal').show();
+    }
+
+    function closeAssignModal() {
+        $('#assign-modal').hide();
+    }
+
+    function onAssignEmpChange() {
+        var empNo = $('#f-assign-emp').val();
+        if (!empNo) {
+            $('.assign-role-chk').prop('checked', false);
+            $('#assign-current-roles').hide();
+            return;
+        }
+        $.ajax({
+            url: '/api/system/roles/emp/' + encodeURIComponent(empNo),
+            method: 'GET',
+            success: function(data) {
+                var currentCds = {};
+                (data || []).forEach(function(r) { currentCds[r.roleCd] = true; });
+
+                /* 현재 보유 권한 표시 */
+                if (data && data.length > 0) {
+                    var roleNms = data.map(function(r) { return r.roleNm || r.roleCd; }).join(', ');
+                    $('#assign-current-role-list').text(roleNms);
+                } else {
+                    $('#assign-current-role-list').text('보유한 권한 없음');
+                }
+                $('#assign-current-roles').show();
+
+                /* 체크박스 현재 권한 반영 */
+                $('.assign-role-chk').each(function() {
+                    $(this).prop('checked', !!currentCds[$(this).val()]);
+                });
+            },
+            error: function(xhr) { if (xhr.status === 401) logout(); }
+        });
+    }
+
+    function saveAssignRoles() {
+        var empNo = $('#f-assign-emp').val();
+        if (!empNo) { alert('사원을 선택하세요.'); return; }
+
+        var roleCdList = [];
+        $('.assign-role-chk:checked').each(function() { roleCdList.push($(this).val()); });
+
+        $.ajax({
+            url:         '/api/system/roles/assign',
+            method:      'POST',
+            contentType: 'application/json',
+            data:        JSON.stringify({ empNo: empNo, roleCdList: roleCdList, grntEmpNo: null }),
+            success: function() {
+                closeAssignModal();
+                if (_selectedSysRoleCd) {
+                    selectSysRole(_selectedSysRoleCd, $('#sys-role-selected-nm').text());
+                }
+                loadSysRoleList();
+                alert('권한이 저장되었습니다.');
+            },
+            error: function(xhr) {
+                var msg = (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : '저장 중 오류가 발생했습니다.';
                 alert(msg);
             }
         });
