@@ -18,6 +18,14 @@ public class DepartmentService {
     private final DepartmentMapper departmentMapper;
 
     /* ─────────────────────────────────────
+       부서 평탄 목록 (셀렉트박스용)
+    ───────────────────────────────────── */
+    @Transactional(readOnly = true)
+    public List<DepartmentDto> findAllDepts() {
+        return departmentMapper.findAllDepts();
+    }
+
+    /* ─────────────────────────────────────
        부서 트리 조회
        평탄 목록 → 계층 구조로 변환
     ───────────────────────────────────── */

@@ -16,6 +16,12 @@ public class DepartmentController {
 
     private final DepartmentService departmentService;
 
+    /** 부서 평탄 목록 - 셀렉트박스용 (USE_YN = 'Y' 포함 전체) */
+    @GetMapping
+    public ResponseEntity<ApiResponse<List<DepartmentDto>>> getAllDepts() {
+        return ResponseEntity.ok(ApiResponse.success(departmentService.findAllDepts()));
+    }
+
     /** 다음 부서코드 자동 생성 (DEPT-NNN 패턴) */
     @GetMapping("/next-code")
     public ResponseEntity<ApiResponse<String>> getNextCode() {
