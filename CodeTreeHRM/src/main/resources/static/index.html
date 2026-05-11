@@ -1511,22 +1511,28 @@
         hideAllPages();
         $('#page-emp-reg').show();
 
-        /* 부서·직급 셀렉트 로드 (검색 영역) */
-        $.when(
-            $.ajax({ url: '/api/hr/departments', method: 'GET' }),
-            $.ajax({ url: '/api/hr/positions',  method: 'GET' })
-        ).done(function(deptRes, jbgdRes) {
-            var $dept = $('#emp-search-dept').empty().append('<option value="">부서 전체</option>');
-            var $jbgd = $('#emp-search-jbgd').empty().append('<option value="">직급 전체</option>');
-            if (deptRes[0].success) {
-                deptRes[0].data.forEach(function(d) {
-                    $dept.append($('<option>').val(d.deptCd).text(d.deptNm));
-                });
+        /* 부서 셀렉트 로드 (검색 영역) */
+        $.ajax({
+            url: '/api/hr/departments', method: 'GET',
+            success: function(res) {
+                var $dept = $('#emp-search-dept').empty().append('<option value="">부서 전체</option>');
+                if (res && res.success && res.data) {
+                    res.data.forEach(function(d) {
+                        $dept.append($('<option>').val(d.deptCd).text(d.deptNm));
+                    });
+                }
             }
-            if (jbgdRes[0].success) {
-                jbgdRes[0].data.forEach(function(j) {
-                    $jbgd.append($('<option>').val(j.jbgdCd).text(j.jbgdNm));
-                });
+        });
+        /* 직급 셀렉트 로드 (검색 영역) */
+        $.ajax({
+            url: '/api/hr/positions', method: 'GET',
+            success: function(res) {
+                var $jbgd = $('#emp-search-jbgd').empty().append('<option value="">직급 전체</option>');
+                if (res && res.success && res.data) {
+                    res.data.forEach(function(j) {
+                        $jbgd.append($('<option>').val(j.jbgdCd).text(j.jbgdNm));
+                    });
+                }
             }
         });
 
@@ -1624,27 +1630,12 @@
         $('#emp-save-btn').text(isEdit ? '수정' : '등록');
         resetEmpForm();
 
-        /* ① 부서·직급 셀렉트 먼저 로드 ($.ajax 2개만 유지 → 인자 배열 wrapping 일관성 보장) */
-        $.when(
-            $.ajax({ url: '/api/hr/departments', method: 'GET' }),
-            $.ajax({ url: '/api/hr/positions',   method: 'GET' })
-        ).done(function(deptRes, jbgdRes) {
-            /* 부서 셀렉트 */
-            var $dept = $('#f-dept-cd').empty().append('<option value="">부서 선택</option>');
-            if (deptRes[0] && deptRes[0].success && deptRes[0].data) {
-                deptRes[0].data.forEach(function(d) {
-                    $dept.append($('<option>').val(d.deptCd).text(d.deptNm));
-                });
-            }
-            /* 직급 셀렉트 */
-            var $jbgd = $('#f-jbgd-cd').empty().append('<option value="">직급 선택</option>');
-            if (jbgdRes[0] && jbgdRes[0].success && jbgdRes[0].data) {
-                jbgdRes[0].data.forEach(function(j) {
-                    $jbgd.append($('<option>').val(j.jbgdCd).text(j.jbgdNm));
-                });
-            }
-            /* ② 수정 모드: 드롭다운 옵션이 채워진 후 사원 데이터 로드 → 선택값 정상 바인딩 */
-            if (isEdit) {
+        /* ① 부서·직급 셀렉트 개별 로드 ($.when 대신 개별 $.ajax → res 직접 접근) */
+        var _selectLoadCount = 0;
+        function _onSelectLoaded() {
+            _selectLoadCount++;
+            /* 두 셀렉트 모두 로드 완료 후 수정 모드일 때 사원 데이터 바인딩 */
+            if (_selectLoadCount === 2 && isEdit) {
                 $.ajax({
                     url: '/api/hr/employees/' + encodeURIComponent(_editEmpNo),
                     method: 'GET',
@@ -1659,9 +1650,40 @@
                     }
                 });
             }
-        }).fail(function() {
-            showToast('부서/직급 목록을 불러오는 중 오류가 발생했습니다.', 'error');
-            closeEmpModal();
+        }
+        /* 부서 셀렉트 */
+        $.ajax({
+            url: '/api/hr/departments', method: 'GET',
+            success: function(res) {
+                var $dept = $('#f-dept-cd').empty().append('<option value="">부서 선택</option>');
+                if (res && res.success && res.data) {
+                    res.data.forEach(function(d) {
+                        $dept.append($('<option>').val(d.deptCd).text(d.deptNm));
+                    });
+                }
+                _onSelectLoaded();
+            },
+            error: function() {
+                showToast('부서 목록을 불러오는 중 오류가 발생했습니다.', 'error');
+                closeEmpModal();
+            }
+        });
+        /* 직급 셀렉트 */
+        $.ajax({
+            url: '/api/hr/positions', method: 'GET',
+            success: function(res) {
+                var $jbgd = $('#f-jbgd-cd').empty().append('<option value="">직급 선택</option>');
+                if (res && res.success && res.data) {
+                    res.data.forEach(function(j) {
+                        $jbgd.append($('<option>').val(j.jbgdCd).text(j.jbgdNm));
+                    });
+                }
+                _onSelectLoaded();
+            },
+            error: function() {
+                showToast('직급 목록을 불러오는 중 오류가 발생했습니다.', 'error');
+                closeEmpModal();
+            }
         });
 
         $('#emp-modal').show();
