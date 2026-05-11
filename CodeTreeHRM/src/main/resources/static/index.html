@@ -132,6 +132,31 @@
 
         /* ── 고용형태 뱃지 ── */
         .badge-empl { display:inline-block; padding:2px 8px; background:#EDE7F6; color:#512DA8; border-radius:4px; font-size:0.75rem; font-weight:600; }
+
+        /* ── 부서 관리 (M002-01) ── */
+        .dept-layout { display:flex; gap:16px; align-items:flex-start; }
+        .dept-tree-panel { width:280px; flex-shrink:0; }
+        .dept-detail-panel { flex:1; min-width:0; }
+        .dept-tree-scroll { max-height:calc(100vh - 220px); overflow-y:auto; padding:8px 0; }
+        .tree-node { user-select:none; }
+        .tree-node-row { display:flex; align-items:center; padding:6px 12px; border-radius:6px; cursor:pointer; transition:background 0.15s; gap:6px; }
+        .tree-node-row:hover { background:#F0F4F8; }
+        .tree-node-row.selected { background:#EEF2F7; font-weight:600; }
+        .tree-toggle { width:16px; text-align:center; font-size:0.7rem; color:#aaa; cursor:pointer; flex-shrink:0; }
+        .tree-toggle.has-child { color:#888; }
+        .tree-node-nm { font-size:0.85rem; color:#2C3E50; flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+        .tree-node-nm.inactive { color:#bbb; text-decoration:line-through; }
+        .tree-children { display:none; }
+        .tree-children.open { display:block; }
+        .dept-detail-card { background:#F8F9FA; border-radius:8px; padding:16px; margin-bottom:16px; }
+        .dept-detail-card .detail-title { font-size:0.78rem; color:#888; margin-bottom:2px; }
+        .dept-detail-card .detail-val { font-size:0.9rem; color:#2C3E50; font-weight:500; }
+        .detail-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+        .badge-use-y { display:inline-block; padding:2px 8px; background:#E8F5E9; color:#388E3C; border-radius:4px; font-size:0.75rem; font-weight:600; }
+        .badge-use-n { display:inline-block; padding:2px 8px; background:#FFF3E0; color:#E65100; border-radius:4px; font-size:0.75rem; font-weight:600; }
+        .dept-no-select { text-align:center; padding:60px 20px; color:#aaa; }
+        .btn-danger { background:white; color:var(--danger); border:1px solid var(--danger); padding:7px 16px; border-radius:6px; cursor:pointer; font-size:0.84rem; }
+        .btn-danger:hover { background:#fef0ef; }
     </style>
 </head>
 <body>
@@ -225,6 +250,180 @@
                     </thead>
                     <tbody id="menu-table-body"></tbody>
                 </table>
+            </div>
+        </div>
+
+        <!-- 부서 관리 (M002-01) -->
+        <div id="page-dept-mgmt" style="display:none;">
+            <div class="dept-layout">
+                <!-- 좌측: 부서 트리 -->
+                <div class="page-panel dept-tree-panel" style="padding:20px;">
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+                        <h4 style="color:var(--primary);font-size:0.95rem;">부서 체계</h4>
+                        <button class="btn-primary" style="font-size:0.78rem;padding:5px 10px;" onclick="openDeptModal(null)">+ 신규</button>
+                    </div>
+                    <div class="dept-tree-scroll" id="dept-tree-container">
+                        <div style="text-align:center;padding:24px;color:#aaa;font-size:0.85rem;">불러오는 중...</div>
+                    </div>
+                </div>
+
+                <!-- 우측: 상세 정보 -->
+                <div class="page-panel dept-detail-panel" style="padding:24px;">
+                    <!-- 미선택 안내 -->
+                    <div id="dept-no-select" class="dept-no-select">
+                        <div style="font-size:2.5rem;margin-bottom:12px;">🏢</div>
+                        <p style="font-size:0.9rem;">좌측 트리에서 부서를 선택하세요.</p>
+                    </div>
+                    <!-- 상세 내용 -->
+                    <div id="dept-detail-content" style="display:none;">
+                        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+                            <div>
+                                <h3 id="detail-dept-nm" style="font-size:1.1rem;color:var(--primary);margin-bottom:4px;"></h3>
+                                <span id="detail-dept-cd" style="font-size:0.82rem;color:#888;"></span>
+                                <span id="detail-use-badge" style="margin-left:8px;"></span>
+                            </div>
+                            <div style="display:flex;gap:8px;">
+                                <button class="btn-primary" onclick="openDeptModal(_selectedDeptCd)">수정</button>
+                                <button class="btn-danger" id="btn-close-dept" onclick="closeDeptAction()">폐지 처리</button>
+                            </div>
+                        </div>
+
+                        <!-- 기본 정보 -->
+                        <div class="dept-detail-card">
+                            <div style="font-size:0.78rem;font-weight:700;color:var(--primary);letter-spacing:0.04em;margin-bottom:12px;">기본 정보</div>
+                            <div class="detail-grid">
+                                <div>
+                                    <div class="detail-title">영문명</div>
+                                    <div class="detail-val" id="detail-dept-eng-nm">-</div>
+                                </div>
+                                <div>
+                                    <div class="detail-title">약칭</div>
+                                    <div class="detail-val" id="detail-dept-shrt-nm">-</div>
+                                </div>
+                                <div>
+                                    <div class="detail-title">상위 부서</div>
+                                    <div class="detail-val" id="detail-upper-dept">-</div>
+                                </div>
+                                <div>
+                                    <div class="detail-title">부서 레벨 / 순서</div>
+                                    <div class="detail-val" id="detail-dept-lvl-ordr">-</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 운영 정보 -->
+                        <div class="dept-detail-card">
+                            <div style="font-size:0.78rem;font-weight:700;color:var(--primary);letter-spacing:0.04em;margin-bottom:12px;">운영 정보</div>
+                            <div class="detail-grid">
+                                <div>
+                                    <div class="detail-title">부서장</div>
+                                    <div class="detail-val" id="detail-dept-mngr">-</div>
+                                </div>
+                                <div>
+                                    <div class="detail-title">전화번호</div>
+                                    <div class="detail-val" id="detail-dept-telno">-</div>
+                                </div>
+                                <div>
+                                    <div class="detail-title">위치</div>
+                                    <div class="detail-val" id="detail-dept-lctn">-</div>
+                                </div>
+                                <div>
+                                    <div class="detail-title">설립일</div>
+                                    <div class="detail-val" id="detail-estbl-ymd">-</div>
+                                </div>
+                                <div id="detail-clsg-row">
+                                    <div class="detail-title">폐지일</div>
+                                    <div class="detail-val" id="detail-clsg-ymd">-</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 시스템 정보 -->
+                        <div style="font-size:0.78rem;color:#aaa;text-align:right;">
+                            등록: <span id="detail-regist-dt"></span> &nbsp;|&nbsp; 최종수정: <span id="detail-updt-dt"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 부서 등록/수정 모달 -->
+        <div id="dept-modal" class="modal-overlay" style="display:none;">
+            <div class="modal-box modal-box-lg">
+                <div class="modal-header">
+                    <h3 id="dept-modal-title">부서 등록</h3>
+                    <button class="modal-close" onclick="closeDeptModal()">&times;</button>
+                </div>
+                <div class="modal-body-scroll">
+                    <div class="form-section-title">기본 정보</div>
+                    <div class="form-grid-2">
+                        <div class="form-row">
+                            <label>부서코드 <span class="req">*</span></label>
+                            <input type="text" id="f-dept-cd" placeholder="예: DEPT-005" style="text-transform:uppercase;">
+                        </div>
+                        <div class="form-row">
+                            <label>출력 순서 <span class="req">*</span></label>
+                            <input type="number" id="f-dept-ordr" placeholder="예: 5" min="1">
+                        </div>
+                        <div class="form-row form-col-full">
+                            <label>부서명(국문) <span class="req">*</span></label>
+                            <input type="text" id="f-dept-nm" placeholder="부서명을 입력하세요">
+                        </div>
+                        <div class="form-row">
+                            <label>부서명(영문)</label>
+                            <input type="text" id="f-dept-eng-nm" placeholder="예: Development Team">
+                        </div>
+                        <div class="form-row">
+                            <label>약칭</label>
+                            <input type="text" id="f-dept-shrt-nm" placeholder="예: 개발팀">
+                        </div>
+                    </div>
+
+                    <div class="form-section-title">계층 구조</div>
+                    <div class="form-grid-2">
+                        <div class="form-row">
+                            <label>상위 부서</label>
+                            <select id="f-upper-dept-cd">
+                                <option value="">없음 (최상위)</option>
+                            </select>
+                        </div>
+                        <div class="form-row">
+                            <label>부서 레벨 <span style="color:#aaa;font-weight:400;">(자동 계산)</span></label>
+                            <input type="text" id="f-dept-lvl" readonly placeholder="상위 부서 선택 시 자동 설정">
+                        </div>
+                    </div>
+
+                    <div class="form-section-title">운영 정보</div>
+                    <div class="form-grid-2">
+                        <div class="form-row">
+                            <label>부서장 사번</label>
+                            <input type="text" id="f-dept-mngr-no" placeholder="예: 2026-001">
+                        </div>
+                        <div class="form-row">
+                            <label>전화번호</label>
+                            <input type="text" id="f-dept-telno" placeholder="예: 02-1234-5678">
+                        </div>
+                        <div class="form-row">
+                            <label>위치</label>
+                            <input type="text" id="f-dept-lctn-nm" placeholder="예: 본사 3층">
+                        </div>
+                        <div class="form-row">
+                            <label>설립일</label>
+                            <input type="date" id="f-estbl-ymd">
+                        </div>
+                        <div class="form-row">
+                            <label>사용 여부</label>
+                            <select id="f-use-yn">
+                                <option value="Y">사용</option>
+                                <option value="N">미사용</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn-cancel" onclick="closeDeptModal()">취소</button>
+                    <button class="btn-primary" id="dept-save-btn" onclick="saveDept()">등록</button>
+                </div>
             </div>
         </div>
 
@@ -611,8 +810,10 @@
             loadMenuMgmt();
         } else if (menuUrl === '/admin/role-menu' || nm === '권한별메뉴관리' || nm === '메뉴권한관리') {
             loadRoleMenuPage();
-        } else if (menuUrl === '/hr/manage' || nm === '인사관리') {
+        } else if (menuUrl === '/hr/manage' || nm === '인사관리' || menuUrl === '/hr/register' || nm === '사원등록') {
             loadEmpRegPage();
+        } else if (menuUrl === '/dept/manage' || nm === '부서관리') {
+            loadDeptMgmtPage();
         } else {
             showPlaceholder(menuNm);
         }
@@ -636,7 +837,7 @@
     }
 
     function hideAllPages() {
-        $('#page-home, #page-placeholder, #page-menu-mgmt, #page-role-menu, #page-emp-reg').hide();
+        $('#page-home, #page-placeholder, #page-menu-mgmt, #page-role-menu, #page-emp-reg, #page-dept-mgmt').hide();
     }
 
     function logout() {
@@ -1243,6 +1444,333 @@
             error: function(xhr) {
                 var msg = (xhr.responseJSON && xhr.responseJSON.message)
                     ? xhr.responseJSON.message : '저장 중 오류가 발생했습니다.';
+                alert(msg);
+            }
+        });
+    }
+
+    /* ═══════════════════════════════════════
+       부서 관리 (Department Master CRUD)  M002-01
+    ═══════════════════════════════════════ */
+    var _selectedDeptCd = null;
+    var _deptTreeData   = [];      // 트리 원본 캐시
+    var _editDeptCd     = null;    // 모달 편집 대상
+
+    /* ── 페이지 진입 ── */
+    function loadDeptMgmtPage() {
+        hideAllPages();
+        $('#page-dept-mgmt').show();
+        _selectedDeptCd = null;
+        $('#dept-no-select').show();
+        $('#dept-detail-content').hide();
+        loadDeptTree();
+    }
+
+    /* ── 트리 데이터 로드 ── */
+    function loadDeptTree() {
+        $.ajax({
+            url: '/api/hr/departments/tree',
+            method: 'GET',
+            success: function(res) {
+                if (res.success) {
+                    _deptTreeData = res.data || [];
+                    renderDeptTree(_deptTreeData);
+                }
+            },
+            error: function(xhr) { if (xhr.status === 401) logout(); }
+        });
+    }
+
+    /* ── 트리 렌더링 ── */
+    function renderDeptTree(nodes) {
+        var $c = $('#dept-tree-container').empty();
+        if (!nodes || nodes.length === 0) {
+            $c.html('<div style="text-align:center;padding:24px;color:#aaa;font-size:0.85rem;">등록된 부서가 없습니다.</div>');
+            return;
+        }
+        nodes.forEach(function(node) { $c.append(buildTreeNode(node, 0)); });
+    }
+
+    function buildTreeNode(node, depth) {
+        var hasChildren = node.children && node.children.length > 0;
+        var nodeId = 'tn-' + node.deptCd.replace(/[^a-zA-Z0-9]/g, '-');
+        var childId = 'tc-' + node.deptCd.replace(/[^a-zA-Z0-9]/g, '-');
+
+        var $wrap = $('<div class="tree-node">');
+
+        var $row = $('<div class="tree-node-row">').css('padding-left', (12 + depth * 20) + 'px').attr('id', nodeId);
+
+        /* 펼침 토글 */
+        var $toggle = $('<span class="tree-toggle">');
+        if (hasChildren) {
+            $toggle.addClass('has-child').text('▶');
+            $toggle.on('click', function(e) {
+                e.stopPropagation();
+                var $ch = $('#' + childId);
+                var isOpen = $ch.hasClass('open');
+                $ch.toggleClass('open', !isOpen);
+                $toggle.text(isOpen ? '▶' : '▼');
+            });
+        }
+        $row.append($toggle);
+
+        /* 부서명 */
+        var isInactive = node.useYn === 'N';
+        var $nm = $('<span class="tree-node-nm">').text(node.deptNm);
+        if (isInactive) $nm.addClass('inactive');
+        $row.append($nm);
+
+        /* 레벨 표시 */
+        if (node.deptLvl) {
+            $row.append($('<span style="font-size:0.7rem;color:#bbb;margin-left:4px;">').text('Lv.' + node.deptLvl));
+        }
+
+        $row.on('click', function() { selectDept(node.deptCd); });
+
+        $wrap.append($row);
+
+        /* 자식 노드 */
+        if (hasChildren) {
+            var $children = $('<div class="tree-children" id="' + childId + '">');
+            node.children.forEach(function(child) {
+                $children.append(buildTreeNode(child, depth + 1));
+            });
+            $wrap.append($children);
+        }
+        return $wrap;
+    }
+
+    /* ── 부서 선택: 상세 패널 로드 ── */
+    function selectDept(deptCd) {
+        _selectedDeptCd = deptCd;
+        /* 트리 선택 하이라이트 */
+        $('.tree-node-row').removeClass('selected');
+        $('#tn-' + deptCd.replace(/[^a-zA-Z0-9]/g, '-')).addClass('selected');
+
+        $.ajax({
+            url: '/api/hr/departments/' + encodeURIComponent(deptCd),
+            method: 'GET',
+            success: function(res) {
+                if (res.success && res.data) {
+                    renderDeptDetail(res.data);
+                }
+            },
+            error: function(xhr) { if (xhr.status === 401) logout(); }
+        });
+    }
+
+    /* ── 상세 패널 렌더링 ── */
+    function renderDeptDetail(d) {
+        $('#dept-no-select').hide();
+        $('#dept-detail-content').show();
+
+        $('#detail-dept-nm').text(d.deptNm || '-');
+        $('#detail-dept-cd').text('[' + (d.deptCd || '') + ']');
+        $('#detail-use-badge').html(d.useYn === 'Y'
+            ? '<span class="badge-use-y">사용</span>'
+            : '<span class="badge-use-n">미사용</span>');
+
+        /* 기본 정보 */
+        $('#detail-dept-eng-nm').text(d.deptEngNm || '-');
+        $('#detail-dept-shrt-nm').text(d.deptShrtNm || '-');
+        $('#detail-upper-dept').text(d.upperDeptNm ? d.upperDeptNm + ' (' + d.upperDeptCd + ')' : '최상위 부서');
+        $('#detail-dept-lvl-ordr').text('Lv.' + (d.deptLvl || 1) + ' / ' + (d.deptOrdr || '-') + '번');
+
+        /* 운영 정보 */
+        var mngrTxt = d.deptMngrNm ? d.deptMngrNm + ' (' + d.deptMngrNo + ')' : (d.deptMngrNo || '-');
+        $('#detail-dept-mngr').text(mngrTxt);
+        $('#detail-dept-telno').text(d.deptTelno || '-');
+        $('#detail-dept-lctn').text(d.deptLctnNm || '-');
+        $('#detail-estbl-ymd').text(d.estblYmd || '-');
+
+        if (d.clsgYmd) {
+            $('#detail-clsg-row').show();
+            $('#detail-clsg-ymd').text(d.clsgYmd);
+        } else {
+            $('#detail-clsg-row').hide();
+        }
+
+        /* 폐지 버튼 활성화 여부 */
+        $('#btn-close-dept').prop('disabled', d.useYn === 'N').css('opacity', d.useYn === 'N' ? 0.4 : 1);
+
+        /* 시스템 정보 */
+        $('#detail-regist-dt').text(d.registDt || '-');
+        $('#detail-updt-dt').text(d.updtDt || '-');
+    }
+
+    /* ── 모달 열기 ── */
+    function openDeptModal(deptCd) {
+        _editDeptCd = deptCd || null;
+        var isEdit  = _editDeptCd !== null;
+
+        $('#dept-modal-title').text(isEdit ? '부서 수정' : '부서 등록');
+        $('#dept-save-btn').text(isEdit ? '수정' : '등록');
+        resetDeptForm();
+
+        /* 상위 부서 드롭다운 로드 */
+        loadUpperDeptSelect(isEdit ? _editDeptCd : null, function() {
+            if (isEdit) {
+                $.ajax({
+                    url: '/api/hr/departments/' + encodeURIComponent(_editDeptCd),
+                    method: 'GET',
+                    success: function(res) {
+                        if (res.success && res.data) bindDeptForm(res.data);
+                    }
+                });
+            }
+        });
+
+        $('#dept-modal').show();
+    }
+
+    /* ── 상위 부서 셀렉트 로드 ── */
+    function loadUpperDeptSelect(excludeCd, callback) {
+        $.ajax({
+            url: '/api/hr/departments/tree',
+            method: 'GET',
+            success: function(res) {
+                var $sel = $('#f-upper-dept-cd').empty().append('<option value="">없음 (최상위)</option>');
+                if (res.success && res.data) {
+                    appendFlatOptions($sel, res.data, 0, excludeCd);
+                }
+                /* 상위 부서 변경 시 레벨 자동 표시 */
+                $sel.off('change.lvl').on('change.lvl', function() {
+                    var upperCd = $(this).val();
+                    if (!upperCd) { $('#f-dept-lvl').val('1 (최상위)'); return; }
+                    $.ajax({
+                        url: '/api/hr/departments/' + encodeURIComponent(upperCd),
+                        method: 'GET',
+                        success: function(r) {
+                            if (r.success && r.data) {
+                                var lv = (r.data.deptLvl || 1) + 1;
+                                $('#f-dept-lvl').val(lv + '레벨');
+                            }
+                        }
+                    });
+                });
+                if (callback) callback();
+            }
+        });
+    }
+
+    function appendFlatOptions($sel, nodes, depth, excludeCd) {
+        nodes.forEach(function(n) {
+            if (n.deptCd === excludeCd) return;
+            var prefix = depth > 0 ? ('　'.repeat(depth) + '└ ') : '';
+            $sel.append($('<option>').val(n.deptCd).text(prefix + n.deptNm));
+            if (n.children && n.children.length > 0) {
+                appendFlatOptions($sel, n.children, depth + 1, excludeCd);
+            }
+        });
+    }
+
+    /* ── 폼 초기화 ── */
+    function resetDeptForm() {
+        $('#f-dept-cd').val('').prop('readonly', false);
+        $('#f-dept-nm').val('');
+        $('#f-dept-eng-nm').val('');
+        $('#f-dept-shrt-nm').val('');
+        $('#f-dept-ordr').val('');
+        $('#f-upper-dept-cd').val('');
+        $('#f-dept-lvl').val('1 (최상위)');
+        $('#f-dept-mngr-no').val('');
+        $('#f-dept-telno').val('');
+        $('#f-dept-lctn-nm').val('');
+        $('#f-estbl-ymd').val('');
+        $('#f-use-yn').val('Y');
+    }
+
+    /* ── 수정 시 폼 바인딩 ── */
+    function bindDeptForm(d) {
+        $('#f-dept-cd').val(d.deptCd || '').prop('readonly', true);
+        $('#f-dept-nm').val(d.deptNm || '');
+        $('#f-dept-eng-nm').val(d.deptEngNm || '');
+        $('#f-dept-shrt-nm').val(d.deptShrtNm || '');
+        $('#f-dept-ordr').val(d.deptOrdr || '');
+        $('#f-upper-dept-cd').val(d.upperDeptCd || '');
+        $('#f-dept-lvl').val(d.deptLvl ? d.deptLvl + '레벨' : '1 (최상위)');
+        $('#f-dept-mngr-no').val(d.deptMngrNo || '');
+        $('#f-dept-telno').val(d.deptTelno || '');
+        $('#f-dept-lctn-nm').val(d.deptLctnNm || '');
+        $('#f-estbl-ymd').val(d.estblYmd || '');
+        $('#f-use-yn').val(d.useYn || 'Y');
+    }
+
+    /* ── 모달 닫기 ── */
+    function closeDeptModal() {
+        $('#dept-modal').hide();
+        _editDeptCd = null;
+    }
+
+    /* ── 저장 ── */
+    function saveDept() {
+        var deptCd  = $('#f-dept-cd').val().trim().toUpperCase();
+        var deptNm  = $('#f-dept-nm').val().trim();
+        var deptOrdr = parseInt($('#f-dept-ordr').val()) || null;
+
+        if (!deptCd)  { alert('부서코드를 입력하세요.'); $('#f-dept-cd').focus(); return; }
+        if (!deptNm)  { alert('부서명을 입력하세요.'); $('#f-dept-nm').focus(); return; }
+        if (!deptOrdr){ alert('출력 순서를 입력하세요.'); $('#f-dept-ordr').focus(); return; }
+
+        var payload = {
+            deptCd:      deptCd,
+            deptNm:      deptNm,
+            deptEngNm:   $('#f-dept-eng-nm').val().trim()  || null,
+            deptShrtNm:  $('#f-dept-shrt-nm').val().trim() || null,
+            deptOrdr:    deptOrdr,
+            upperDeptCd: $('#f-upper-dept-cd').val()       || null,
+            deptMngrNo:  $('#f-dept-mngr-no').val().trim() || null,
+            deptTelno:   $('#f-dept-telno').val().trim()   || null,
+            deptLctnNm:  $('#f-dept-lctn-nm').val().trim() || null,
+            estblYmd:    $('#f-estbl-ymd').val()           || null,
+            useYn:       $('#f-use-yn').val()
+        };
+
+        $.ajax({
+            url:         '/api/hr/departments',
+            method:      'POST',
+            contentType: 'application/json',
+            data:        JSON.stringify(payload),
+            success: function(res) {
+                if (res.success) {
+                    closeDeptModal();
+                    var prevSelected = _editDeptCd || deptCd;
+                    loadDeptTree();
+                    setTimeout(function() { selectDept(prevSelected); }, 300);
+                    alert(_editDeptCd ? '수정되었습니다.' : '등록되었습니다.');
+                } else {
+                    alert(res.message || '저장 중 오류가 발생했습니다.');
+                }
+            },
+            error: function(xhr) {
+                var msg = (xhr.responseJSON && xhr.responseJSON.message)
+                    ? xhr.responseJSON.message : '저장 중 오류가 발생했습니다.';
+                alert(msg);
+            }
+        });
+    }
+
+    /* ── 폐지 처리 ── */
+    function closeDeptAction() {
+        if (!_selectedDeptCd) return;
+        if (!confirm('[' + _selectedDeptCd + '] 부서를 폐지 처리하시겠습니까?\n\n폐지 후에는 USE_YN이 \'N\'으로 변경되고 폐지일이 기록됩니다.')) return;
+
+        $.ajax({
+            url:    '/api/hr/departments/' + encodeURIComponent(_selectedDeptCd) + '/close',
+            method: 'PATCH',
+            success: function(res) {
+                if (res.success) {
+                    var cd = _selectedDeptCd;
+                    loadDeptTree();
+                    setTimeout(function() { selectDept(cd); }, 300);
+                    alert('폐지 처리되었습니다.');
+                } else {
+                    alert(res.message || '폐지 처리 중 오류가 발생했습니다.');
+                }
+            },
+            error: function(xhr) {
+                var msg = (xhr.responseJSON && xhr.responseJSON.message)
+                    ? xhr.responseJSON.message : '폐지 처리 중 오류가 발생했습니다.';
                 alert(msg);
             }
         });
