@@ -1483,7 +1483,7 @@
         /* 부서·직급 셀렉트 로드 (검색 영역) */
         $.when(
             $.ajax({ url: '/api/hr/departments', method: 'GET' }),
-            $.ajax({ url: '/api/hr/job-grades',  method: 'GET' })
+            $.ajax({ url: '/api/hr/positions',  method: 'GET' })
         ).done(function(deptRes, jbgdRes) {
             var $dept = $('#emp-search-dept').empty().append('<option value="">부서 전체</option>');
             var $jbgd = $('#emp-search-jbgd').empty().append('<option value="">직급 전체</option>');
@@ -1596,7 +1596,7 @@
         /* 부서·직급 셀렉트 로드 후 데이터 채우기 */
         $.when(
             $.ajax({ url: '/api/hr/departments', method: 'GET' }),
-            $.ajax({ url: '/api/hr/job-grades',  method: 'GET' }),
+            $.ajax({ url: '/api/hr/positions',  method: 'GET' }),
             isEdit
                 ? $.ajax({ url: '/api/hr/employees/' + encodeURIComponent(_editEmpNo), method: 'GET' })
                 : $.Deferred().resolve({ success: true, data: null }).promise()
