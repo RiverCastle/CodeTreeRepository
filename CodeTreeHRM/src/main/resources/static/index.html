@@ -1610,11 +1610,23 @@
         /* 상위 부서 드롭다운 로드 */
         loadUpperDeptSelect(isEdit ? _editDeptCd : null, function() {
             if (isEdit) {
+                /* 수정: 기존 데이터 바인딩 */
                 $.ajax({
                     url: '/api/hr/departments/' + encodeURIComponent(_editDeptCd),
                     method: 'GET',
                     success: function(res) {
                         if (res.success && res.data) bindDeptForm(res.data);
+                    }
+                });
+            } else {
+                /* 신규: 부서코드 자동 생성 후 입력 필드에 채우기 */
+                $.ajax({
+                    url: '/api/hr/departments/next-code',
+                    method: 'GET',
+                    success: function(res) {
+                        if (res.success && res.data) {
+                            $('#f-dept-cd').val(res.data);
+                        }
                     }
                 });
             }

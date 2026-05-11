@@ -155,4 +155,18 @@
         WHERE DEPT_CD = #{deptCd}
     </update>
 
+    <!-- ─────────────────────────────────────
+         DEPT-NNN 패턴 최대 시퀀스 조회
+         예) DEPT-001 ~ DEPT-004 중 최댓값 → 4
+         신규 코드 생성 시 +1 하여 DEPT-005 반환
+    ───────────────────────────────────── -->
+    <select id="findMaxDeptSeq" resultType="int">
+        SELECT IFNULL(
+            MAX(CAST(SUBSTRING_INDEX(DEPT_CD, '-', -1) AS UNSIGNED)),
+            0
+        )
+        FROM hrm_dept_master
+        WHERE DEPT_CD REGEXP '^DEPT-[0-9]+$'
+    </select>
+
 </mapper>
