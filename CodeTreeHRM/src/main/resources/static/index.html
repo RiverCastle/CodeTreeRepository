@@ -1362,11 +1362,29 @@
         var isEdit = _editPosCd !== null;
         $('#pos-modal-title').text(isEdit ? '직급 수정' : '직급 등록');
         $('#pos-save-btn').text(isEdit ? '수정' : '등록');
-        $('#f-pos-cd').val(isEdit ? posData.jbgdCd : '').prop('readonly', isEdit);
         $('#f-pos-nm').val(isEdit ? posData.jbgdNm : '');
         $('#f-pos-ordr').val(isEdit ? posData.jbgdOrdr : 1);
         $('#f-pos-use-yn').val(isEdit ? posData.useYn : 'Y');
-        $('#pos-modal').show();
+
+        if (isEdit) {
+            /* 수정: 직급코드 고정 (readonly) */
+            $('#f-pos-cd').val(posData.jbgdCd).prop('readonly', true);
+            $('#pos-modal').show();
+        } else {
+            /* 신규: 다음 코드 자동 생성 후 모달 표시 */
+            $('#f-pos-cd').val('생성 중...').prop('readonly', true);
+            $.ajax({
+                url: '/api/hr/positions/next-code',
+                method: 'GET',
+                success: function(res) {
+                    $('#f-pos-cd').val(res.success ? res.data : '');
+                },
+                error: function() {
+                    $('#f-pos-cd').val('').prop('readonly', false);
+                }
+            });
+            $('#pos-modal').show();
+        }
     }
 
     function closePosModal() {

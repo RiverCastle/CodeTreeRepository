@@ -23,6 +23,12 @@ public class PosController {
         return ResponseEntity.ok(ApiResponse.success(posService.findAll()));
     }
 
+    /** 다음 직급코드 자동 생성 (POS-{nn} 패턴) */
+    @GetMapping("/next-code")
+    public ResponseEntity<ApiResponse<String>> getNextCode() {
+        return ResponseEntity.ok(ApiResponse.success(posService.generateNextCode()));
+    }
+
     /** 직급 단건 조회 */
     @GetMapping("/{jbgdCd}")
     public ResponseEntity<ApiResponse<PosDto>> getPosition(@PathVariable String jbgdCd) {

@@ -59,6 +59,17 @@ public class PosService {
         posMapper.updateStatus(jbgdCd, useYn);
     }
 
+    /**
+     * 다음 직급코드 자동 생성
+     * POS-{nn} 패턴에서 최대 번호 + 1 을 2자리 0-패딩하여 반환
+     * 예) POS-05 존재 시 → "POS-06"
+     */
+    @Transactional(readOnly = true)
+    public String generateNextCode() {
+        int nextSeq = posMapper.generateNextSeq();
+        return String.format("POS-%02d", nextSeq);
+    }
+
     // ── 유효성 검사 ────────────────────────────────────────────
 
     private void validatePos(PosDto pos) {

@@ -29,4 +29,7 @@ public interface PosMapper {
 
     /** 사용 여부 변경 (UPDT_DT 자동 갱신) */
     void updateStatus(@Param("jbgdCd") String jbgdCd, @Param("useYn") String useYn);
+
+    /** 다음 직급코드 자동 생성용: POS-{nn} 패턴의 최대 일련번호 + 1 */
+    int generateNextSeq();
 }

@@ -91,4 +91,18 @@
         WHERE JBGD_CD = #{jbgdCd}
     </update>
 
+    <!-- ─────────────────────────────────────
+         다음 직급코드 자동 생성용 시퀀스
+         POS-{nn} 패턴에서 nn의 최댓값 + 1 반환
+         예) POS-05 존재 시 → 6 반환 → 서비스에서 POS-06 으로 포맷
+    ───────────────────────────────────── -->
+    <select id="generateNextSeq" resultType="int">
+        SELECT IFNULL(
+            MAX(CAST(SUBSTRING_INDEX(JBGD_CD, '-', -1) AS UNSIGNED)),
+            0
+        ) + 1
+        FROM hrm_pos_master
+        WHERE JBGD_CD REGEXP '^POS-[0-9]+$'
+    </select>
+
 </mapper>
