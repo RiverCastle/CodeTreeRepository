@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.codetree.CodeTreeHRM.hr.mapper.PosMapper">
+
+    <!-- ─────────────────────────────────────
+         직급 전체 목록 (순서 DESC → 상위 직급 먼저)
+    ───────────────────────────────────── -->
+    <select id="findAll" resultType="com.codetree.CodeTreeHRM.hr.dto.PosDto">
+        SELECT
+            JBGD_CD     AS jbgdCd,
+            JBGD_NM     AS jbgdNm,
+            JBGD_ORDR   AS jbgdOrdr,
+            USE_YN      AS useYn,
+            DATE_FORMAT(REGIST_DT, '%Y-%m-%d %H:%i:%s') AS registDt,
+            DATE_FORMAT(UPDT_DT,   '%Y-%m-%d %H:%i:%s') AS updtDt
+        FROM hrm_pos_master
+        ORDER BY JBGD_ORDR ASC,
+                 CASE WHEN USE_YN = 'Y' THEN 0 ELSE 1 END ASC
+    </select>
+
+    <!-- ─────────────────────────────────────
+         직급 단건 조회
+    ───────────────────────────────────── -->
+    <select id="findByJbgdCd" resultType="com.codetree.CodeTreeHRM.hr.dto.PosDto">
+        SELECT
+            JBGD_CD     AS jbgdCd,
+            JBGD_NM     AS jbgdNm,
+            JBGD_ORDR   AS jbgdOrdr,
+            USE_YN      AS useYn,
+            DATE_FORMAT(REGIST_DT, '%Y-%m-%d %H:%i:%s') AS registDt,
+            DATE_FORMAT(UPDT_DT,   '%Y-%m-%d %H:%i:%s') AS updtDt
+        FROM hrm_pos_master
+        WHERE JBGD_CD = #{jbgdCd}
+    </select>
+
+    <!-- ─────────────────────────────────────
+         직급코드 존재 여부 확인
+    ───────────────────────────────────── -->
+    <select id="countByJbgdCd" resultType="int">
+        SELECT COUNT(*) FROM hrm_pos_master WHERE JBGD_CD = #{jbgdCd}
+    </select>
+
+    <!-- ─────────────────────────────────────
+         해당 직급을 사용 중인 재직 사원 수
+         (EMP_STTS_CD = '01' : 재직 기준, 필요 시 조건 조정)
+    ───────────────────────────────────── -->
+    <select id="countActiveEmployeesByJbgdCd" resultType="int">
+        SELECT COUNT(*)
+        FROM hrm_emp_master
+        WHERE JBGD_CD = #{jbgdCd}
+          AND EMP_STTS_CD IN ('ACTIVE', 'LOA')
+    </select>
+
+    <!-- ─────────────────────────────────────
+         신규 등록
+    ───────────────────────────────────── -->
+    <insert id="insertPos" parameterType="com.codetree.CodeTreeHRM.hr.dto.PosDto">
+        INSERT INTO hrm_pos_master (
+            JBGD_CD,
+            JBGD_NM,
+            JBGD_ORDR,
+            USE_YN
+        ) VALUES (
+            #{jbgdCd},
+            #{jbgdNm},
+            #{jbgdOrdr},
+            IFNULL(#{useYn}, 'Y')
+        )
+    </insert>
+
+    <!-- ─────────────────────────────────────
+         정보 수정
+    ───────────────────────────────────── -->
+    <update id="updatePos" parameterType="com.codetree.CodeTreeHRM.hr.dto.PosDto">
+        UPDATE hrm_pos_master
+        SET
+            JBGD_NM   = #{jbgdNm},
+            JBGD_ORDR = #{jbgdOrdr},
+            USE_YN    = #{useYn}
+        WHERE JBGD_CD = #{jbgdCd}
+    </update>
+
+    <!-- ─────────────────────────────────────
+         사용 여부 변경
+    ───────────────────────────────────── -->
+    <update id="updateStatus">
+        UPDATE hrm_pos_master
+        SET USE_YN = #{useYn}
+        WHERE JBGD_CD = #{jbgdCd}
+    </update>
+
+</mapper>

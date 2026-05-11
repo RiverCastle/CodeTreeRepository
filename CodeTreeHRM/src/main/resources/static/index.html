@@ -270,6 +270,29 @@
             </div>
         </div>
 
+        <!-- 직급 관리 -->
+        <div id="page-pos-mgmt" style="display:none;">
+            <div class="page-panel" style="padding: 24px;">
+                <div class="admin-toolbar">
+                    <div style="font-size:0.9rem; color:#7F8C8D;">직급 목록 (순서 오름차순)</div>
+                    <button class="btn-primary" onclick="openPosModal(null)">+ 신규 등록</button>
+                </div>
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>직급코드</th>
+                            <th>직급명</th>
+                            <th style="text-align:center">순서</th>
+                            <th>사용여부</th>
+                            <th>등록일시</th>
+                            <th style="text-align:center">관리</th>
+                        </tr>
+                    </thead>
+                    <tbody id="pos-table-body"></tbody>
+                </table>
+            </div>
+        </div>
+
         <!-- 권한별 메뉴 관리 -->
         <div id="page-role-menu" style="display:none;">
             <div style="display:flex; gap:16px; align-items:flex-start;">
@@ -321,6 +344,41 @@
         </div>
 
     </main>
+</div>
+
+<!-- 직급 등록/수정 모달 -->
+<div id="pos-modal" class="modal-overlay" style="display:none;">
+    <div class="modal-box">
+        <div class="modal-header">
+            <h3 id="pos-modal-title">직급 등록</h3>
+            <button class="modal-close" onclick="closePosModal()">×</button>
+        </div>
+        <div class="modal-body">
+            <div class="form-row">
+                <label>직급코드 <span class="req">*</span></label>
+                <input type="text" id="f-pos-cd" placeholder="예: P01" maxlength="20">
+            </div>
+            <div class="form-row">
+                <label>직급명 <span class="req">*</span></label>
+                <input type="text" id="f-pos-nm" placeholder="직급명 입력" maxlength="100">
+            </div>
+            <div class="form-row">
+                <label>순서 <span class="req">*</span></label>
+                <input type="number" id="f-pos-ordr" value="1" min="1" max="9999">
+            </div>
+            <div class="form-row">
+                <label>사용여부</label>
+                <select id="f-pos-use-yn">
+                    <option value="Y">사용</option>
+                    <option value="N">미사용</option>
+                </select>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-cancel" onclick="closePosModal()">취소</button>
+            <button class="btn-primary" id="pos-save-btn" onclick="savePos()">등록</button>
+        </div>
+    </div>
 </div>
 
 <!-- 메뉴 등록/수정 모달 -->
@@ -613,6 +671,8 @@
             loadRoleMenuPage();
         } else if (menuUrl === '/hr/manage' || nm === '인사관리') {
             loadEmpRegPage();
+        } else if (menuUrl === '/hr/positions' || nm === '직급관리') {
+            loadPosMgmtPage();
         } else {
             showPlaceholder(menuNm);
         }
@@ -636,7 +696,7 @@
     }
 
     function hideAllPages() {
-        $('#page-home, #page-placeholder, #page-menu-mgmt, #page-role-menu, #page-emp-reg').hide();
+        $('#page-home, #page-placeholder, #page-menu-mgmt, #page-role-menu, #page-emp-reg, #page-pos-mgmt').hide();
     }
 
     function logout() {
@@ -1243,6 +1303,137 @@
             error: function(xhr) {
                 var msg = (xhr.responseJSON && xhr.responseJSON.message)
                     ? xhr.responseJSON.message : '저장 중 오류가 발생했습니다.';
+                alert(msg);
+            }
+        });
+    }
+
+    /* ═══════════════════════════════════════
+       직급 관리 (Position Master CRUD)
+    ═══════════════════════════════════════ */
+    var _editPosCd = null;
+
+    function loadPosMgmtPage() {
+        hideAllPages();
+        $('#page-pos-mgmt').show();
+        loadPosList();
+    }
+
+    function loadPosList() {
+        $.ajax({
+            url: '/api/hr/positions',
+            method: 'GET',
+            success: function(res) {
+                if (res.success) renderPosTable(res.data);
+            },
+            error: function(xhr) {
+                if (xhr.status === 401) logout();
+            }
+        });
+    }
+
+    function renderPosTable(data) {
+        var $tbody = $('#pos-table-body').empty();
+        if (!data || data.length === 0) {
+            $tbody.append('<tr><td colspan="6" style="text-align:center;padding:32px;color:#aaa;">등록된 직급이 없습니다.</td></tr>');
+            return;
+        }
+        data.forEach(function(p) {
+            var badge = p.useYn === 'Y'
+                ? '<span class="badge-y">사용</span>'
+                : '<span class="badge-n">미사용</span>';
+            var toggleLabel = p.useYn === 'Y' ? '미사용 처리' : '사용 처리';
+            var $tr = $('<tr>');
+            $tr.append('<td><code style="font-size:0.82rem">' + escHtml(p.jbgdCd) + '</code></td>');
+            $tr.append('<td style="font-weight:500">' + escHtml(p.jbgdNm) + '</td>');
+            $tr.append('<td style="text-align:center">' + (p.jbgdOrdr != null ? p.jbgdOrdr : '-') + '</td>');
+            $tr.append('<td>' + badge + '</td>');
+            $tr.append('<td style="color:#999;font-size:0.8rem">' + (p.registDt ? p.registDt.substring(0, 10) : '-') + '</td>');
+            var $acts = $('<td style="text-align:center;white-space:nowrap">');
+            $('<button class="btn-sm btn-edit">수정</button>').on('click', function() { openPosModal(p); }).appendTo($acts);
+            $('<button class="btn-sm btn-del">' + toggleLabel + '</button>').on('click', function() { togglePosStatus(p); }).appendTo($acts);
+            $tr.append($acts);
+            $tbody.append($tr);
+        });
+    }
+
+    function openPosModal(posData) {
+        _editPosCd = posData ? posData.jbgdCd : null;
+        var isEdit = _editPosCd !== null;
+        $('#pos-modal-title').text(isEdit ? '직급 수정' : '직급 등록');
+        $('#pos-save-btn').text(isEdit ? '수정' : '등록');
+        $('#f-pos-cd').val(isEdit ? posData.jbgdCd : '').prop('readonly', isEdit);
+        $('#f-pos-nm').val(isEdit ? posData.jbgdNm : '');
+        $('#f-pos-ordr').val(isEdit ? posData.jbgdOrdr : 1);
+        $('#f-pos-use-yn').val(isEdit ? posData.useYn : 'Y');
+        $('#pos-modal').show();
+    }
+
+    function closePosModal() {
+        $('#pos-modal').hide();
+        _editPosCd = null;
+    }
+
+    function savePos() {
+        var jbgdCd  = $('#f-pos-cd').val().trim();
+        var jbgdNm  = $('#f-pos-nm').val().trim();
+        var jbgdOrdr = parseInt($('#f-pos-ordr').val()) || 1;
+        var isEdit  = _editPosCd !== null;
+
+        if (!isEdit && !jbgdCd) { alert('직급 코드를 입력하세요.'); $('#f-pos-cd').focus(); return; }
+        if (!jbgdNm) { alert('직급명을 입력하세요.'); $('#f-pos-nm').focus(); return; }
+        if (jbgdOrdr < 1) { alert('순서는 1 이상이어야 합니다.'); $('#f-pos-ordr').focus(); return; }
+
+        var payload = {
+            jbgdCd:   isEdit ? _editPosCd : jbgdCd,
+            jbgdNm:   jbgdNm,
+            jbgdOrdr: jbgdOrdr,
+            useYn:    $('#f-pos-use-yn').val()
+        };
+
+        $.ajax({
+            url:         '/api/hr/positions',
+            method:      'POST',
+            contentType: 'application/json',
+            data:        JSON.stringify(payload),
+            success: function(res) {
+                if (res.success) {
+                    closePosModal();
+                    loadPosList();
+                    alert(isEdit ? '수정되었습니다.' : '등록되었습니다.');
+                } else {
+                    alert(res.message || '저장 중 오류가 발생했습니다.');
+                }
+            },
+            error: function(xhr) {
+                var msg = (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : '저장 중 오류가 발생했습니다.';
+                alert(msg);
+            }
+        });
+    }
+
+    function togglePosStatus(pos) {
+        var nextUseYn = pos.useYn === 'Y' ? 'N' : 'Y';
+        var confirmMsg = nextUseYn === 'N'
+            ? '[' + pos.jbgdNm + '] 직급을 미사용 처리하시겠습니까?\n해당 직급을 사용 중인 재직 사원이 있으면 처리할 수 없습니다.'
+            : '[' + pos.jbgdNm + '] 직급을 사용 처리하시겠습니까?';
+        if (!confirm(confirmMsg)) return;
+
+        $.ajax({
+            url:         '/api/hr/positions/' + encodeURIComponent(pos.jbgdCd) + '/status',
+            method:      'PATCH',
+            contentType: 'application/json',
+            data:        JSON.stringify({ useYn: nextUseYn }),
+            success: function(res) {
+                if (res.success) {
+                    loadPosList();
+                    alert('처리되었습니다.');
+                } else {
+                    alert(res.message || '처리 중 오류가 발생했습니다.');
+                }
+            },
+            error: function(xhr) {
+                var msg = (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : '처리 중 오류가 발생했습니다.';
                 alert(msg);
             }
         });
