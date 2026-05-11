@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<!--
+  screen-template.html — 업무 화면 보일러플레이트
+  ════════════════════════════════════════════════════════════════
+  새 화면을 만들 때 이 파일을 복사해서 시작한다.
+  common.css / common.js 를 링크하는 것만으로
+  전체 디자인 시스템(색상·레이아웃·버튼·그리드·폼)이 자동 적용된다.
+
+  [화면 구성 선택]
+    조회영역 + 그리드 + 폼  ← 가장 일반적인 목록+상세 구조 (주석 해제해서 사용)
+    조회영역 + 그리드만     ← 조회 전용 화면
+    폼 단독                 ← 단일 설정 화면
+
+  [필수 링크]
+    common.css — 디자인 시스템 전체 (변수·리셋·레이아웃·버튼·그리드·폼)
+    common.js  — 모달(alert·confirm·dirty) + 토스트
+
+  [클래스 치트시트]
+    레이아웃  : .layout  .right-area
+    조회영역  : .search-wrap  .search-panel  .search-row  .search-field
+               .search-label  .search-input  .search-select  .search-divider
+               .search-radio-group  .search-radio-label  .search-btns
+               .active-filters  .filter-tag
+    패널      : .panel-header  .panel-header-top  .panel-header-btns
+               .panel-title  .result-badge
+    그리드    : .grid-panel  .grid-header  .grid-title  .grid-breadcrumb  .grid-body
+               table > thead th / tbody td tr
+               .selected-row  .new-row  .badge-y  .badge-n  .icon-cell  .empty-row
+    폼        : .form-panel  .form-header  .form-header-badge  .form-header-dirty
+               .form-header-actions  .form-body  .form-row  .form-row.full
+               .form-label  .form-input  .form-input.readonly  .form-input.sm  .req
+               .radio-group  .radio-label  .form-empty
+    버튼      : .btn-sm  .btn-md
+               .btn-add-same  .btn-add-sub  .btn-del  .btn-save
+               .btn-search  .btn-sreset  .btn-tree-ctrl
+    공통      : .badge  .badge-y  .badge-n  .badge-new
+  ════════════════════════════════════════════════════════════════
+-->
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>화면명</title>
+
+<!-- 공통 디자인 시스템 -->
+<link rel="stylesheet" href="/common.css">
+
+<style>
+  /*
+   * 이 화면 전용 스타일만 여기에 작성한다.
+   * 색상·버튼·레이아웃·그리드·폼 등 공통 스타일은 common.css 를 사용할 것.
+   */
+</style>
+</head>
+<body>
+
+<!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+     조회 영역
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+<div class="search-wrap">
+  <div class="search-panel">
+    <div class="search-row">
+
+      <!-- 조회 조건 필드 예시 — 필요한 것만 남기고 나머지 삭제 -->
+      <div class="search-field">
+        <span class="search-label">항목명</span>
+        <input class="search-input" type="text" id="cond_sample" placeholder="검색어 입력">
+      </div>
+
+      <div class="search-divider"></div>
+
+      <div class="search-field">
+        <span class="search-label">사용여부</span>
+        <div class="search-radio-group">
+          <label class="search-radio-label"><input type="radio" name="cond_useYn" value=""  checked> 전체</label>
+          <label class="search-radio-label"><input type="radio" name="cond_useYn" value="Y"> 사용</label>
+          <label class="search-radio-label"><input type="radio" name="cond_useYn" value="N"> 미사용</label>
+        </div>
+      </div>
+
+      <div class="search-btns">
+        <button class="btn-md btn-sreset" onclick="resetSearch()">초기화</button>
+        <button class="btn-md btn-search" onclick="doSearch()">조회</button>
+      </div>
+
+    </div>
+    <!-- 활성 필터 태그 (doSearch 에서 동적 렌더링) -->
+    <div class="active-filters" id="activeFilters"></div>
+  </div>
+</div>
+
+<!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+     패널 레이아웃 (그리드 + 폼)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+<div class="layout">
+  <div class="right-area">
+
+    <!-- 그리드 패널 -->
+    <div class="grid-panel">
+      <div class="grid-header">
+        <span class="grid-title">목록</span>
+        <span class="grid-breadcrumb" id="gridBreadcrumb"></span>
+      </div>
+      <div class="grid-body">
+        <table>
+          <thead>
+            <tr>
+              <!-- 컬럼 정의 -->
+              <th>항목1</th>
+              <th>항목2</th>
+              <th style="width:68px">사용여부</th>
+            </tr>
+          </thead>
+          <tbody id="gridBody">
+            <tr class="empty-row"><td colspan="3">데이터를 불러오는 중...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 폼 패널 -->
+    <div class="form-panel">
+      <div class="form-header">
+        <span id="formTitle">상세</span>
+        <span class="form-header-badge"  id="formNewBadge"   style="display:none">NEW — 미저장</span>
+        <span class="form-header-dirty"  id="formDirtyBadge">● 변경됨</span>
+        <div class="form-header-actions">
+          <button class="btn-md btn-save" id="formSaveBtn" onclick="save()">저장</button>
+        </div>
+      </div>
+      <div class="form-body" id="formBody">
+        <div class="form-empty">목록에서 항목을 선택하거나 추가 버튼을 눌러주세요.</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- 공통 모달·토스트 -->
+<script src="/common.js"></script>
+
+<script>
+/* ════════════════════════════════════════════════════════════════
+   화면 전용 JavaScript
+   공통 함수: openAlertModal / openConfirmModal / openDirtyModal
+             showToast / escHtml  (common.js 참조)
+════════════════════════════════════════════════════════════════ */
+
+/** 페이지 진입 시 데이터 로드 */
+document.addEventListener('DOMContentLoaded', load);
+
+async function load() {
+  try {
+    const res = await fetch('/api/TODO');   /* ← API 경로 변경 */
+    if (res.status === 401) { parent.location.href = '/login'; return; }
+    const data = await res.json();
+    renderGrid(data);
+  } catch(e) {
+    await openAlertModal({ icon:'🚫', title:'오류', desc:'데이터를 불러올 수 없습니다.' });
+  }
+}
+
+function renderGrid(data) {
+  const tbody = document.getElementById('gridBody');
+  if (!data.length) {
+    tbody.innerHTML = '<tr class="empty-row"><td colspan="3">데이터가 없습니다.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = data.map(row => `
+    <tr onclick="selectRow('${escHtml(row.id)}')">
+      <td>${escHtml(row.col1)}</td>
+      <td>${escHtml(row.col2)}</td>
+      <td><span class="badge ${row.useYn === 'Y' ? 'badge-y' : 'badge-n'}">${row.useYn}</span></td>
+    </tr>
+  `).join('');
+}
+
+function selectRow(id) {
+  /* TODO: 폼 렌더링 */
+}
+
+function doSearch() {
+  /* TODO: 조회 조건 수집 후 load() 호출 */
+}
+
+function resetSearch() {
+  document.getElementById('cond_sample').value = '';
+  document.querySelector('input[name="cond_useYn"][value=""]').checked = true;
+  document.getElementById('activeFilters').innerHTML = '';
+  load();
+}
+
+async function save() {
+  /* TODO: 저장 로직 */
+}
+</script>
+</body>
+</html>

@@ -100,7 +100,7 @@
  * modal-btn-danger  : 빨간 테두리 — 파괴적 동작(삭제·취소) 경고
  * modal-btn-default : 회색 테두리 — 보조 동작(취소·닫기) 중립
  */
-.modal-btn-primary { background: #82A67D; border-color: #82A67D; color: white; }  /* 초록 */
+.modal-btn-primary { background: #5E8A59; border-color: #5E8A59; color: white; }  /* 초록 — --search-accent 와 동일 */
 .modal-btn-danger  { background: white;   border-color: #E74C3C; color: #E74C3C; } /* 빨강 아웃라인 */
 .modal-btn-default { background: white;   border-color: #ccc;    color: #555; }    /* 회색 아웃라인 */
 
@@ -109,7 +109,7 @@
  * 이전 코드에서 modal-btn-save 등으로 사용된 경우를 지원하기 위해 남겨둠.
  * 신규 코드에서는 위 4종(primary/danger/default)을 사용할 것.
  */
-.modal-btn-save    { background: #82A67D; border-color: #82A67D; color: white; }  /* = primary */
+.modal-btn-save    { background: #5E8A59; border-color: #5E8A59; color: white; }  /* = primary, --search-accent 와 동일 */
 .modal-btn-discard { background: white;   border-color: #ccc;    color: #555; }   /* = default */
 .modal-btn-cancel  { background: white;   border-color: #E74C3C; color: #E74C3C; }/* = danger  */
 
@@ -155,3 +155,489 @@
 
 /** 오류 타입 — 빨간 배경 (= --danger 색상) */
 .toast.error   { background: #E74C3C; }
+
+
+/* ════════════════════════════════════════════════════════════════
+   § 3. CSS 변수 & 페이지 기반
+   ────────────────────────────────────────────────────────────────
+   모든 업무 화면에서 공유하는 디자인 토큰.
+   색상·간격·폰트를 변수로 관리해 팔레트 변경 시 한 곳만 수정하면 된다.
+════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* ── 주 색상 ── */
+  --primary:       #2C3E50;   /* 헤더·제목: 진한 남색 */
+  --accent:        #82A67D;   /* 주 강조색: 녹색 (버튼·선택 상태) */
+  --bg:            #F1F2F6;   /* 페이지 배경: 연회색 */
+  --danger:        #E74C3C;   /* 삭제·오류: 빨간색 */
+  --border:        #EAECEF;   /* 구분선: 연회색 */
+
+  /* ── 조회 영역 (--accent 계열에서 파생한 그린 톤) ── */
+  --search-bg:     #F0F5EF;   /* 카드 배경: accent 를 매우 연하게 희석 */
+  --search-accent: #5E8A59;   /* 레이블·포커스: accent 보다 진하고 채도 높인 그린 */
+  --search-border: #C8DCC6;   /* 입력 테두리·구분선: accent 계열 연한 그린 */
+
+  /* ── 신규 행 (미저장 상태 표시) ── */
+  --new-bg:        #FFFBEA;   /* 신규 행 배경: 노란빛 */
+  --new-border:    #F0C040;   /* 신규 행 좌측 보더: 노란색 */
+}
+
+/**
+ * 전역 리셋
+ * 모든 업무 화면 HTML 에 공통 적용.
+ * <link rel="stylesheet" href="/common.css"> 로 포함하면 자동 적용된다.
+ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width: 100%; height: 100%; overflow: hidden; }
+
+/**
+ * body 기본 설정
+ * work_frame 안에서 조회영역(고정) + 패널 영역(나머지)을 수직 배치하는
+ * flex 컬럼 구조. 모든 업무 화면이 동일한 레이아웃 골격을 공유한다.
+ */
+body {
+  font-family: 'Segoe UI', -apple-system, sans-serif;
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+}
+
+
+/* ════════════════════════════════════════════════════════════════
+   § 4. 조회 영역
+   ────────────────────────────────────────────────────────────────
+   모든 업무 화면의 상단 검색 조건 카드.
+
+   구조:
+     .search-wrap          ← 좌우 패딩 (layout 과 정렬 맞춤)
+       .search-panel       ← 카드 (border-radius 16px, 상단 accent 보더)
+         .search-row       ← 조건 필드 가로 나열
+           .search-field   ← 레이블 + 컨트롤 한 쌍
+         .active-filters   ← 조회 후 활성 필터 태그
+════════════════════════════════════════════════════════════════ */
+
+/** 조회 카드 외부 여백 — .layout 과 동일한 padding 으로 카드 정렬 */
+.search-wrap {
+  padding: 20px 20px 0 20px;
+  flex-shrink: 0;
+}
+
+/**
+ * 조회 카드 본체
+ * border-top: 3px 로 "조회 영역" 임을 색으로 명시하면서
+ * 사방 border-radius 를 유지해 아래 패널과 통일된 Card UI 구성.
+ */
+.search-panel {
+  background: var(--search-bg);
+  border-radius: 16px;
+  border-top: 3px solid var(--search-accent);
+  box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+  padding: 12px 18px;
+}
+
+/** 조건 필드 가로 나열 행 */
+.search-row {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+
+/** 레이블 + 컨트롤 한 쌍 */
+.search-field { display: flex; align-items: center; gap: 7px; }
+
+/** 레이블: --search-accent 그린으로 조회 영역 통일감 */
+.search-label {
+  font-size: 0.79rem;
+  font-weight: 700;
+  color: var(--search-accent);
+  white-space: nowrap;
+}
+
+/** 텍스트 입력 */
+.search-input {
+  width: 150px;
+  padding: 5px 10px;
+  border: 1px solid var(--search-border);
+  border-radius: 8px;
+  font-size: 0.81rem;
+  color: #34495E;
+  outline: none;
+  background: white;
+  transition: border-color .15s, box-shadow .15s;
+}
+.search-input:focus {
+  border-color: var(--search-accent);
+  box-shadow: 0 0 0 3px rgba(94,138,89,0.12);
+}
+
+/** 셀렉트박스 */
+.search-select {
+  padding: 5px 10px;
+  border: 1px solid var(--search-border);
+  border-radius: 8px;
+  font-size: 0.81rem;
+  color: #34495E;
+  outline: none;
+  cursor: pointer;
+  background: white;
+  transition: border-color .15s, box-shadow .15s;
+}
+.search-select:focus {
+  border-color: var(--search-accent);
+  box-shadow: 0 0 0 3px rgba(94,138,89,0.12);
+}
+
+/** 세로 구분선 */
+.search-divider {
+  width: 1px;
+  height: 22px;
+  background: var(--search-border);
+  flex-shrink: 0;
+}
+
+/** 라디오 그룹 (사용여부 등) */
+.search-radio-group { display: flex; gap: 10px; }
+.search-radio-label {
+  display: flex; align-items: center; gap: 5px;
+  font-size: 0.81rem; color: #34495E; cursor: pointer;
+}
+.search-radio-label input[type="radio"] {
+  accent-color: var(--search-accent);
+  cursor: pointer;
+}
+
+/** 초기화·조회 버튼 묶음 — margin-left: auto 로 우측 정렬 */
+.search-btns { display: flex; gap: 6px; margin-left: auto; }
+
+/**
+ * 활성 필터 태그 영역
+ * 조회 조건 입력 후 "메뉴명: 사원 ✕" 형태의 태그 표시.
+ * 조건이 없으면 height 가 0 이 되어 공간을 차지하지 않음.
+ */
+.active-filters { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+
+/** 개별 필터 태그 */
+.filter-tag {
+  display: inline-flex; align-items: center; gap: 4px;
+  background: rgba(94,138,89,0.1); color: var(--search-accent);
+  font-size: 0.74rem; font-weight: 600;
+  padding: 2px 9px; border-radius: 20px;
+  border: 1px solid rgba(94,138,89,0.2);
+}
+.filter-tag .ftag-remove { cursor: pointer; color: #aaa; margin-left: 2px; }
+.filter-tag .ftag-remove:hover { color: var(--danger); }
+
+/**
+ * 조회 결과 건수 배지
+ * 패널 제목 옆에 "N건 매칭" 형태로 표시.
+ * 기본 display: none → applySearch() 에서 inline-flex 로 전환.
+ */
+.result-badge {
+  display: none;
+  align-items: center;
+  background: rgba(94,138,89,0.12); color: var(--search-accent);
+  font-size: 0.72rem; font-weight: 600;
+  padding: 2px 9px; border-radius: 20px; margin-left: 6px;
+}
+
+
+/* ════════════════════════════════════════════════════════════════
+   § 5. 버튼 시스템
+   ────────────────────────────────────────────────────────────────
+   btn-sm  : 패널 헤더 보조 버튼 (동일추가·하위추가·삭제 등)
+   btn-md  : 주 액션 버튼 (조회·저장 등)
+   색상 변형: add-same / add-sub / del / save / search / sreset
+════════════════════════════════════════════════════════════════ */
+
+/** 소형 버튼 묶음 컨테이너 */
+.btn-group-sm { display: flex; gap: 4px; flex-shrink: 0; }
+
+/**
+ * 소형 버튼 (btn-sm)
+ * 패널 헤더처럼 공간이 좁은 곳의 보조 액션에 사용.
+ */
+.btn-sm {
+  padding: 5px 10px; border-radius: 6px;
+  font-size: 0.78rem; font-weight: 600;
+  cursor: pointer; border: 1.5px solid; line-height: 1.5;
+  white-space: nowrap; transition: opacity .15s;
+}
+.btn-sm:hover    { opacity: .75; }
+.btn-sm:disabled { opacity: .35; cursor: not-allowed; }
+
+/**
+ * 중형 버튼 (btn-md)
+ * 조회·저장처럼 화면의 주 액션에 사용. btn-sm 보다 한 단계 크다.
+ */
+.btn-md {
+  padding: 5px 13px; border-radius: 7px;
+  font-size: 0.78rem; font-weight: 600;
+  cursor: pointer; border: 1.5px solid; line-height: 1.5;
+  white-space: nowrap; transition: opacity .15s;
+}
+.btn-md:hover    { opacity: .8; }
+.btn-md:disabled { opacity: .35; cursor: not-allowed; }
+
+/* ── 버튼 색상 변형 ── */
+/** 동일 레벨 추가: 초록 채움 */
+.btn-add-same { background: var(--search-accent); border-color: var(--search-accent); color: white; }
+/** 하위 추가: 파랑 채움 */
+.btn-add-sub  { background: #5B8FD4;              border-color: #5B8FD4;              color: white; }
+/** 삭제: 빨강 채움 */
+.btn-del      { background: var(--danger);        border-color: var(--danger);        color: white; }
+/** 저장: --search-accent 채움 (조회 버튼과 동일한 색으로 트랜잭션 버튼 통일) */
+.btn-save     { background: var(--search-accent); border-color: var(--search-accent); color: white; }
+/** 조회: 진한 초록 채움 (search-accent) */
+.btn-search   { background: var(--search-accent); border-color: var(--search-accent); color: white; }
+/** 초기화: 흰 배경 회색 아웃라인 */
+.btn-sreset   { background: white; border-color: var(--search-border); color: #555; }
+
+/**
+ * 트리 전체 펼치기/접기 텍스트 버튼
+ * 배경·테두리 없이 텍스트만. hover 시 accent 색으로 전환.
+ */
+.btn-tree-ctrl {
+  font-size: 0.72rem; color: #888; background: none; border: none;
+  cursor: pointer; padding: 2px 0;
+  display: flex; align-items: center; gap: 4px;
+  transition: color .15s;
+}
+.btn-tree-ctrl:hover { color: var(--accent); }
+
+
+/* ════════════════════════════════════════════════════════════════
+   § 6. 레이아웃 & 패널
+   ────────────────────────────────────────────────────────────────
+   .layout    : 조회영역 아래 패널들의 flex 컨테이너
+   .right-area: 그리드+폼 수직 배치 영역
+   .panel-*   : 패널 공통 헤더/제목
+   .grid-*    : 그리드 패널
+   .form-*    : 폼 패널
+════════════════════════════════════════════════════════════════ */
+
+/**
+ * 패널 레이아웃 컨테이너
+ * flex: 1 + min-height: 0 으로 조회영역 아래 남은 공간을 모두 차지.
+ * overflow 없이 자식 패널이 안전하게 줄어들도록 min-height 설정.
+ */
+.layout {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  padding: 20px;
+  gap: 18px;
+}
+
+/** 우측 그리드+폼 수직 배치 영역 */
+.right-area {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/**
+ * 패널 공통 헤더
+ * 모든 패널(트리·그리드·폼)의 상단 타이틀 바.
+ * flex-direction: column 으로 2줄 구조를 지원한다.
+ *   1행 (.panel-header-top)  : 제목 + 결과 배지
+ *   2행 (.panel-header-btns) : 추가·삭제 버튼 우측 정렬
+ * 버튼이 없는 패널(그리드·폼)은 1행만 사용해도 무방하다.
+ */
+.panel-header {
+  padding: 11px 14px;
+  border-bottom: 1px solid var(--border);
+  display: flex; flex-direction: column;
+  gap: 8px; flex-shrink: 0;
+}
+
+/** 1행: 제목 + 배지 가로 나열 */
+.panel-header-top {
+  display: flex; align-items: center; gap: 6px;
+}
+
+/** 2행: 버튼 묶음 우측 정렬 */
+.panel-header-btns {
+  display: flex; gap: 5px; justify-content: flex-end;
+}
+
+/** 패널 제목 텍스트 */
+.panel-title {
+  font-size: 0.88rem; font-weight: 700;
+  color: var(--primary); white-space: nowrap;
+}
+
+/**
+ * 그리드 패널 — 형제 메뉴 목록 표시
+ * flex: 4 로 폼 패널(flex: 5) 보다 약간 작게 배분.
+ */
+.grid-panel {
+  flex: 4; background: white; border-radius: 16px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+  display: flex; flex-direction: column; overflow: hidden;
+}
+
+/** 그리드 헤더 (패널 타이틀 + 브레드크럼) */
+.grid-header {
+  padding: 11px 20px; border-bottom: 1px solid var(--border);
+  font-size: 0.88rem; font-weight: 700; color: var(--primary);
+  flex-shrink: 0; display: flex; align-items: center; gap: 8px;
+}
+
+/** 그리드 헤더 우측 보조 텍스트 (예: "— 부서 관리 하위") */
+.grid-breadcrumb { font-size: 0.78rem; font-weight: 400; color: #999; }
+
+/** 그리드 본문 스크롤 영역 */
+.grid-body { flex: 1; overflow-y: auto; }
+
+/**
+ * 폼 패널 — 선택 메뉴 상세 입력/수정
+ * flex: 5 로 그리드보다 약간 더 높게 배분.
+ */
+.form-panel {
+  flex: 5; background: white; border-radius: 16px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+  display: flex; flex-direction: column;
+}
+
+/** 폼 헤더 */
+.form-header {
+  padding: 11px 20px; border-bottom: 1px solid var(--border);
+  font-size: 0.88rem; font-weight: 700; color: var(--primary);
+  flex-shrink: 0; display: flex; align-items: center; gap: 8px;
+}
+
+/** NEW — 미저장 배지 (신규 입력 중) */
+.form-header-badge {
+  font-size: 0.72rem; font-weight: 600; padding: 2px 8px;
+  border-radius: 20px; background: rgba(240,192,64,0.2); color: #9A6B00;
+}
+
+/** ● 변경됨 배지 (기존 메뉴 수정 중) */
+.form-header-dirty {
+  font-size: 0.72rem; font-weight: 600; padding: 2px 8px;
+  border-radius: 20px; background: rgba(231,76,60,0.1); color: var(--danger);
+  display: none;   /* markDirty() 에서 표시 전환 */
+}
+
+/** 폼 헤더 우측 버튼 영역 */
+.form-header-actions { margin-left: auto; display: flex; gap: 6px; }
+
+/**
+ * 폼 본문
+ * 2컬럼 그리드로 필드를 배치. .form-row.full 로 전체 너비 필드 지원.
+ */
+.form-body {
+  padding: 18px 30px;
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 15px 36px; overflow-y: auto; align-content: start; flex: 1;
+}
+
+/** 개별 폼 행 (레이블 + 컨트롤) */
+.form-row      { display: flex; align-items: center; gap: 10px; }
+/** 전체 너비 행 (메뉴 URL 등) */
+.form-row.full { grid-column: 1 / -1; }
+
+/** 폼 레이블 */
+.form-label {
+  width: 72px; font-size: 0.81rem; font-weight: 600;
+  color: #555; flex-shrink: 0;
+}
+
+/** 필수 입력 표시 (*) */
+.req { color: var(--danger); }
+
+/**
+ * 폼 입력 필드 공통
+ * flex: 1 로 남은 너비를 모두 채움.
+ */
+.form-input {
+  flex: 1; padding: 7px 11px;
+  border: 1px solid #DDE1E7; border-radius: 8px;
+  font-size: 0.83rem; color: #34495E; background: white;
+  min-width: 0; outline: none; transition: border-color .15s;
+}
+.form-input:focus    { border-color: var(--accent); }
+/** readonly: 회색 배경으로 편집 불가 시각화 */
+.form-input.readonly { background: #F8F9FA; color: #555; cursor: default; }
+/** 좁은 숫자 입력 (정렬순서 등) */
+.form-input.sm       { flex: none; width: 84px; }
+select.form-input    { cursor: pointer; }
+
+/** 폼 빈 상태 안내 텍스트 */
+.form-empty {
+  color: #bbb; font-size: 0.83rem;
+  display: flex; align-items: center; justify-content: center;
+  height: 100%; grid-column: 1 / -1;
+}
+
+
+/* ════════════════════════════════════════════════════════════════
+   § 7. 테이블 (그리드 본문)
+   ────────────────────────────────────────────────────────────────
+   .grid-body 안의 <table> 에 적용되는 공통 스타일.
+════════════════════════════════════════════════════════════════ */
+
+table { width: 100%; border-collapse: collapse; font-size: 0.83rem; }
+
+/** 헤더 행: sticky top 으로 스크롤 시 고정 */
+thead th {
+  padding: 9px 14px; text-align: left;
+  background: #F8F9FA; color: #555; font-weight: 600; font-size: 0.79rem;
+  border-bottom: 1px solid var(--border); white-space: nowrap;
+  position: sticky; top: 0; z-index: 1;
+}
+
+/** 데이터 셀 */
+tbody td { padding: 9px 14px; border-bottom: 1px solid #F3F4F6; color: #34495E; }
+
+/** 데이터 행 기본 */
+tbody tr { cursor: pointer; }
+tbody tr:hover            { background: #FAFBFC; }
+
+/** 선택된 행 */
+tbody tr.selected-row     { background: rgba(130,166,125,0.1); }
+tbody tr.selected-row td  { color: var(--primary); font-weight: 500; }
+
+/** 신규(미저장) 행 */
+tbody tr.new-row          { background: var(--new-bg); border-left: 3px solid var(--new-border); }
+tbody tr.new-row td       { color: #7A5C00; font-style: italic; }
+tbody tr.new-row.selected-row { background: #FFF3C0; }
+
+/** 사용여부 배지 */
+.badge     { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 0.73rem; font-weight: 600; }
+.badge-y   { background: rgba(130,166,125,0.15); color: var(--accent); }
+.badge-n   { background: rgba(231,76,60,0.1);    color: var(--danger); }
+.badge-new { background: rgba(240,192,64,0.2);   color: #9A6B00; }
+
+/** 아이콘 셀: 가운데 정렬 */
+.icon-cell { text-align: center; font-size: 1.05rem; }
+
+/** 데이터 없음 표시 */
+.no-data   { color: #ccc; font-size: 0.8rem; }
+
+/** 빈 상태 행 (데이터 없을 때 전체 너비 안내) */
+.empty-row td { text-align: center; color: #bbb; padding: 20px; font-size: 0.83rem; }
+
+
+/* ════════════════════════════════════════════════════════════════
+   § 8. 폼 컨트롤
+   ────────────────────────────────────────────────────────────────
+   폼 안에서 사용하는 라디오 그룹 등 공통 인풋 컨트롤.
+════════════════════════════════════════════════════════════════ */
+
+/**
+ * 라디오 그룹 (사용여부 등)
+ * .radio-group 으로 라디오 버튼들을 가로 나열.
+ */
+.radio-group { display: flex; gap: 18px; }
+.radio-label {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 0.83rem; color: #34495E; cursor: pointer;
+}
+.radio-label input[type="radio"] {
+  accent-color: var(--accent);
+  width: 14px; height: 14px; cursor: pointer;
+}

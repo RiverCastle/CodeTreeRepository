@@ -42,11 +42,50 @@
         </div>
     </div>
     <script>
-        function navigate(url, bc) {
-            document.getElementById('work_frame').src = url;
+        /**
+         * navigate — work_frame 화면 전환 함수
+         *
+         * 단순히 src 를 바꾸면 URL 이 없을 때 404 가 그대로 노출된다.
+         * 이를 막기 위해 HEAD 요청으로 URL 존재 여부를 먼저 확인하고,
+         * 404·오류 시 placeholder.html("개발 중" 안내) 로 대체한다.
+         *
+         * [처리 흐름]
+         *   1. placeholder.html / home.html 은 체크 없이 바로 로드 (무한 체크 방지)
+         *   2. 그 외 URL → HEAD fetch
+         *      ├─ 200 OK  → 해당 URL 로드
+         *      └─ 404 등  → placeholder.html?title=메뉴명 로드
+         *   3. 네트워크 오류(fetch 실패) 시에도 placeholder 로 대체
+         *   4. 브레드크럼(top_frame)은 성공/실패 무관하게 항상 갱신
+         *
+         * @param {string} url  이동할 URL (예: '/system/menu', 'home.html')
+         * @param {string} bc   브레드크럼 텍스트 (예: '시스템 관리 > 메뉴 관리')
+         */
+        async function navigate(url, bc) {
+            const frame = document.getElementById('work_frame');
+
+            // placeholder / home 은 fetch 체크 없이 바로 로드
+            if (!url
+                || url.startsWith('placeholder.html')
+                || url.startsWith('home.html')) {
+                frame.src = url;
+            } else {
+                // HEAD 요청으로 URL 유효성 확인
+                // ▸ bc 의 마지막 세그먼트(> 뒤)를 메뉴명으로 사용
+                const menuNm = bc.split('>').pop().trim();
+                const fallback = 'placeholder.html?title=' + encodeURIComponent(menuNm);
+                try {
+                    const res = await fetch(url, { method: 'HEAD' });
+                    frame.src = res.ok ? url : fallback;
+                } catch (e) {
+                    // 네트워크 오류 등 fetch 자체 실패 시에도 placeholder 표시
+                    frame.src = fallback;
+                }
+            }
+
+            // 브레드크럼은 성공/실패 무관하게 항상 갱신
             try {
                 document.getElementById('top_frame').contentWindow.setBreadcrumb(bc);
-            } catch(e) {}
+            } catch (e) {}
         }
     </script>
 </body>
