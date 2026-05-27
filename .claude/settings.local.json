@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(Get-ChildItem -Path . -Recurse -Directory)",
+      "Bash(Select-Object -ExpandProperty FullName)",
+      "Read(//c/project/CodeTreeHRM/**)",
+      "Bash(xargs basename -a)",
+      "Bash(mysql -u codetree1 -pcodetree1 hrm -e ' *)",
+      "Bash(echo \"Exit: $?\")",
+      "PowerShell(& \"C:\\\\Program Files\\\\MySQL\\\\MySQL Server 8.0\\\\bin\\\\mysql.exe\" -u codetree1 \"-pcodetree1\" hrm -e \"SHOW COLUMNS FROM ntc_notice;\")"
+    ]
+  }
+}
