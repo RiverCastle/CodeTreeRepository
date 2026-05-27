@@ -13,6 +13,7 @@ public class NoticeDto {
     private String  useYn;
     private String  popupYn;
     private String  popupPosCd;
+    private String  popupSizeCd;
     private int     inqryCnt;
     private String  registDt;
     private String  updtDt;

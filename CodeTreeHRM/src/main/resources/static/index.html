@@ -182,15 +182,28 @@
         .popup-pos-btn.selected { border-color:var(--primary); background:var(--primary); color:white; font-weight:600; }
 
         /* ── 팝업 공지 ── */
-        .notice-popup { position:fixed; width:340px; background:white; border-radius:10px; box-shadow:0 8px 32px rgba(0,0,0,0.18); z-index:8000; border-top:4px solid var(--primary); overflow:hidden; }
-        .notice-popup-header { display:flex; align-items:center; justify-content:space-between; padding:12px 16px 8px; border-bottom:1px solid #f0f0f0; }
+        .notice-popup { position:fixed; width:360px; min-width:200px; min-height:140px; background:white; border-radius:10px; box-shadow:0 8px 32px rgba(0,0,0,0.18); z-index:8000; border-top:4px solid var(--primary); overflow:hidden; display:flex; flex-direction:column; }
+        .notice-popup.popup-sm { width:260px; }
+        .notice-popup.popup-md { width:360px; }
+        .notice-popup.popup-lg { width:480px; }
+        .notice-popup-header { display:flex; align-items:center; justify-content:space-between; padding:12px 16px 8px; border-bottom:1px solid #f0f0f0; flex-shrink:0; cursor:move; user-select:none; }
         .notice-popup-title { font-size:0.88rem; font-weight:700; color:var(--primary); flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; padding-right:8px; }
-        .notice-popup-close { background:none; border:none; font-size:1.1rem; color:#aaa; cursor:pointer; line-height:1; padding:0 2px; }
+        .notice-popup-close { background:none; border:none; font-size:1.1rem; color:#aaa; cursor:pointer; line-height:1; padding:0 4px; }
         .notice-popup-close:hover { color:#555; }
-        .notice-popup-body { padding:12px 16px; max-height:180px; overflow-y:auto; font-size:0.82rem; color:#444; line-height:1.65; white-space:pre-wrap; word-break:break-all; }
-        .notice-popup-footer { padding:8px 16px 12px; display:flex; justify-content:flex-end; }
-        .notice-popup-footer button { font-size:0.78rem; padding:5px 12px; border-radius:5px; border:1px solid #ddd; background:white; color:#666; cursor:pointer; }
+        .notice-popup-body { padding:12px 16px; flex:1; min-height:40px; overflow-y:auto; font-size:0.82rem; color:#444; line-height:1.65; white-space:pre-wrap; word-break:break-all; }
+        .notice-popup-footer { padding:8px 16px 10px; display:flex; align-items:center; justify-content:space-between; gap:8px; border-top:1px solid #f5f5f5; flex-shrink:0; }
+        .notice-popup-hide-today { display:flex; align-items:center; gap:5px; font-size:0.76rem; color:#888; cursor:pointer; user-select:none; }
+        .notice-popup-hide-today input[type=checkbox] { cursor:pointer; accent-color:var(--primary); }
+        .notice-popup-footer button { font-size:0.78rem; padding:5px 12px; border-radius:5px; border:1px solid #ddd; background:white; color:#666; cursor:pointer; flex-shrink:0; }
         .notice-popup-footer button:hover { border-color:var(--accent); color:var(--accent); }
+        .notice-popup-resize { position:absolute; bottom:0; right:0; width:18px; height:18px; cursor:se-resize; z-index:1;
+            background-image:linear-gradient(135deg,transparent 40%,rgba(0,0,0,0.18) 40%,rgba(0,0,0,0.18) 52%,transparent 52%),
+                             linear-gradient(135deg,transparent 62%,rgba(0,0,0,0.18) 62%,rgba(0,0,0,0.18) 74%,transparent 74%); }
+        /* ── 팝업 크기 선택 버튼 ── */
+        .popup-size-grid { display:flex; gap:8px; }
+        .popup-size-btn { flex:1; padding:8px 0; border:1px solid #ddd; border-radius:6px; background:white; cursor:pointer; font-size:0.78rem; color:#555; text-align:center; transition:0.15s; }
+        .popup-size-btn:hover { border-color:var(--accent); color:var(--accent); }
+        .popup-size-btn.selected { border-color:var(--primary); background:var(--primary); color:white; font-weight:600; }
     </style>
 </head>
 <body>
@@ -358,6 +371,14 @@
                         </div>
                     </div>
                     <div id="popup-pos-section" style="display:none;">
+                        <div class="form-row">
+                            <label>팝업 크기 <span class="req">*</span></label>
+                            <div class="popup-size-grid">
+                                <button type="button" class="popup-size-btn" data-size="SM" onclick="selectPopupSize('SM')">소 &nbsp;(260px)</button>
+                                <button type="button" class="popup-size-btn selected" data-size="MD" onclick="selectPopupSize('MD')">중 &nbsp;(360px)</button>
+                                <button type="button" class="popup-size-btn" data-size="LG" onclick="selectPopupSize('LG')">대 &nbsp;(480px)</button>
+                            </div>
+                        </div>
                         <div class="form-row">
                             <label>팝업 위치 <span class="req">*</span></label>
                             <div class="popup-pos-grid" id="popup-pos-grid">
@@ -2882,9 +2903,10 @@
     /* ═══════════════════════════════════════
        공지사항 관리 (관리자)
     ═══════════════════════════════════════ */
-    var _ntcCurrentPage = 1;
-    var _editNtcNo      = null;
+    var _ntcCurrentPage   = 1;
+    var _editNtcNo        = null;
     var _selectedPopupPos = null;
+    var _selectedPopupSize = 'MD';
 
     function loadNoticeMgmtPage() {
         hideAllPages();
@@ -2968,7 +2990,8 @@
 
     function openNoticeModal(ntcNo) {
         _editNtcNo = ntcNo || null;
-        _selectedPopupPos = null;
+        _selectedPopupPos  = null;
+        _selectedPopupSize = 'MD';
         var isEdit = _editNtcNo !== null;
         $('#notice-modal-title').text(isEdit ? '공지사항 수정' : '공지사항 등록');
         $('#notice-save-btn').text(isEdit ? '수정' : '등록');
@@ -2979,6 +3002,7 @@
         $('#f-ntc-popup').val('N');
         $('#popup-pos-section').hide();
         $('.popup-pos-btn').removeClass('selected');
+        selectPopupSize('MD');
 
         if (isEdit) {
             $.ajax({
@@ -2993,7 +3017,8 @@
                         $('#f-ntc-popup').val(d.popupYn || 'N');
                         if (d.popupYn === 'Y') {
                             $('#popup-pos-section').show();
-                            if (d.popupPosCd) selectPopupPos(d.popupPosCd);
+                            if (d.popupPosCd)  selectPopupPos(d.popupPosCd);
+                            selectPopupSize(d.popupSizeCd || 'MD');
                         }
                     }
                 },
@@ -3003,15 +3028,20 @@
         $('#notice-modal').show();
     }
 
-    function closeNoticeModal() { $('#notice-modal').hide(); _editNtcNo = null; _selectedPopupPos = null; }
+    function closeNoticeModal() {
+        $('#notice-modal').hide();
+        _editNtcNo = null; _selectedPopupPos = null; _selectedPopupSize = 'MD';
+    }
 
     function togglePopupPos() {
         if ($('#f-ntc-popup').val() === 'Y') {
             $('#popup-pos-section').show();
         } else {
             $('#popup-pos-section').hide();
-            _selectedPopupPos = null;
+            _selectedPopupPos  = null;
+            _selectedPopupSize = 'MD';
             $('.popup-pos-btn').removeClass('selected');
+            selectPopupSize('MD');
         }
     }
 
@@ -3019,6 +3049,12 @@
         _selectedPopupPos = pos;
         $('.popup-pos-btn').removeClass('selected');
         $('.popup-pos-btn[data-pos="' + pos + '"]').addClass('selected');
+    }
+
+    function selectPopupSize(size) {
+        _selectedPopupSize = size || 'MD';
+        $('.popup-size-btn').removeClass('selected');
+        $('.popup-size-btn[data-size="' + _selectedPopupSize + '"]').addClass('selected');
     }
 
     function saveNotice() {
@@ -3030,13 +3066,14 @@
         if (popupYn === 'Y' && !_selectedPopupPos) { alert('팝업 위치를 선택하세요.'); return; }
 
         var payload = {
-            ntcNo:      _editNtcNo,
-            ntcTtl:     ttl,
-            ntcCn:      cn,
-            imprtntYn:  $('#f-ntc-imprtnt').val(),
-            useYn:      $('#f-ntc-use').val(),
-            popupYn:    popupYn,
-            popupPosCd: popupYn === 'Y' ? _selectedPopupPos : null
+            ntcNo:        _editNtcNo,
+            ntcTtl:       ttl,
+            ntcCn:        cn,
+            imprtntYn:    $('#f-ntc-imprtnt').val(),
+            useYn:        $('#f-ntc-use').val(),
+            popupYn:      popupYn,
+            popupPosCd:   popupYn === 'Y' ? _selectedPopupPos  : null,
+            popupSizeCd:  popupYn === 'Y' ? _selectedPopupSize : null
         };
         $.ajax({
             url: '/api/notice', method: 'POST', contentType: 'application/json',
@@ -3177,12 +3214,77 @@
         BR: { bottom:'20px', right:'20px' }
     };
 
+    var _popupSizeClassMap = { SM: 'popup-sm', MD: 'popup-md', LG: 'popup-lg' };
+    var _popupUid = 0;
+
+    function makePopupInteractive($popup) {
+        var uid    = ++_popupUid;
+        var dragNs = '.pd' + uid;
+        var resNs  = '.pr' + uid;
+
+        /* ── 드래그 (헤더 이동) ── */
+        var dragging = false, dsx, dsy, psl, pst;
+        $popup.find('.notice-popup-header').on('mousedown' + dragNs, function(e) {
+            if ($(e.target).is('button')) return;
+            var rect = $popup[0].getBoundingClientRect();
+            $popup.css({ left: rect.left, top: rect.top, right: 'auto', bottom: 'auto', transform: 'none' });
+            dragging = true;
+            dsx = e.clientX;  dsy = e.clientY;
+            psl = rect.left;  pst = rect.top;
+            e.preventDefault();
+        });
+        $(document).on('mousemove' + dragNs, function(e) {
+            if (!dragging) return;
+            var x = Math.max(0, Math.min(window.innerWidth  - $popup.outerWidth(),  psl + (e.clientX - dsx)));
+            var y = Math.max(0, Math.min(window.innerHeight - $popup.outerHeight(), pst + (e.clientY - dsy)));
+            $popup.css({ left: x, top: y });
+        }).on('mouseup' + dragNs, function() { dragging = false; });
+
+        /* ── 리사이즈 (우하단 핸들) ── */
+        var resizing = false, rsx, rsy, rsw, rsh;
+        $popup.find('.notice-popup-resize').on('mousedown' + resNs, function(e) {
+            resizing = true;
+            rsx = e.clientX;  rsy = e.clientY;
+            rsw = $popup.outerWidth();
+            rsh = $popup.outerHeight();
+            e.preventDefault();
+            e.stopPropagation();
+        });
+        $(document).on('mousemove' + resNs, function(e) {
+            if (!resizing) return;
+            $popup.css({
+                width:  Math.max(200, rsw + (e.clientX - rsx)),
+                height: Math.max(140, rsh + (e.clientY - rsy))
+            });
+        }).on('mouseup' + resNs, function() { resizing = false; });
+
+        /* cleanup: 팝업 닫힐 때 document 이벤트 제거 */
+        $popup.data('popupCleanup', function() {
+            $(document).off(dragNs).off(resNs);
+        });
+    }
+
+    function todayStr() {
+        return new Date().toISOString().slice(0, 10);
+    }
+
+    function isPopupHiddenToday(ntcNo) {
+        return localStorage.getItem('ntc_hide_' + ntcNo) === todayStr();
+    }
+
+    function hidePopupToday(ntcNo) {
+        localStorage.setItem('ntc_hide_' + ntcNo, todayStr());
+    }
+
     function loadActivePopups() {
         $.ajax({
             url: '/api/notice/popups', method: 'GET',
             success: function(res) {
                 if (res.success && res.data && res.data.length > 0) {
-                    renderPopups(res.data);
+                    var visible = res.data.filter(function(n) {
+                        return !isPopupHiddenToday(n.ntcNo);
+                    });
+                    if (visible.length > 0) renderPopups(visible);
                 }
             },
             error: function() {}
@@ -3192,16 +3294,38 @@
     function renderPopups(list) {
         var $container = $('#notice-popups').empty();
         list.forEach(function(n) {
-            var css = _popupPosCssMap[n.popupPosCd] || _popupPosCssMap['CC'];
-            var $popup = $('<div class="notice-popup"></div>').css(css);
+            var posCss    = _popupPosCssMap[n.popupPosCd] || _popupPosCssMap['CC'];
+            var sizeClass = _popupSizeClassMap[n.popupSizeCd] || 'popup-md';
+            var $popup    = $('<div class="notice-popup ' + sizeClass + '"></div>').css(posCss);
+
+            function closePopup() {
+                var cleanup = $popup.data('popupCleanup');
+                if (cleanup) cleanup();
+                $popup.remove();
+            }
+
             var $hd = $('<div class="notice-popup-header">');
             $hd.append('<div class="notice-popup-title">' + escHtml(n.ntcTtl) + '</div>');
-            $('<button class="notice-popup-close">&times;</button>').on('click', function() { $popup.remove(); }).appendTo($hd);
+            $('<button class="notice-popup-close">&times;</button>').on('click', closePopup).appendTo($hd);
+
             var $bd = $('<div class="notice-popup-body">').text(n.ntcCn);
-            var $ft = $('<div class="notice-popup-footer">');
-            $('<button>닫기</button>').on('click', function() { $popup.remove(); }).appendTo($ft);
-            $popup.append($hd).append($bd).append($ft);
+
+            var $ft   = $('<div class="notice-popup-footer">');
+            var chkId = 'chk-hide-' + n.ntcNo;
+            var $lbl  = $('<label class="notice-popup-hide-today" for="' + chkId + '">');
+            $('<input type="checkbox" id="' + chkId + '">').appendTo($lbl);
+            $lbl.append(' 오늘 하루 보지 않기');
+            $ft.append($lbl);
+            $('<button>닫기</button>').on('click', function() {
+                if ($('#' + chkId).is(':checked')) hidePopupToday(n.ntcNo);
+                closePopup();
+            }).appendTo($ft);
+
+            var $resize = $('<div class="notice-popup-resize" title="크기 조절">');
+
+            $popup.append($hd).append($bd).append($ft).append($resize);
             $container.append($popup);
+            makePopupInteractive($popup);
         });
     }
 

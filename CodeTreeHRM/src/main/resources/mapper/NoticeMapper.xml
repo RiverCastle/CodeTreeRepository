@@ -15,6 +15,7 @@
             USE_YN                                          AS useYn,
             POPUP_YN                                        AS popupYn,
             POPUP_POS_CD                                    AS popupPosCd,
+            POPUP_SIZE_CD                                   AS popupSizeCd,
             INQRY_CNT                                       AS inqryCnt,
             DATE_FORMAT(REGIST_DT, '%Y-%m-%d %H:%i')       AS registDt,
             DATE_FORMAT(UPDT_DT,   '%Y-%m-%d %H:%i')       AS updtDt,
@@ -78,6 +79,7 @@
             USE_YN                                          AS useYn,
             POPUP_YN                                        AS popupYn,
             POPUP_POS_CD                                    AS popupPosCd,
+            POPUP_SIZE_CD                                   AS popupSizeCd,
             INQRY_CNT                                       AS inqryCnt,
             DATE_FORMAT(REGIST_DT, '%Y-%m-%d %H:%i')       AS registDt,
             DATE_FORMAT(UPDT_DT,   '%Y-%m-%d %H:%i')       AS updtDt,
@@ -90,13 +92,8 @@
          등록
     ───────────────────────────────────── -->
     <insert id="insertNotice" useGeneratedKeys="true" keyProperty="ntcNo">
-        INSERT INTO ntc_notice (NTC_TTL, NTC_CN, IMPRTNT_YN, USE_YN, POPUP_YN, POPUP_POS_CD, RGSTR_NO)
-        VALUES (#{ntcTtl}, #{ntcCn}, #{imprtntYn}, #{useYn}, #{popupYn},
-                <choose>
-                    <when test="popupYn == 'Y'">#{popupPosCd}</when>
-                    <otherwise>NULL</otherwise>
-                </choose>,
-                #{rgstrNo})
+        INSERT INTO ntc_notice (NTC_TTL, NTC_CN, IMPRTNT_YN, USE_YN, POPUP_YN, POPUP_POS_CD, POPUP_SIZE_CD, RGSTR_NO)
+        VALUES (#{ntcTtl}, #{ntcCn}, #{imprtntYn}, #{useYn}, #{popupYn}, #{popupPosCd}, #{popupSizeCd}, #{rgstrNo})
     </insert>
 
     <!-- ─────────────────────────────────────
@@ -104,15 +101,13 @@
     ───────────────────────────────────── -->
     <update id="updateNotice">
         UPDATE ntc_notice SET
-            NTC_TTL      = #{ntcTtl},
-            NTC_CN       = #{ntcCn},
-            IMPRTNT_YN   = #{imprtntYn},
-            USE_YN       = #{useYn},
-            POPUP_YN     = #{popupYn},
-            POPUP_POS_CD = <choose>
-                               <when test="popupYn == 'Y'">#{popupPosCd}</when>
-                               <otherwise>NULL</otherwise>
-                           </choose>
+            NTC_TTL       = #{ntcTtl},
+            NTC_CN        = #{ntcCn},
+            IMPRTNT_YN    = #{imprtntYn},
+            USE_YN        = #{useYn},
+            POPUP_YN      = #{popupYn},
+            POPUP_POS_CD  = #{popupPosCd},
+            POPUP_SIZE_CD = #{popupSizeCd}
         WHERE NTC_NO = #{ntcNo}
     </update>
 
@@ -140,6 +135,7 @@
             NTC_CN                                          AS ntcCn,
             IMPRTNT_YN                                      AS imprtntYn,
             POPUP_POS_CD                                    AS popupPosCd,
+            POPUP_SIZE_CD                                   AS popupSizeCd,
             DATE_FORMAT(REGIST_DT, '%Y-%m-%d')              AS registDt
         FROM ntc_notice
         WHERE USE_YN = 'Y' AND POPUP_YN = 'Y'
