@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.codetree.CodeTreeHRM.code.mapper.CommonCodeMapper">
+
+    <!-- ─────────────────────────────────────
+         그룹 코드 목록 (검색)
+    ───────────────────────────────────── -->
+    <select id="findAllGrps" resultType="com.codetree.CodeTreeHRM.code.dto.CommonCodeDto">
+        SELECT
+            GRP_CD                                          AS grpCd,
+            GRP_NM                                          AS grpNm,
+            DC                                              AS dc,
+            USE_YN                                          AS useYn,
+            DATE_FORMAT(REGIST_DT, '%Y-%m-%d %H:%i')       AS registDt,
+            DATE_FORMAT(UPDT_DT,   '%Y-%m-%d %H:%i')       AS updtDt
+        FROM com_code
+        <where>
+            <if test="grpNm != null and grpNm != ''">
+                AND GRP_NM LIKE CONCAT('%', #{grpNm}, '%')
+            </if>
+            <if test="useYn != null and useYn != ''">
+                AND USE_YN = #{useYn}
+            </if>
+        </where>
+        ORDER BY USE_YN DESC, GRP_CD ASC
+    </select>
+
+    <!-- ─────────────────────────────────────
+         그룹 코드 단건 조회
+    ───────────────────────────────────── -->
+    <select id="findByGrpCd" resultType="com.codetree.CodeTreeHRM.code.dto.CommonCodeDto">
+        SELECT
+            GRP_CD                                          AS grpCd,
+            GRP_NM                                          AS grpNm,
+            DC                                              AS dc,
+            USE_YN                                          AS useYn,
+            DATE_FORMAT(REGIST_DT, '%Y-%m-%d %H:%i')       AS registDt,
+            DATE_FORMAT(UPDT_DT,   '%Y-%m-%d %H:%i')       AS updtDt
+        FROM com_code
+        WHERE GRP_CD = #{grpCd}
+    </select>
+
+    <!-- ─────────────────────────────────────
+         그룹 코드 존재 여부
+    ───────────────────────────────────── -->
+    <select id="countByGrpCd" resultType="int">
+        SELECT COUNT(*) FROM com_code WHERE GRP_CD = #{grpCd}
+    </select>
+
+    <!-- ─────────────────────────────────────
+         그룹 코드 등록
+    ───────────────────────────────────── -->
+    <insert id="insertGrp" parameterType="com.codetree.CodeTreeHRM.code.dto.CommonCodeDto">
+        INSERT INTO com_code (GRP_CD, GRP_NM, DC, USE_YN)
+        VALUES (#{grpCd}, #{grpNm}, #{dc}, IFNULL(#{useYn}, 'Y'))
+    </insert>
+
+    <!-- ─────────────────────────────────────
+         그룹 코드 수정
+    ───────────────────────────────────── -->
+    <update id="updateGrp" parameterType="com.codetree.CodeTreeHRM.code.dto.CommonCodeDto">
+        UPDATE com_code
+        SET GRP_NM = #{grpNm},
+            DC     = #{dc},
+            USE_YN = #{useYn}
+        WHERE GRP_CD = #{grpCd}
+    </update>
+
+    <!-- ─────────────────────────────────────
+         그룹 사용여부 변경
+    ───────────────────────────────────── -->
+    <update id="updateGrpStatus">
+        UPDATE com_code SET USE_YN = #{useYn} WHERE GRP_CD = #{grpCd}
+    </update>
+
+    <!-- ─────────────────────────────────────
+         상세 코드 목록 (그룹 기준, 순서 정렬)
+    ───────────────────────────────────── -->
+    <select id="findDtlsByGrpCd" resultType="com.codetree.CodeTreeHRM.code.dto.CommonCodeDtlDto">
+        SELECT
+            GRP_CD                                          AS grpCd,
+            DTL_CD                                          AS dtlCd,
+            DTL_NM                                          AS dtlNm,
+            DTL_ORDR                                        AS dtlOrdr,
+            DC                                              AS dc,
+            USE_YN                                          AS useYn,
+            DATE_FORMAT(REGIST_DT, '%Y-%m-%d %H:%i')       AS registDt,
+            DATE_FORMAT(UPDT_DT,   '%Y-%m-%d %H:%i')       AS updtDt
+        FROM com_code_dtl
+        WHERE GRP_CD = #{grpCd}
+        ORDER BY USE_YN DESC, DTL_ORDR ASC, DTL_CD ASC
+    </select>
+
+    <!-- ─────────────────────────────────────
+         상세 코드 존재 여부 (복합키)
+    ───────────────────────────────────── -->
+    <select id="countDtl" resultType="int">
+        SELECT COUNT(*) FROM com_code_dtl
+        WHERE GRP_CD = #{grpCd} AND DTL_CD = #{dtlCd}
+    </select>
+
+    <!-- ─────────────────────────────────────
+         상세 코드 등록
+    ───────────────────────────────────── -->
+    <insert id="insertDtl" parameterType="com.codetree.CodeTreeHRM.code.dto.CommonCodeDtlDto">
+        INSERT INTO com_code_dtl (GRP_CD, DTL_CD, DTL_NM, DTL_ORDR, DC, USE_YN)
+        VALUES (#{grpCd}, #{dtlCd}, #{dtlNm}, IFNULL(#{dtlOrdr}, 1), #{dc}, IFNULL(#{useYn}, 'Y'))
+    </insert>
+
+    <!-- ─────────────────────────────────────
+         상세 코드 수정
+    ───────────────────────────────────── -->
+    <update id="updateDtl" parameterType="com.codetree.CodeTreeHRM.code.dto.CommonCodeDtlDto">
+        UPDATE com_code_dtl
+        SET DTL_NM   = #{dtlNm},
+            DTL_ORDR = #{dtlOrdr},
+            DC       = #{dc},
+            USE_YN   = #{useYn}
+        WHERE GRP_CD = #{grpCd} AND DTL_CD = #{dtlCd}
+    </update>
+
+    <!-- ─────────────────────────────────────
+         상세 코드 사용여부 변경
+    ───────────────────────────────────── -->
+    <update id="updateDtlStatus">
+        UPDATE com_code_dtl
+        SET USE_YN = #{useYn}
+        WHERE GRP_CD = #{grpCd} AND DTL_CD = #{dtlCd}
+    </update>
+
+    <!-- ─────────────────────────────────────
+         상세 코드 삭제 (Hard Delete)
+    ───────────────────────────────────── -->
+    <delete id="deleteDtl">
+        DELETE FROM com_code_dtl
+        WHERE GRP_CD = #{grpCd} AND DTL_CD = #{dtlCd}
+    </delete>
+
+</mapper>
