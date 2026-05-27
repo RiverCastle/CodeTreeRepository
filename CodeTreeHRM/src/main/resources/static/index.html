@@ -169,6 +169,41 @@
         .result-toast-msg { flex:1; font-size:0.88rem; color:#2C3E50; font-weight:500; line-height:1.4; }
         .result-toast-close { background:none; border:none; color:#bbb; cursor:pointer; font-size:1rem; padding:0 2px; line-height:1; flex-shrink:0; }
         .result-toast-close:hover { color:#555; }
+
+        /* ── 공지사항 ── */
+        .notice-cn-preview { max-height:48px; overflow:hidden; color:#666; font-size:0.82rem; white-space:pre-wrap; word-break:break-all; }
+        .badge-imprtnt { display:inline-block; padding:2px 8px; background:#FFF3E0; color:#E65100; border-radius:4px; font-size:0.75rem; font-weight:700; margin-right:4px; }
+        .notice-detail-cn { white-space:pre-wrap; word-break:break-all; line-height:1.75; font-size:0.9rem; color:#333; min-height:120px; }
+        .form-row textarea { padding:8px 12px; border:1px solid #ddd; border-radius:6px; font-size:0.84rem; outline:none; resize:vertical; min-height:120px; }
+        .form-row textarea:focus { border-color:var(--accent); }
+        .popup-pos-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:6px; }
+        .popup-pos-btn { padding:8px 0; border:1px solid #ddd; border-radius:6px; background:white; cursor:pointer; font-size:0.78rem; color:#555; text-align:center; transition:0.15s; }
+        .popup-pos-btn:hover { border-color:var(--accent); color:var(--accent); }
+        .popup-pos-btn.selected { border-color:var(--primary); background:var(--primary); color:white; font-weight:600; }
+
+        /* ── 팝업 공지 ── */
+        .notice-popup { position:fixed; width:360px; min-width:200px; min-height:140px; background:white; border-radius:10px; box-shadow:0 8px 32px rgba(0,0,0,0.18); z-index:8000; border-top:4px solid var(--primary); overflow:hidden; display:flex; flex-direction:column; }
+        .notice-popup.popup-sm { width:260px; }
+        .notice-popup.popup-md { width:360px; }
+        .notice-popup.popup-lg { width:480px; }
+        .notice-popup-header { display:flex; align-items:center; justify-content:space-between; padding:12px 16px 8px; border-bottom:1px solid #f0f0f0; flex-shrink:0; cursor:move; user-select:none; }
+        .notice-popup-title { font-size:0.88rem; font-weight:700; color:var(--primary); flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; padding-right:8px; }
+        .notice-popup-close { background:none; border:none; font-size:1.1rem; color:#aaa; cursor:pointer; line-height:1; padding:0 4px; }
+        .notice-popup-close:hover { color:#555; }
+        .notice-popup-body { padding:12px 16px; flex:1; min-height:40px; overflow-y:auto; font-size:0.82rem; color:#444; line-height:1.65; white-space:pre-wrap; word-break:break-all; }
+        .notice-popup-footer { padding:8px 16px 10px; display:flex; align-items:center; justify-content:space-between; gap:8px; border-top:1px solid #f5f5f5; flex-shrink:0; }
+        .notice-popup-hide-today { display:flex; align-items:center; gap:5px; font-size:0.76rem; color:#888; cursor:pointer; user-select:none; }
+        .notice-popup-hide-today input[type=checkbox] { cursor:pointer; accent-color:var(--primary); }
+        .notice-popup-footer button { font-size:0.78rem; padding:5px 12px; border-radius:5px; border:1px solid #ddd; background:white; color:#666; cursor:pointer; flex-shrink:0; }
+        .notice-popup-footer button:hover { border-color:var(--accent); color:var(--accent); }
+        .notice-popup-resize { position:absolute; bottom:0; right:0; width:18px; height:18px; cursor:se-resize; z-index:1;
+            background-image:linear-gradient(135deg,transparent 40%,rgba(0,0,0,0.18) 40%,rgba(0,0,0,0.18) 52%,transparent 52%),
+                             linear-gradient(135deg,transparent 62%,rgba(0,0,0,0.18) 62%,rgba(0,0,0,0.18) 74%,transparent 74%); }
+        /* ── 팝업 크기 선택 버튼 ── */
+        .popup-size-grid { display:flex; gap:8px; }
+        .popup-size-btn { flex:1; padding:8px 0; border:1px solid #ddd; border-radius:6px; background:white; cursor:pointer; font-size:0.78rem; color:#555; text-align:center; transition:0.15s; }
+        .popup-size-btn:hover { border-color:var(--accent); color:var(--accent); }
+        .popup-size-btn.selected { border-color:var(--primary); background:var(--primary); color:white; font-weight:600; }
     </style>
 </head>
 <body>
@@ -219,6 +254,172 @@
                     <div class="card-label">공통코드</div>
                     <div class="card-value">-</div>
                     <div class="card-sub">준비 중</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 공지사항 관리 (관리자) -->
+        <div id="page-notice-mgmt" style="display:none;">
+            <div class="page-panel" style="padding:24px;">
+                <div class="admin-toolbar">
+                    <div class="search-form">
+                        <input type="text" id="ntc-search-ttl" placeholder="제목 검색" style="width:160px"
+                               onkeydown="if(event.key==='Enter') searchNotices(1)">
+                        <select id="ntc-search-imprtnt" style="min-width:90px">
+                            <option value="">중요여부 전체</option>
+                            <option value="Y">중요</option>
+                            <option value="N">일반</option>
+                        </select>
+                        <select id="ntc-search-use" style="min-width:90px">
+                            <option value="">게시여부 전체</option>
+                            <option value="Y">게시</option>
+                            <option value="N">미게시</option>
+                        </select>
+                        <input type="date" id="ntc-search-from">
+                        <span style="color:#aaa;font-size:0.82rem;">~</span>
+                        <input type="date" id="ntc-search-to">
+                        <button class="btn-primary" onclick="searchNotices(1)">검색</button>
+                    </div>
+                    <button class="btn-primary" onclick="openNoticeModal(null)">+ 신규 등록</button>
+                </div>
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th style="width:60px;text-align:center">번호</th>
+                            <th>제목</th>
+                            <th style="width:70px;text-align:center">중요</th>
+                            <th style="width:70px;text-align:center">게시</th>
+                            <th style="width:70px;text-align:center">팝업</th>
+                            <th style="width:60px;text-align:center">조회</th>
+                            <th style="width:120px">등록일시</th>
+                            <th style="width:110px;text-align:center">관리</th>
+                        </tr>
+                    </thead>
+                    <tbody id="ntc-table-body"></tbody>
+                </table>
+                <div id="ntc-pagination" class="pagination" style="margin-top:16px;"></div>
+            </div>
+        </div>
+
+        <!-- 공지사항 목록 (직원) -->
+        <div id="page-notice-list" style="display:none;">
+            <div class="page-panel" style="padding:24px;">
+                <div class="admin-toolbar">
+                    <div class="search-form">
+                        <input type="text" id="ntc-emp-search-ttl" placeholder="제목 검색" style="width:200px"
+                               onkeydown="if(event.key==='Enter') searchNoticesEmp(1)">
+                        <select id="ntc-emp-search-imprtnt" style="min-width:90px">
+                            <option value="">전체</option>
+                            <option value="Y">중요</option>
+                            <option value="N">일반</option>
+                        </select>
+                        <button class="btn-primary" onclick="searchNoticesEmp(1)">검색</button>
+                    </div>
+                </div>
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th style="width:60px;text-align:center">번호</th>
+                            <th>제목</th>
+                            <th style="width:60px;text-align:center">조회</th>
+                            <th style="width:120px">등록일시</th>
+                        </tr>
+                    </thead>
+                    <tbody id="ntc-emp-table-body"></tbody>
+                </table>
+                <div id="ntc-emp-pagination" class="pagination" style="margin-top:16px;"></div>
+            </div>
+        </div>
+
+        <!-- 공지사항 등록/수정 모달 (관리자) -->
+        <div id="notice-modal" class="modal-overlay" style="display:none;">
+            <div class="modal-box modal-box-lg">
+                <div class="modal-header">
+                    <h3 id="notice-modal-title">공지사항 등록</h3>
+                    <button class="modal-close" onclick="closeNoticeModal()">&times;</button>
+                </div>
+                <div class="modal-body-scroll">
+                    <div class="form-row">
+                        <label>제목 <span class="req">*</span></label>
+                        <input type="text" id="f-ntc-ttl" placeholder="공지 제목을 입력하세요" maxlength="200">
+                    </div>
+                    <div class="form-row">
+                        <label>내용 <span class="req">*</span></label>
+                        <textarea id="f-ntc-cn" placeholder="공지 내용을 입력하세요" style="min-height:160px;"></textarea>
+                    </div>
+                    <div class="form-grid-2">
+                        <div class="form-row">
+                            <label>중요 여부</label>
+                            <select id="f-ntc-imprtnt">
+                                <option value="N">일반</option>
+                                <option value="Y">중요</option>
+                            </select>
+                        </div>
+                        <div class="form-row">
+                            <label>게시 여부</label>
+                            <select id="f-ntc-use">
+                                <option value="Y">게시</option>
+                                <option value="N">미게시</option>
+                            </select>
+                        </div>
+                        <div class="form-row">
+                            <label>팝업 표시</label>
+                            <select id="f-ntc-popup" onchange="togglePopupPos()">
+                                <option value="N">사용 안 함</option>
+                                <option value="Y">사용</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div id="popup-pos-section" style="display:none;">
+                        <div class="form-row">
+                            <label>팝업 크기 <span class="req">*</span></label>
+                            <div class="popup-size-grid">
+                                <button type="button" class="popup-size-btn" data-size="SM" onclick="selectPopupSize('SM')">소 &nbsp;(260px)</button>
+                                <button type="button" class="popup-size-btn selected" data-size="MD" onclick="selectPopupSize('MD')">중 &nbsp;(360px)</button>
+                                <button type="button" class="popup-size-btn" data-size="LG" onclick="selectPopupSize('LG')">대 &nbsp;(480px)</button>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <label>팝업 위치 <span class="req">*</span></label>
+                            <div class="popup-pos-grid" id="popup-pos-grid">
+                                <button type="button" class="popup-pos-btn" data-pos="TL" onclick="selectPopupPos('TL')">좌상단</button>
+                                <button type="button" class="popup-pos-btn" data-pos="TC" onclick="selectPopupPos('TC')">중앙상단</button>
+                                <button type="button" class="popup-pos-btn" data-pos="TR" onclick="selectPopupPos('TR')">우상단</button>
+                                <button type="button" class="popup-pos-btn" data-pos="ML" onclick="selectPopupPos('ML')">좌중앙</button>
+                                <button type="button" class="popup-pos-btn" data-pos="CC" onclick="selectPopupPos('CC')">중앙</button>
+                                <button type="button" class="popup-pos-btn" data-pos="MR" onclick="selectPopupPos('MR')">우중앙</button>
+                                <button type="button" class="popup-pos-btn" data-pos="BL" onclick="selectPopupPos('BL')">좌하단</button>
+                                <button type="button" class="popup-pos-btn" data-pos="BC" onclick="selectPopupPos('BC')">중앙하단</button>
+                                <button type="button" class="popup-pos-btn" data-pos="BR" onclick="selectPopupPos('BR')">우하단</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn-cancel" onclick="closeNoticeModal()">취소</button>
+                    <button class="btn-primary" id="notice-save-btn" onclick="saveNotice()">등록</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 공지사항 상세 모달 (직원) -->
+        <div id="notice-detail-modal" class="modal-overlay" style="display:none;">
+            <div class="modal-box modal-box-lg">
+                <div class="modal-header">
+                    <h3 id="ntc-detail-ttl" style="font-size:1rem;flex:1;padding-right:8px;"></h3>
+                    <button class="modal-close" onclick="$('#notice-detail-modal').hide()">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;font-size:0.8rem;color:#aaa;">
+                        <span id="ntc-detail-imprtnt"></span>
+                        <span id="ntc-detail-date"></span>
+                        <span style="margin-left:auto;">조회 <strong id="ntc-detail-inqry"></strong>회</span>
+                    </div>
+                    <hr style="border:none;border-top:1px solid #f0f0f0;margin-bottom:16px;">
+                    <div id="ntc-detail-cn" class="notice-detail-cn"></div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn-cancel" onclick="$('#notice-detail-modal').hide()">닫기</button>
                 </div>
             </div>
         </div>
@@ -1018,6 +1219,9 @@
     </div>
 </div>
 
+<!-- 팝업 공지 컨테이너 (동적 생성) -->
+<div id="notice-popups"></div>
+
 <script>
     var token = localStorage.getItem('accessToken');
 
@@ -1125,6 +1329,10 @@
             loadSysRolePage();
         } else if (menuUrl === '/system/user' || nm === '사용자관리' || nm === '시스템사용자관리') {
             loadUserMgmtPage();
+        } else if (menuUrl === '/notice/manage' || nm === '공지사항관리' || nm === '공지관리') {
+            loadNoticeMgmtPage();
+        } else if (menuUrl === '/notice/list' || nm === '공지사항' || nm === '공지사항목록') {
+            loadNoticeListPage();
         } else {
             showPlaceholder(menuNm);
         }
@@ -1148,7 +1356,7 @@
     }
 
     function hideAllPages() {
-        $('#page-home, #page-placeholder, #page-menu-mgmt, #page-role-menu, #page-emp-reg, #page-pos-mgmt, #page-dept-mgmt, #page-system-role, #page-user-mgmt').hide();
+        $('#page-home, #page-placeholder, #page-menu-mgmt, #page-role-menu, #page-emp-reg, #page-pos-mgmt, #page-dept-mgmt, #page-system-role, #page-user-mgmt, #page-notice-mgmt, #page-notice-list').hide();
     }
 
     function logout() {
@@ -2692,9 +2900,439 @@
         });
     }
 
+    /* ═══════════════════════════════════════
+       공지사항 관리 (관리자)
+    ═══════════════════════════════════════ */
+    var _ntcCurrentPage   = 1;
+    var _editNtcNo        = null;
+    var _selectedPopupPos = null;
+    var _selectedPopupSize = 'MD';
+
+    function loadNoticeMgmtPage() {
+        hideAllPages();
+        $('#page-notice-mgmt').show();
+        $('#bc-text').text('공지사항 > 공지사항 관리');
+        searchNotices(1);
+    }
+
+    function searchNotices(page) {
+        if (page) _ntcCurrentPage = page;
+        var params = {
+            ntcTtl:    $('#ntc-search-ttl').val(),
+            imprtntYn: $('#ntc-search-imprtnt').val(),
+            useYn:     $('#ntc-search-use').val(),
+            fromDt:    $('#ntc-search-from').val(),
+            toDt:      $('#ntc-search-to').val(),
+            page:      _ntcCurrentPage,
+            size:      20
+        };
+        $.ajax({
+            url: '/api/notice', method: 'GET', data: params,
+            success: function(res) {
+                if (res.success) {
+                    renderNtcTable(res.data.content);
+                    renderNtcPagination(res.data.page, res.data.totalPages, res.data.totalCount);
+                }
+            },
+            error: function(xhr) { if (xhr.status === 401) logout(); }
+        });
+    }
+
+    function renderNtcTable(list) {
+        var $tbody = $('#ntc-table-body').empty();
+        if (!list || list.length === 0) {
+            $tbody.append('<tr><td colspan="8" style="text-align:center;padding:36px;color:#aaa;">등록된 공지사항이 없습니다.</td></tr>');
+            return;
+        }
+        list.forEach(function(n) {
+            var impBadge = n.imprtntYn === 'Y'
+                ? '<span class="badge-imprtnt">중요</span>'
+                : '<span style="color:#bbb;font-size:0.8rem;">-</span>';
+            var useBadge = n.useYn === 'Y'
+                ? '<span class="badge-y">게시</span>'
+                : '<span class="badge-n">미게시</span>';
+            var popBadge = n.popupYn === 'Y'
+                ? '<span class="badge-y">ON</span>'
+                : '<span style="color:#bbb;font-size:0.8rem;">-</span>';
+            var $tr = $('<tr>');
+            $tr.append('<td style="text-align:center;color:#aaa;font-size:0.8rem">' + n.ntcNo + '</td>');
+            $tr.append('<td><strong style="color:var(--primary)">' + escHtml(n.ntcTtl) + '</strong></td>');
+            $tr.append('<td style="text-align:center">' + impBadge + '</td>');
+            $tr.append('<td style="text-align:center">' + useBadge + '</td>');
+            $tr.append('<td style="text-align:center">' + popBadge + '</td>');
+            $tr.append('<td style="text-align:center;color:#888;font-size:0.8rem">' + n.inqryCnt + '</td>');
+            $tr.append('<td style="color:#888;font-size:0.8rem">' + (n.registDt || '-') + '</td>');
+            var $acts = $('<td style="text-align:center;white-space:nowrap">');
+            $('<button class="btn-sm btn-edit">수정</button>').on('click', function() { openNoticeModal(n.ntcNo); }).appendTo($acts);
+            $('<button class="btn-sm btn-del">삭제</button>').on('click', function() { deleteNotice(n.ntcNo, n.ntcTtl); }).appendTo($acts);
+            $tr.append($acts);
+            $tbody.append($tr);
+        });
+    }
+
+    function renderNtcPagination(page, totalPages, totalCount) {
+        var $pg = $('#ntc-pagination').empty();
+        if (totalPages <= 0) return;
+        $pg.append('<span class="page-info">총 ' + totalCount + '건</span>');
+        $('<button>◀</button>').prop('disabled', page <= 1)
+            .on('click', function() { searchNotices(page - 1); }).appendTo($pg);
+        var s = Math.max(1, page - 2), e = Math.min(totalPages, s + 4);
+        if (e - s < 4) s = Math.max(1, e - 4);
+        for (var i = s; i <= e; i++) {
+            (function(p) {
+                $('<button>' + p + '</button>').toggleClass('active', p === page)
+                    .on('click', function() { searchNotices(p); }).appendTo($pg);
+            })(i);
+        }
+        $('<button>▶</button>').prop('disabled', page >= totalPages)
+            .on('click', function() { searchNotices(page + 1); }).appendTo($pg);
+    }
+
+    function openNoticeModal(ntcNo) {
+        _editNtcNo = ntcNo || null;
+        _selectedPopupPos  = null;
+        _selectedPopupSize = 'MD';
+        var isEdit = _editNtcNo !== null;
+        $('#notice-modal-title').text(isEdit ? '공지사항 수정' : '공지사항 등록');
+        $('#notice-save-btn').text(isEdit ? '수정' : '등록');
+        $('#f-ntc-ttl').val('');
+        $('#f-ntc-cn').val('');
+        $('#f-ntc-imprtnt').val('N');
+        $('#f-ntc-use').val('Y');
+        $('#f-ntc-popup').val('N');
+        $('#popup-pos-section').hide();
+        $('.popup-pos-btn').removeClass('selected');
+        selectPopupSize('MD');
+
+        if (isEdit) {
+            $.ajax({
+                url: '/api/notice/' + _editNtcNo, method: 'GET',
+                success: function(res) {
+                    if (res.success && res.data) {
+                        var d = res.data;
+                        $('#f-ntc-ttl').val(d.ntcTtl);
+                        $('#f-ntc-cn').val(d.ntcCn);
+                        $('#f-ntc-imprtnt').val(d.imprtntYn || 'N');
+                        $('#f-ntc-use').val(d.useYn || 'Y');
+                        $('#f-ntc-popup').val(d.popupYn || 'N');
+                        if (d.popupYn === 'Y') {
+                            $('#popup-pos-section').show();
+                            if (d.popupPosCd)  selectPopupPos(d.popupPosCd);
+                            selectPopupSize(d.popupSizeCd || 'MD');
+                        }
+                    }
+                },
+                error: function() { showToast('공지 정보를 불러올 수 없습니다.', 'error'); }
+            });
+        }
+        $('#notice-modal').show();
+    }
+
+    function closeNoticeModal() {
+        $('#notice-modal').hide();
+        _editNtcNo = null; _selectedPopupPos = null; _selectedPopupSize = 'MD';
+    }
+
+    function togglePopupPos() {
+        if ($('#f-ntc-popup').val() === 'Y') {
+            $('#popup-pos-section').show();
+        } else {
+            $('#popup-pos-section').hide();
+            _selectedPopupPos  = null;
+            _selectedPopupSize = 'MD';
+            $('.popup-pos-btn').removeClass('selected');
+            selectPopupSize('MD');
+        }
+    }
+
+    function selectPopupPos(pos) {
+        _selectedPopupPos = pos;
+        $('.popup-pos-btn').removeClass('selected');
+        $('.popup-pos-btn[data-pos="' + pos + '"]').addClass('selected');
+    }
+
+    function selectPopupSize(size) {
+        _selectedPopupSize = size || 'MD';
+        $('.popup-size-btn').removeClass('selected');
+        $('.popup-size-btn[data-size="' + _selectedPopupSize + '"]').addClass('selected');
+    }
+
+    function saveNotice() {
+        var ttl = $('#f-ntc-ttl').val().trim();
+        var cn  = $('#f-ntc-cn').val().trim();
+        if (!ttl) { alert('제목을 입력하세요.'); $('#f-ntc-ttl').focus(); return; }
+        if (!cn)  { alert('내용을 입력하세요.'); $('#f-ntc-cn').focus(); return; }
+        var popupYn = $('#f-ntc-popup').val();
+        if (popupYn === 'Y' && !_selectedPopupPos) { alert('팝업 위치를 선택하세요.'); return; }
+
+        var payload = {
+            ntcNo:        _editNtcNo,
+            ntcTtl:       ttl,
+            ntcCn:        cn,
+            imprtntYn:    $('#f-ntc-imprtnt').val(),
+            useYn:        $('#f-ntc-use').val(),
+            popupYn:      popupYn,
+            popupPosCd:   popupYn === 'Y' ? _selectedPopupPos  : null,
+            popupSizeCd:  popupYn === 'Y' ? _selectedPopupSize : null
+        };
+        $.ajax({
+            url: '/api/notice', method: 'POST', contentType: 'application/json',
+            data: JSON.stringify(payload),
+            success: function(res) {
+                if (res.success) {
+                    closeNoticeModal();
+                    searchNotices(_ntcCurrentPage);
+                    showToast(_editNtcNo ? '수정되었습니다.' : '등록되었습니다.');
+                } else {
+                    showToast(res.message || '저장 중 오류가 발생했습니다.', 'error');
+                }
+            },
+            error: function(xhr) {
+                var msg = (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : '저장 중 오류가 발생했습니다.';
+                showToast(msg, 'error');
+            }
+        });
+    }
+
+    function deleteNotice(ntcNo, ttl) {
+        if (!confirm('[' + ttl + ']\n\n삭제하시겠습니까?')) return;
+        $.ajax({
+            url: '/api/notice/' + ntcNo, method: 'DELETE',
+            success: function(res) {
+                if (res.success) {
+                    searchNotices(_ntcCurrentPage);
+                    showToast('삭제되었습니다.');
+                } else {
+                    showToast(res.message || '삭제 중 오류가 발생했습니다.', 'error');
+                }
+            },
+            error: function() { showToast('삭제 중 오류가 발생했습니다.', 'error'); }
+        });
+    }
+
+    /* ═══════════════════════════════════════
+       공지사항 목록 (직원)
+    ═══════════════════════════════════════ */
+    var _ntcEmpCurrentPage = 1;
+
+    function loadNoticeListPage() {
+        hideAllPages();
+        $('#page-notice-list').show();
+        $('#bc-text').text('공지사항');
+        searchNoticesEmp(1);
+    }
+
+    function searchNoticesEmp(page) {
+        if (page) _ntcEmpCurrentPage = page;
+        var params = {
+            ntcTtl:    $('#ntc-emp-search-ttl').val(),
+            imprtntYn: $('#ntc-emp-search-imprtnt').val(),
+            useYn:     'Y',
+            page:      _ntcEmpCurrentPage,
+            size:      20
+        };
+        $.ajax({
+            url: '/api/notice', method: 'GET', data: params,
+            success: function(res) {
+                if (res.success) {
+                    renderNtcEmpTable(res.data.content);
+                    renderNtcEmpPagination(res.data.page, res.data.totalPages, res.data.totalCount);
+                }
+            },
+            error: function(xhr) { if (xhr.status === 401) logout(); }
+        });
+    }
+
+    function renderNtcEmpTable(list) {
+        var $tbody = $('#ntc-emp-table-body').empty();
+        if (!list || list.length === 0) {
+            $tbody.append('<tr><td colspan="4" style="text-align:center;padding:36px;color:#aaa;">등록된 공지사항이 없습니다.</td></tr>');
+            return;
+        }
+        list.forEach(function(n) {
+            var impBadge = n.imprtntYn === 'Y' ? '<span class="badge-imprtnt">중요</span>' : '';
+            var $tr = $('<tr style="cursor:pointer">');
+            $tr.append('<td style="text-align:center;color:#aaa;font-size:0.8rem">' + n.ntcNo + '</td>');
+            $tr.append('<td>' + impBadge + '<strong>' + escHtml(n.ntcTtl) + '</strong></td>');
+            $tr.append('<td style="text-align:center;color:#888;font-size:0.8rem">' + n.inqryCnt + '</td>');
+            $tr.append('<td style="color:#888;font-size:0.8rem">' + (n.registDt || '-').substring(0, 10) + '</td>');
+            $tr.on('click', function() { openNoticeDetail(n.ntcNo); });
+            $tbody.append($tr);
+        });
+    }
+
+    function renderNtcEmpPagination(page, totalPages, totalCount) {
+        var $pg = $('#ntc-emp-pagination').empty();
+        if (totalPages <= 0) return;
+        $pg.append('<span class="page-info">총 ' + totalCount + '건</span>');
+        $('<button>◀</button>').prop('disabled', page <= 1)
+            .on('click', function() { searchNoticesEmp(page - 1); }).appendTo($pg);
+        var s = Math.max(1, page - 2), e = Math.min(totalPages, s + 4);
+        if (e - s < 4) s = Math.max(1, e - 4);
+        for (var i = s; i <= e; i++) {
+            (function(p) {
+                $('<button>' + p + '</button>').toggleClass('active', p === page)
+                    .on('click', function() { searchNoticesEmp(p); }).appendTo($pg);
+            })(i);
+        }
+        $('<button>▶</button>').prop('disabled', page >= totalPages)
+            .on('click', function() { searchNoticesEmp(page + 1); }).appendTo($pg);
+    }
+
+    function openNoticeDetail(ntcNo) {
+        $.ajax({
+            url: '/api/notice/' + ntcNo, method: 'GET',
+            success: function(res) {
+                if (res.success && res.data) {
+                    var d = res.data;
+                    $('#ntc-detail-ttl').text(d.ntcTtl);
+                    $('#ntc-detail-imprtnt').html(d.imprtntYn === 'Y' ? '<span class="badge-imprtnt">중요</span>' : '');
+                    $('#ntc-detail-date').text(d.registDt ? d.registDt.substring(0, 10) : '');
+                    $('#ntc-detail-inqry').text(d.inqryCnt);
+                    $('#ntc-detail-cn').text(d.ntcCn);
+                    $('#notice-detail-modal').show();
+                    /* 목록 조회수 갱신 */
+                    searchNoticesEmp(_ntcEmpCurrentPage);
+                }
+            },
+            error: function() { showToast('공지 내용을 불러올 수 없습니다.', 'error'); }
+        });
+    }
+
+    /* ═══════════════════════════════════════
+       팝업 공지 (로그인 후 메인 진입 시)
+    ═══════════════════════════════════════ */
+    var _popupPosCssMap = {
+        TL: { top:'80px',  left:'20px'  },
+        TC: { top:'80px',  left:'50%',  transform:'translateX(-50%)' },
+        TR: { top:'80px',  right:'20px' },
+        ML: { top:'50%',   left:'20px',  transform:'translateY(-50%)' },
+        CC: { top:'50%',   left:'50%',  transform:'translate(-50%,-50%)' },
+        MR: { top:'50%',   right:'20px', transform:'translateY(-50%)' },
+        BL: { bottom:'20px', left:'20px'  },
+        BC: { bottom:'20px', left:'50%',  transform:'translateX(-50%)' },
+        BR: { bottom:'20px', right:'20px' }
+    };
+
+    var _popupSizeClassMap = { SM: 'popup-sm', MD: 'popup-md', LG: 'popup-lg' };
+    var _popupUid = 0;
+
+    function makePopupInteractive($popup) {
+        var uid    = ++_popupUid;
+        var dragNs = '.pd' + uid;
+        var resNs  = '.pr' + uid;
+
+        /* ── 드래그 (헤더 이동) ── */
+        var dragging = false, dsx, dsy, psl, pst;
+        $popup.find('.notice-popup-header').on('mousedown' + dragNs, function(e) {
+            if ($(e.target).is('button')) return;
+            var rect = $popup[0].getBoundingClientRect();
+            $popup.css({ left: rect.left, top: rect.top, right: 'auto', bottom: 'auto', transform: 'none' });
+            dragging = true;
+            dsx = e.clientX;  dsy = e.clientY;
+            psl = rect.left;  pst = rect.top;
+            e.preventDefault();
+        });
+        $(document).on('mousemove' + dragNs, function(e) {
+            if (!dragging) return;
+            var x = Math.max(0, Math.min(window.innerWidth  - $popup.outerWidth(),  psl + (e.clientX - dsx)));
+            var y = Math.max(0, Math.min(window.innerHeight - $popup.outerHeight(), pst + (e.clientY - dsy)));
+            $popup.css({ left: x, top: y });
+        }).on('mouseup' + dragNs, function() { dragging = false; });
+
+        /* ── 리사이즈 (우하단 핸들) ── */
+        var resizing = false, rsx, rsy, rsw, rsh;
+        $popup.find('.notice-popup-resize').on('mousedown' + resNs, function(e) {
+            resizing = true;
+            rsx = e.clientX;  rsy = e.clientY;
+            rsw = $popup.outerWidth();
+            rsh = $popup.outerHeight();
+            e.preventDefault();
+            e.stopPropagation();
+        });
+        $(document).on('mousemove' + resNs, function(e) {
+            if (!resizing) return;
+            $popup.css({
+                width:  Math.max(200, rsw + (e.clientX - rsx)),
+                height: Math.max(140, rsh + (e.clientY - rsy))
+            });
+        }).on('mouseup' + resNs, function() { resizing = false; });
+
+        /* cleanup: 팝업 닫힐 때 document 이벤트 제거 */
+        $popup.data('popupCleanup', function() {
+            $(document).off(dragNs).off(resNs);
+        });
+    }
+
+    function todayStr() {
+        return new Date().toISOString().slice(0, 10);
+    }
+
+    function isPopupHiddenToday(ntcNo) {
+        return localStorage.getItem('ntc_hide_' + ntcNo) === todayStr();
+    }
+
+    function hidePopupToday(ntcNo) {
+        localStorage.setItem('ntc_hide_' + ntcNo, todayStr());
+    }
+
+    function loadActivePopups() {
+        $.ajax({
+            url: '/api/notice/popups', method: 'GET',
+            success: function(res) {
+                if (res.success && res.data && res.data.length > 0) {
+                    var visible = res.data.filter(function(n) {
+                        return !isPopupHiddenToday(n.ntcNo);
+                    });
+                    if (visible.length > 0) renderPopups(visible);
+                }
+            },
+            error: function() {}
+        });
+    }
+
+    function renderPopups(list) {
+        var $container = $('#notice-popups').empty();
+        list.forEach(function(n) {
+            var posCss    = _popupPosCssMap[n.popupPosCd] || _popupPosCssMap['CC'];
+            var sizeClass = _popupSizeClassMap[n.popupSizeCd] || 'popup-md';
+            var $popup    = $('<div class="notice-popup ' + sizeClass + '"></div>').css(posCss);
+
+            function closePopup() {
+                var cleanup = $popup.data('popupCleanup');
+                if (cleanup) cleanup();
+                $popup.remove();
+            }
+
+            var $hd = $('<div class="notice-popup-header">');
+            $hd.append('<div class="notice-popup-title">' + escHtml(n.ntcTtl) + '</div>');
+            $('<button class="notice-popup-close">&times;</button>').on('click', closePopup).appendTo($hd);
+
+            var $bd = $('<div class="notice-popup-body">').text(n.ntcCn);
+
+            var $ft   = $('<div class="notice-popup-footer">');
+            var chkId = 'chk-hide-' + n.ntcNo;
+            var $lbl  = $('<label class="notice-popup-hide-today" for="' + chkId + '">');
+            $('<input type="checkbox" id="' + chkId + '">').appendTo($lbl);
+            $lbl.append(' 오늘 하루 보지 않기');
+            $ft.append($lbl);
+            $('<button>닫기</button>').on('click', function() {
+                if ($('#' + chkId).is(':checked')) hidePopupToday(n.ntcNo);
+                closePopup();
+            }).appendTo($ft);
+
+            var $resize = $('<div class="notice-popup-resize" title="크기 조절">');
+
+            $popup.append($hd).append($bd).append($ft).append($resize);
+            $container.append($popup);
+            makePopupInteractive($popup);
+        });
+    }
+
     /* ── 초기 로드 ── */
     loadMenu();
     showHome();
+    loadActivePopups();
 </script>
 
 <!-- 공통 결과 Toast -->
