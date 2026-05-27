@@ -572,7 +572,7 @@
                     <div class="form-grid-2">
                         <div class="form-row">
                             <label>부서코드 <span class="req">*</span></label>
-                            <input type="text" id="f-dept-cd" placeholder="예: DEPT-005" style="text-transform:uppercase;">
+                            <input type="text" id="f-dept-code" placeholder="예: DEPT-005" style="text-transform:uppercase;">
                         </div>
                         <div class="form-row">
                             <label>출력 순서 <span class="req">*</span></label>
@@ -2147,7 +2147,7 @@
                 $.ajax({
                     url: '/api/hr/departments/next-code',
                     method: 'GET',
-                    success: function(res) { if (res.success && res.data) $('#f-dept-cd').val(res.data); }
+                    success: function(res) { if (res.success && res.data) $('#f-dept-code').val(res.data); }
                 });
             }
         });
@@ -2187,7 +2187,7 @@
     }
 
     function resetDeptForm() {
-        $('#f-dept-cd').val('').prop('readonly', false);
+        $('#f-dept-code').val('').prop('readonly', false);
         $('#f-dept-nm, #f-dept-eng-nm, #f-dept-shrt-nm, #f-dept-mngr-no, #f-dept-telno, #f-dept-lctn-nm, #f-estbl-ymd').val('');
         $('#f-dept-ordr').val('');
         $('#f-upper-dept-cd').val('');
@@ -2196,7 +2196,7 @@
     }
 
     function bindDeptForm(d) {
-        $('#f-dept-cd').val(d.deptCd || '').prop('readonly', true);
+        $('#f-dept-code').val(d.deptCd || '').prop('readonly', true);
         $('#f-dept-nm').val(d.deptNm || '');
         $('#f-dept-eng-nm').val(d.deptEngNm || '');
         $('#f-dept-shrt-nm').val(d.deptShrtNm || '');
@@ -2213,10 +2213,10 @@
     function closeDeptModal() { $('#dept-modal').hide(); _editDeptCd = null; }
 
     function saveDept() {
-        var deptCd   = $('#f-dept-cd').val().trim().toUpperCase();
+        var deptCd   = $('#f-dept-code').val().trim().toUpperCase();
         var deptNm   = $('#f-dept-nm').val().trim();
         var deptOrdr = parseInt($('#f-dept-ordr').val()) || null;
-        if (!deptCd)   { alert('부서코드를 입력하세요.'); $('#f-dept-cd').focus(); return; }
+        if (!deptCd)   { alert('부서코드를 입력하세요.'); $('#f-dept-code').focus(); return; }
         if (!deptNm)   { alert('부서명을 입력하세요.'); $('#f-dept-nm').focus(); return; }
         if (!deptOrdr) { alert('출력 순서를 입력하세요.'); $('#f-dept-ordr').focus(); return; }
         var payload = {
