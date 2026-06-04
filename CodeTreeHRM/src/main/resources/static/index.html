@@ -243,18 +243,13 @@
             <div class="card-grid">
                 <div class="summary-card">
                     <div class="card-label">전체 사원</div>
-                    <div class="card-value">-</div>
-                    <div class="card-sub">준비 중</div>
+                    <div class="card-value" id="stat-emp-count">-</div>
+                    <div class="card-sub">명</div>
                 </div>
                 <div class="summary-card">
                     <div class="card-label">부서 수</div>
-                    <div class="card-value">-</div>
-                    <div class="card-sub">준비 중</div>
-                </div>
-                <div class="summary-card">
-                    <div class="card-label">공통코드</div>
-                    <div class="card-value">-</div>
-                    <div class="card-sub">준비 중</div>
+                    <div class="card-value" id="stat-dept-count">-</div>
+                    <div class="card-sub">개</div>
                 </div>
             </div>
         </div>
@@ -1503,6 +1498,28 @@
         $('#page-home').show();
         $('#bc-text').text('대시보드');
         $('.nav-sub a').removeClass('active');
+        loadDashboardStats();
+    }
+
+    function loadDashboardStats() {
+        /* 전체 사원 수 (페이징 totalCount 사용) */
+        $.ajax({
+            url: '/api/hr/employees', method: 'GET', data: { page: 1, size: 1 },
+            success: function(res) {
+                if (res && res.success && res.data) {
+                    $('#stat-emp-count').text(res.data.totalCount);
+                }
+            }
+        });
+        /* 부서 수 (평탄 목록 배열 길이) */
+        $.ajax({
+            url: '/api/hr/departments', method: 'GET',
+            success: function(res) {
+                if (res && res.success && res.data) {
+                    $('#stat-dept-count').text(res.data.length);
+                }
+            }
+        });
     }
 
     function showPlaceholder(title) {
