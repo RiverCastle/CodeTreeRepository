@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.codetree.CodeTreeHRM.message.mapper.MessageMapper">
+
+    <!-- ─────────────────────────────────────
+         캐시 적재용: 사용중 메시지 전체
+    ───────────────────────────────────── -->
+    <select id="findAllForCache" resultType="com.codetree.CodeTreeHRM.message.dto.MessageDto">
+        SELECT
+            MSG_ID      AS msgId,
+            LANG_CD     AS langCd,
+            MSG_TYPE    AS msgType,
+            MSG_CONTENT AS msgContent,
+            DESCRIPTION AS description,
+            IS_USE      AS isUse
+        FROM com_message
+        WHERE IS_USE = 'Y'
+    </select>
+
+    <!-- ─────────────────────────────────────
+         관리 화면 목록 (검색)
+    ───────────────────────────────────── -->
+    <select id="findAll" resultType="com.codetree.CodeTreeHRM.message.dto.MessageDto">
+        SELECT
+            MSG_ID                                          AS msgId,
+            LANG_CD                                         AS langCd,
+            MSG_TYPE                                        AS msgType,
+            MSG_CONTENT                                     AS msgContent,
+            DESCRIPTION                                     AS description,
+            IS_USE                                          AS isUse,
+            DATE_FORMAT(CREATED_AT, '%Y-%m-%d %H:%i')       AS createdAt,
+            DATE_FORMAT(UPDATED_AT, '%Y-%m-%d %H:%i')       AS updatedAt
+        FROM com_message
+        <where>
+            <if test="keyword != null and keyword != ''">
+                AND (MSG_ID LIKE CONCAT('%', #{keyword}, '%')
+                     OR MSG_CONTENT LIKE CONCAT('%', #{keyword}, '%'))
+            </if>
+            <if test="langCd != null and langCd != ''">
+                AND LANG_CD = #{langCd}
+            </if>
+            <if test="msgType != null and msgType != ''">
+                AND MSG_TYPE = #{msgType}
+            </if>
+        </where>
+        ORDER BY MSG_ID ASC, LANG_CD ASC
+    </select>
+
+    <!-- ─────────────────────────────────────
+         단건 조회 (복합키)
+    ───────────────────────────────────── -->
+    <select id="findOne" resultType="com.codetree.CodeTreeHRM.message.dto.MessageDto">
+        SELECT
+            MSG_ID                                          AS msgId,
+            LANG_CD                                         AS langCd,
+            MSG_TYPE                                        AS msgType,
+            MSG_CONTENT                                     AS msgContent,
+            DESCRIPTION                                     AS description,
+            IS_USE                                          AS isUse,
+            DATE_FORMAT(CREATED_AT, '%Y-%m-%d %H:%i')       AS createdAt,
+            DATE_FORMAT(UPDATED_AT, '%Y-%m-%d %H:%i')       AS updatedAt
+        FROM com_message
+        WHERE MSG_ID = #{msgId} AND LANG_CD = #{langCd}
+    </select>
+
+    <!-- ─────────────────────────────────────
+         존재 여부 (복합키)
+    ───────────────────────────────────── -->
+    <select id="countOne" resultType="int">
+        SELECT COUNT(*) FROM com_message
+        WHERE MSG_ID = #{msgId} AND LANG_CD = #{langCd}
+    </select>
+
+    <!-- ─────────────────────────────────────
+         등록
+    ───────────────────────────────────── -->
+    <insert id="insert" parameterType="com.codetree.CodeTreeHRM.message.dto.MessageDto">
+        INSERT INTO com_message (MSG_ID, LANG_CD, MSG_TYPE, MSG_CONTENT, DESCRIPTION, IS_USE)
+        VALUES (#{msgId}, #{langCd}, #{msgType}, #{msgContent}, #{description}, IFNULL(#{isUse}, 'Y'))
+    </insert>
+
+    <!-- ─────────────────────────────────────
+         수정
+    ───────────────────────────────────── -->
+    <update id="update" parameterType="com.codetree.CodeTreeHRM.message.dto.MessageDto">
+        UPDATE com_message
+        SET MSG_TYPE    = #{msgType},
+            MSG_CONTENT = #{msgContent},
+            DESCRIPTION = #{description},
+            IS_USE      = #{isUse}
+        WHERE MSG_ID = #{msgId} AND LANG_CD = #{langCd}
+    </update>
+
+    <!-- ─────────────────────────────────────
+         사용여부 변경
+    ───────────────────────────────────── -->
+    <update id="updateStatus">
+        UPDATE com_message
+        SET IS_USE = #{isUse}
+        WHERE MSG_ID = #{msgId} AND LANG_CD = #{langCd}
+    </update>
+
+    <!-- ─────────────────────────────────────
+         삭제 (Hard Delete)
+    ───────────────────────────────────── -->
+    <delete id="delete">
+        DELETE FROM com_message
+        WHERE MSG_ID = #{msgId} AND LANG_CD = #{langCd}
+    </delete>
+
+</mapper>
