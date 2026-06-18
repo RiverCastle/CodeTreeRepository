@@ -29,12 +29,8 @@ public class CommonCodeController {
     /* ── 그룹 코드 저장 (Upsert) ── */
     @PostMapping
     public ResponseEntity<ApiResponse<Void>> saveGrp(@RequestBody CommonCodeDto dto) {
-        try {
-            commonCodeService.saveGrp(dto);
-            return ResponseEntity.ok(ApiResponse.success(null));
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
-        }
+        commonCodeService.saveGrp(dto);
+        return ResponseEntity.ok(ApiResponse.success(null));
     }
 
     /* ── 그룹 사용여부 변경 ── */
@@ -57,12 +53,8 @@ public class CommonCodeController {
     public ResponseEntity<ApiResponse<Void>> saveDtl(
             @PathVariable String grpCd,
             @RequestBody CommonCodeDtlDto dto) {
-        try {
-            commonCodeService.saveDtl(grpCd, dto);
-            return ResponseEntity.ok(ApiResponse.success(null));
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
-        }
+        commonCodeService.saveDtl(grpCd, dto);
+        return ResponseEntity.ok(ApiResponse.success(null));
     }
 
     /* ── 상세 코드 사용여부 변경 ── */
@@ -80,11 +72,7 @@ public class CommonCodeController {
     public ResponseEntity<ApiResponse<Void>> deleteDtl(
             @PathVariable String grpCd,
             @PathVariable String dtlCd) {
-        try {
-            commonCodeService.deleteDtl(grpCd, dtlCd);
-            return ResponseEntity.ok(ApiResponse.success(null));
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
-        }
+        commonCodeService.deleteDtl(grpCd, dtlCd);
+        return ResponseEntity.ok(ApiResponse.success(null));
     }
 }

@@ -3,6 +3,7 @@ package com.codetree.CodeTreeHRM.code.service;
 import com.codetree.CodeTreeHRM.code.dto.CommonCodeDtlDto;
 import com.codetree.CodeTreeHRM.code.dto.CommonCodeDto;
 import com.codetree.CodeTreeHRM.code.mapper.CommonCodeMapper;
+import com.codetree.CodeTreeHRM.common.exception.CustomException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,8 +31,8 @@ public class CommonCodeService {
     ───────────────────────────────────── */
     @Transactional
     public void saveGrp(CommonCodeDto dto) {
-        if (isBlank(dto.getGrpCd())) throw new IllegalArgumentException("그룹코드는 필수 입력 항목입니다.");
-        if (isBlank(dto.getGrpNm())) throw new IllegalArgumentException("그룹명은 필수 입력 항목입니다.");
+        if (isBlank(dto.getGrpCd())) throw new CustomException("ERR_REQUIRED", "그룹코드");
+        if (isBlank(dto.getGrpNm())) throw new CustomException("ERR_REQUIRED", "그룹명");
 
         if (commonCodeMapper.countByGrpCd(dto.getGrpCd()) > 0) {
             commonCodeMapper.updateGrp(dto);
@@ -61,9 +62,9 @@ public class CommonCodeService {
     ───────────────────────────────────── */
     @Transactional
     public void saveDtl(String grpCd, CommonCodeDtlDto dto) {
-        if (isBlank(grpCd))         throw new IllegalArgumentException("그룹코드는 필수입니다.");
-        if (isBlank(dto.getDtlCd())) throw new IllegalArgumentException("상세코드는 필수 입력 항목입니다.");
-        if (isBlank(dto.getDtlNm())) throw new IllegalArgumentException("상세명은 필수 입력 항목입니다.");
+        if (isBlank(grpCd))         throw new CustomException("ERR_REQUIRED", "그룹코드");
+        if (isBlank(dto.getDtlCd())) throw new CustomException("ERR_REQUIRED", "상세코드");
+        if (isBlank(dto.getDtlNm())) throw new CustomException("ERR_REQUIRED", "상세명");
 
         dto.setGrpCd(grpCd);
 
@@ -87,8 +88,8 @@ public class CommonCodeService {
     ───────────────────────────────────── */
     @Transactional
     public void deleteDtl(String grpCd, String dtlCd) {
-        if (isBlank(grpCd)) throw new IllegalArgumentException("그룹코드는 필수입니다.");
-        if (isBlank(dtlCd)) throw new IllegalArgumentException("상세코드는 필수입니다.");
+        if (isBlank(grpCd)) throw new CustomException("ERR_REQUIRED", "그룹코드");
+        if (isBlank(dtlCd)) throw new CustomException("ERR_REQUIRED", "상세코드");
         commonCodeMapper.deleteDtl(grpCd, dtlCd);
     }
 

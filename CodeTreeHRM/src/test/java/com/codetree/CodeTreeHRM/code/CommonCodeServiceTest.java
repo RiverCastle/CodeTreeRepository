@@ -4,6 +4,7 @@ import com.codetree.CodeTreeHRM.code.dto.CommonCodeDtlDto;
 import com.codetree.CodeTreeHRM.code.dto.CommonCodeDto;
 import com.codetree.CodeTreeHRM.code.mapper.CommonCodeMapper;
 import com.codetree.CodeTreeHRM.code.service.CommonCodeService;
+import com.codetree.CodeTreeHRM.common.exception.CustomException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -70,25 +71,29 @@ class CommonCodeServiceTest {
     }
 
     @Test
-    @DisplayName("그룹코드 없음 — 예외 발생")
+    @DisplayName("그룹코드 없음 — CustomException(ERR_REQUIRED) 발생")
     void saveGrp_no_grpCd_throws() {
         grpDto.setGrpCd("");
 
-        assertThatThrownBy(() -> commonCodeService.saveGrp(grpDto))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("그룹코드");
+        CustomException ex = catchThrowableOfType(
+                () -> commonCodeService.saveGrp(grpDto), CustomException.class);
+        assertThat(ex).isNotNull();
+        assertThat(ex.getMsgCd()).isEqualTo("ERR_REQUIRED");
+        assertThat(ex.getArgs()).contains("그룹코드");
 
         verify(commonCodeMapper, never()).insertGrp(any());
     }
 
     @Test
-    @DisplayName("그룹명 없음 — 예외 발생")
+    @DisplayName("그룹명 없음 — CustomException(ERR_REQUIRED) 발생")
     void saveGrp_no_grpNm_throws() {
         grpDto.setGrpNm("  ");
 
-        assertThatThrownBy(() -> commonCodeService.saveGrp(grpDto))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("그룹명");
+        CustomException ex = catchThrowableOfType(
+                () -> commonCodeService.saveGrp(grpDto), CustomException.class);
+        assertThat(ex).isNotNull();
+        assertThat(ex.getMsgCd()).isEqualTo("ERR_REQUIRED");
+        assertThat(ex.getArgs()).contains("그룹명");
 
         verify(commonCodeMapper, never()).insertGrp(any());
     }
@@ -149,21 +154,25 @@ class CommonCodeServiceTest {
     }
 
     @Test
-    @DisplayName("상세 코드 삭제 — grpCd 공백이면 예외")
+    @DisplayName("상세 코드 삭제 — grpCd 공백이면 CustomException(ERR_REQUIRED)")
     void deleteDtl_no_grpCd_throws() {
-        assertThatThrownBy(() -> commonCodeService.deleteDtl("", "TEST_DTL"))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("그룹코드");
+        CustomException ex = catchThrowableOfType(
+                () -> commonCodeService.deleteDtl("", "TEST_DTL"), CustomException.class);
+        assertThat(ex).isNotNull();
+        assertThat(ex.getMsgCd()).isEqualTo("ERR_REQUIRED");
+        assertThat(ex.getArgs()).contains("그룹코드");
 
         verify(commonCodeMapper, never()).deleteDtl(any(), any());
     }
 
     @Test
-    @DisplayName("상세 코드 삭제 — dtlCd 공백이면 예외")
+    @DisplayName("상세 코드 삭제 — dtlCd 공백이면 CustomException(ERR_REQUIRED)")
     void deleteDtl_no_dtlCd_throws() {
-        assertThatThrownBy(() -> commonCodeService.deleteDtl("TEST_GRP", "  "))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("상세코드");
+        CustomException ex = catchThrowableOfType(
+                () -> commonCodeService.deleteDtl("TEST_GRP", "  "), CustomException.class);
+        assertThat(ex).isNotNull();
+        assertThat(ex.getMsgCd()).isEqualTo("ERR_REQUIRED");
+        assertThat(ex.getArgs()).contains("상세코드");
 
         verify(commonCodeMapper, never()).deleteDtl(any(), any());
     }
